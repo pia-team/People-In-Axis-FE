@@ -1,0 +1,2 @@
+import{j as o,B as t,e as r,G as a}from"./mui-mV64ATsk.js";import"./vendor-Cgu4HazA.js";const n=()=>o.jsxs(t,{children:[o.jsx(r,{variant:"h4",component:"h1",gutterBottom:!0,children:"Admin Dashboard"}),o.jsx(a,{sx:{p:3,mt:2},children:o.jsx(r,{variant:"body1",color:"text.secondary",children:"This is the Admin Dashboard page. Implementation coming soon."})})]});export{n as default};
+//# sourceMappingURL=AdminDashboard-Dqo6Z7Ot.js.map

@@ -1,0 +1,178 @@
+import React, { Suspense, lazy } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { CircularProgress, Box } from '@mui/material';
+
+import { useKeycloak } from '@/hooks/useKeycloak';
+import MainLayout from '@/layouts/MainLayout';
+import AuthLayout from '@/layouts/AuthLayout';
+import PrivateRoute from '@/components/auth/PrivateRoute';
+import PublicRoute from '@/components/auth/PublicRoute';
+
+// Lazy load pages for better performance
+const Dashboard = lazy(() => import('@/pages/Dashboard'));
+const Login = lazy(() => import('@/pages/auth/Login'));
+const Unauthorized = lazy(() => import('@/pages/auth/Unauthorized'));
+
+// Employee pages
+const EmployeeList = lazy(() => import('@/pages/employees/EmployeeList'));
+const EmployeeDetail = lazy(() => import('@/pages/employees/EmployeeDetail'));
+const EmployeeForm = lazy(() => import('@/pages/employees/EmployeeForm'));
+const MyProfile = lazy(() => import('@/pages/employees/MyProfile'));
+
+// Company pages
+const CompanyList = lazy(() => import('@/pages/companies/CompanyList'));
+const CompanyDetail = lazy(() => import('@/pages/companies/CompanyDetail'));
+const CompanyForm = lazy(() => import('@/pages/companies/CompanyForm'));
+
+// Department pages
+const DepartmentList = lazy(() => import('@/pages/departments/DepartmentList'));
+const DepartmentDetail = lazy(() => import('@/pages/departments/DepartmentDetail'));
+const DepartmentForm = lazy(() => import('@/pages/departments/DepartmentForm'));
+
+// TimeSheet pages
+const TimeSheetList = lazy(() => import('@/pages/timesheets/TimeSheetList'));
+const TimeSheetForm = lazy(() => import('@/pages/timesheets/TimeSheetForm'));
+const MyTimeSheets = lazy(() => import('@/pages/timesheets/MyTimeSheets'));
+const TimeSheetApproval = lazy(() => import('@/pages/timesheets/TimeSheetApproval'));
+
+// Expense pages
+const ExpenseList = lazy(() => import('@/pages/expenses/ExpenseList'));
+const ExpenseForm = lazy(() => import('@/pages/expenses/ExpenseForm'));
+const MyExpenses = lazy(() => import('@/pages/expenses/MyExpenses'));
+const ExpenseApproval = lazy(() => import('@/pages/expenses/ExpenseApproval'));
+
+// Project pages
+const ProjectList = lazy(() => import('@/pages/projects/ProjectList'));
+const ProjectDetail = lazy(() => import('@/pages/projects/ProjectDetail'));
+const ProjectForm = lazy(() => import('@/pages/projects/ProjectForm'));
+
+// Reports pages
+const Reports = lazy(() => import('@/pages/reports/Reports'));
+const TimeSheetReport = lazy(() => import('@/pages/reports/TimeSheetReport'));
+const ExpenseReport = lazy(() => import('@/pages/reports/ExpenseReport'));
+
+// Admin pages
+const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
+const UserManagement = lazy(() => import('@/pages/admin/UserManagement'));
+const RoleManagement = lazy(() => import('@/pages/admin/RoleManagement'));
+const Settings = lazy(() => import('@/pages/admin/Settings'));
+
+const LoadingScreen: React.FC = () => (
+  <Box
+    display="flex"
+    justifyContent="center"
+    alignItems="center"
+    minHeight="100vh"
+  >
+    <CircularProgress />
+  </Box>
+);
+
+const App: React.FC = () => {
+  const { initialized } = useKeycloak();
+
+  if (!initialized) {
+    return <LoadingScreen />;
+  }
+
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      <Routes>
+        {/* Public routes */}
+        <Route element={<PublicRoute />}>
+          <Route element={<AuthLayout />}>
+            <Route path="/login" element={<Login />} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
+          </Route>
+        </Route>
+
+        {/* Private routes */}
+        <Route element={<PrivateRoute />}>
+          <Route element={<MainLayout />}>
+            {/* Dashboard */}
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+
+            {/* Profile */}
+            <Route path="/profile" element={<MyProfile />} />
+
+            {/* Employees */}
+            <Route path="/employees">
+              <Route index element={<EmployeeList />} />
+              <Route path="new" element={<EmployeeForm />} />
+              <Route path=":id" element={<EmployeeDetail />} />
+              <Route path=":id/edit" element={<EmployeeForm />} />
+            </Route>
+
+            {/* Companies */}
+            <Route path="/companies">
+              <Route index element={<CompanyList />} />
+              <Route path="new" element={<CompanyForm />} />
+              <Route path=":id" element={<CompanyDetail />} />
+              <Route path=":id/edit" element={<CompanyForm />} />
+            </Route>
+
+            {/* Departments */}
+            <Route path="/departments">
+              <Route index element={<DepartmentList />} />
+              <Route path="new" element={<DepartmentForm />} />
+              <Route path=":id" element={<DepartmentDetail />} />
+              <Route path=":id/edit" element={<DepartmentForm />} />
+            </Route>
+
+            {/* Projects */}
+            <Route path="/projects">
+              <Route index element={<ProjectList />} />
+              <Route path="new" element={<ProjectForm />} />
+              <Route path=":id" element={<ProjectDetail />} />
+              <Route path=":id/edit" element={<ProjectForm />} />
+            </Route>
+
+            {/* TimeSheets */}
+            <Route path="/timesheets">
+              <Route index element={<TimeSheetList />} />
+              <Route path="my" element={<MyTimeSheets />} />
+              <Route path="new" element={<TimeSheetForm />} />
+              <Route path=":id/edit" element={<TimeSheetForm />} />
+              <Route path="approval" element={<TimeSheetApproval />} />
+            </Route>
+
+            {/* Expenses */}
+            <Route path="/expenses">
+              <Route index element={<ExpenseList />} />
+              <Route path="my" element={<MyExpenses />} />
+              <Route path="new" element={<ExpenseForm />} />
+              <Route path=":id/edit" element={<ExpenseForm />} />
+              <Route path="approval" element={<ExpenseApproval />} />
+            </Route>
+
+            {/* Reports */}
+            <Route path="/reports">
+              <Route index element={<Reports />} />
+              <Route path="timesheet" element={<TimeSheetReport />} />
+              <Route path="expense" element={<ExpenseReport />} />
+            </Route>
+
+            {/* Admin */}
+            <Route
+              path="/admin"
+              element={
+                <PrivateRoute roles={['ADMIN', 'SYSTEM_ADMIN']} />
+              }
+            >
+              <Route index element={<AdminDashboard />} />
+              <Route path="users" element={<UserManagement />} />
+              <Route path="roles" element={<RoleManagement />} />
+              <Route path="settings" element={<Settings />} />
+            </Route>
+          </Route>
+        </Route>
+
+        {/* 404 */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
+  );
+};
+
+export default App;

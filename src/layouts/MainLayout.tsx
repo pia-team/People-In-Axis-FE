@@ -1,0 +1,316 @@
+import React, { useState } from 'react';
+import { Outlet } from 'react-router-dom';
+import {
+  Box,
+  CssBaseline,
+  Drawer,
+  AppBar,
+  Toolbar,
+  IconButton,
+  Typography,
+  Divider,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Avatar,
+  Menu,
+  MenuItem,
+  Badge,
+  Collapse,
+} from '@mui/material';
+import {
+  Menu as MenuIcon,
+  Dashboard,
+  People,
+  Business,
+  Assignment,
+  Receipt,
+  Work,
+  Assessment,
+  Settings,
+  ExpandLess,
+  ExpandMore,
+  Notifications,
+  AccountCircle,
+  Logout,
+  Person,
+} from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import { toggleSidebar } from '@/store/slices/uiSlice';
+import { useKeycloak } from '@/hooks/useKeycloak';
+
+const drawerWidth = 280;
+
+interface MenuItemType {
+  title: string;
+  path?: string;
+  icon: React.ReactElement;
+  children?: MenuItemType[];
+  roles?: string[];
+}
+
+const menuItems: MenuItemType[] = [
+  {
+    title: 'Dashboard',
+    path: '/dashboard',
+    icon: <Dashboard />,
+  },
+  {
+    title: 'Employees',
+    icon: <People />,
+    roles: ['HUMAN_RESOURCES', 'ADMIN'],
+    children: [
+      { title: 'All Employees', path: '/employees', icon: <People /> },
+      { title: 'My Profile', path: '/profile', icon: <Person /> },
+    ],
+  },
+  {
+    title: 'Companies',
+    path: '/companies',
+    icon: <Business />,
+    roles: ['COMPANY_MANAGER', 'ADMIN'],
+  },
+  {
+    title: 'Time Management',
+    icon: <Assignment />,
+    children: [
+      { title: 'My Timesheets', path: '/timesheets/my', icon: <Assignment /> },
+      { title: 'All Timesheets', path: '/timesheets', icon: <Assignment />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES'] },
+      { title: 'Approval', path: '/timesheets/approval', icon: <Assignment />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES'] },
+    ],
+  },
+  {
+    title: 'Expenses',
+    icon: <Receipt />,
+    children: [
+      { title: 'My Expenses', path: '/expenses/my', icon: <Receipt /> },
+      { title: 'All Expenses', path: '/expenses', icon: <Receipt />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES', 'FINANCE'] },
+      { title: 'Approval', path: '/expenses/approval', icon: <Receipt />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES', 'FINANCE'] },
+    ],
+  },
+  {
+    title: 'Projects',
+    path: '/projects',
+    icon: <Work />,
+  },
+  {
+    title: 'Reports',
+    icon: <Assessment />,
+    roles: ['HUMAN_RESOURCES', 'ADMIN', 'COMPANY_MANAGER'],
+    children: [
+      { title: 'Timesheet Report', path: '/reports/timesheet', icon: <Assessment /> },
+      { title: 'Expense Report', path: '/reports/expense', icon: <Assessment /> },
+    ],
+  },
+  {
+    title: 'Admin',
+    icon: <Settings />,
+    roles: ['ADMIN', 'SYSTEM_ADMIN'],
+    children: [
+      { title: 'Users', path: '/admin/users', icon: <People /> },
+      { title: 'Roles', path: '/admin/roles', icon: <Settings /> },
+      { title: 'Settings', path: '/admin/settings', icon: <Settings /> },
+    ],
+  },
+];
+
+const MainLayout: React.FC = () => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { sidebarOpen } = useSelector((state: RootState) => state.ui);
+  const { tokenParsed, logout, hasAnyRole } = useKeycloak();
+  
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
+
+  const handleDrawerToggle = () => {
+    dispatch(toggleSidebar());
+  };
+
+  const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    handleMenuClose();
+    logout();
+  };
+
+  const handleProfile = () => {
+    handleMenuClose();
+    navigate('/profile');
+  };
+
+  const toggleExpand = (title: string) => {
+    setExpandedItems(prev =>
+      prev.includes(title)
+        ? prev.filter(item => item !== title)
+        : [...prev, title]
+    );
+  };
+
+  const canViewMenuItem = (item: MenuItemType): boolean => {
+    if (!item.roles || item.roles.length === 0) {
+      return true;
+    }
+    return hasAnyRole(item.roles);
+  };
+
+  const renderMenuItem = (item: MenuItemType, level: number = 0) => {
+    if (!canViewMenuItem(item)) {
+      return null;
+    }
+
+    const hasChildren = item.children && item.children.length > 0;
+    const isExpanded = expandedItems.includes(item.title);
+
+    return (
+      <React.Fragment key={item.title}>
+        <ListItem disablePadding sx={{ pl: level * 2 }}>
+          <ListItemButton
+            onClick={() => {
+              if (hasChildren) {
+                toggleExpand(item.title);
+              } else if (item.path) {
+                navigate(item.path);
+              }
+            }}
+          >
+            <ListItemIcon>{item.icon}</ListItemIcon>
+            <ListItemText primary={item.title} />
+            {hasChildren && (isExpanded ? <ExpandLess /> : <ExpandMore />)}
+          </ListItemButton>
+        </ListItem>
+        {hasChildren && (
+          <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              {item.children!.map((child) => renderMenuItem(child, level + 1))}
+            </List>
+          </Collapse>
+        )}
+      </React.Fragment>
+    );
+  };
+
+  const drawerContent = (
+    <div>
+      <Toolbar>
+        <Typography variant="h6" noWrap component="div">
+          People In Axis
+        </Typography>
+      </Toolbar>
+      <Divider />
+      <List>
+        {menuItems.map((item) => renderMenuItem(item))}
+      </List>
+    </div>
+  );
+
+  return (
+    <Box sx={{ display: 'flex' }}>
+      <CssBaseline />
+      <AppBar
+        position="fixed"
+        sx={{
+          width: { sm: `calc(100% - ${sidebarOpen ? drawerWidth : 0}px)` },
+          ml: { sm: `${sidebarOpen ? drawerWidth : 0}px` },
+          transition: 'all 0.3s',
+        }}
+      >
+        <Toolbar>
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            edge="start"
+            onClick={handleDrawerToggle}
+            sx={{ mr: 2 }}
+          >
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+            {/* Dynamic page title can go here */}
+          </Typography>
+          
+          <IconButton size="large" color="inherit">
+            <Badge badgeContent={4} color="error">
+              <Notifications />
+            </Badge>
+          </IconButton>
+          
+          <IconButton
+            size="large"
+            edge="end"
+            aria-label="account of current user"
+            aria-haspopup="true"
+            onClick={handleProfileMenuOpen}
+            color="inherit"
+          >
+            <Avatar sx={{ width: 32, height: 32 }}>
+              {tokenParsed?.given_name?.[0] || <AccountCircle />}
+            </Avatar>
+          </IconButton>
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleMenuClose}
+          >
+            <MenuItem onClick={handleProfile}>
+              <ListItemIcon>
+                <Person fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Profile</ListItemText>
+            </MenuItem>
+            <MenuItem onClick={handleLogout}>
+              <ListItemIcon>
+                <Logout fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Logout</ListItemText>
+            </MenuItem>
+          </Menu>
+        </Toolbar>
+      </AppBar>
+      
+      <Box
+        component="nav"
+        sx={{ width: { sm: sidebarOpen ? drawerWidth : 0 }, flexShrink: { sm: 0 } }}
+      >
+        <Drawer
+          variant="persistent"
+          open={sidebarOpen}
+          sx={{
+            '& .MuiDrawer-paper': {
+              boxSizing: 'border-box',
+              width: drawerWidth,
+            },
+          }}
+        >
+          {drawerContent}
+        </Drawer>
+      </Box>
+      
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          width: { sm: `calc(100% - ${sidebarOpen ? drawerWidth : 0}px)` },
+          ml: { sm: sidebarOpen ? 0 : 0 },
+          transition: 'all 0.3s',
+          mt: 8,
+        }}
+      >
+        <Outlet />
+      </Box>
+    </Box>
+  );
+};
+
+export default MainLayout;

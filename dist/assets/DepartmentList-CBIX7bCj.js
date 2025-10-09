@@ -1,0 +1,2 @@
+import{j as t,B as r,e,G as s}from"./mui-mV64ATsk.js";import"./vendor-Cgu4HazA.js";const a=()=>t.jsxs(r,{children:[t.jsx(e,{variant:"h4",component:"h1",gutterBottom:!0,children:"Department List"}),t.jsx(s,{sx:{p:3,mt:2},children:t.jsx(e,{variant:"body1",color:"text.secondary",children:"This is the Department List page. Implementation coming soon."})})]});export{a as default};
+//# sourceMappingURL=DepartmentList-CBIX7bCj.js.map

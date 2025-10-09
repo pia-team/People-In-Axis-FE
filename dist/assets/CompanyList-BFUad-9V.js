@@ -1,0 +1,2 @@
+import{j as t,B as s,e as o,G as e}from"./mui-mV64ATsk.js";import"./vendor-Cgu4HazA.js";const a=()=>t.jsxs(s,{children:[t.jsx(o,{variant:"h4",component:"h1",gutterBottom:!0,children:"Company List"}),t.jsx(e,{sx:{p:3,mt:2},children:t.jsx(o,{variant:"body1",color:"text.secondary",children:"This is the Company List page. Implementation coming soon."})})]});export{a as default};
+//# sourceMappingURL=CompanyList-BFUad-9V.js.map

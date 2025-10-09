@@ -1,0 +1,2 @@
+import{j as t,B as o,e,G as r}from"./mui-mV64ATsk.js";import"./vendor-Cgu4HazA.js";const i=()=>t.jsxs(o,{children:[t.jsx(e,{variant:"h4",component:"h1",gutterBottom:!0,children:"Project Detail"}),t.jsx(r,{sx:{p:3,mt:2},children:t.jsx(e,{variant:"body1",color:"text.secondary",children:"This is the Project Detail page. Implementation coming soon."})})]});export{i as default};
+//# sourceMappingURL=ProjectDetail-TWFrhk_o.js.map

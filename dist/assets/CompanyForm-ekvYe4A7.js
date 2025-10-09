@@ -1,0 +1,2 @@
+import{j as o,B as t,e as r,G as e}from"./mui-mV64ATsk.js";import"./vendor-Cgu4HazA.js";const s=()=>o.jsxs(t,{children:[o.jsx(r,{variant:"h4",component:"h1",gutterBottom:!0,children:"Company Form"}),o.jsx(e,{sx:{p:3,mt:2},children:o.jsx(r,{variant:"body1",color:"text.secondary",children:"This is the Company Form page. Implementation coming soon."})})]});export{s as default};
+//# sourceMappingURL=CompanyForm-ekvYe4A7.js.map

@@ -1,0 +1,2 @@
+import{j as e,B as s,e as t,G as o}from"./mui-mV64ATsk.js";import"./vendor-Cgu4HazA.js";const i=()=>e.jsxs(s,{children:[e.jsx(t,{variant:"h4",component:"h1",gutterBottom:!0,children:"Expense List"}),e.jsx(o,{sx:{p:3,mt:2},children:e.jsx(t,{variant:"body1",color:"text.secondary",children:"This is the Expense List page. Implementation coming soon."})})]});export{i as default};
+//# sourceMappingURL=ExpenseList-ILPuz-el.js.map
