@@ -12,6 +12,7 @@ export const employeeService = {
     companyId?: number;
     departmentId?: number;
     status?: string;
+    sort?: string | string[];
   }) => {
     const response = await apiClient.get<PaginatedResponse<Employee>>(ENDPOINT, { params });
     return response.data;

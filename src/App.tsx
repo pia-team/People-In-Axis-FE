@@ -34,12 +34,14 @@ const TimeSheetList = lazy(() => import('@/pages/timesheets/TimeSheetList'));
 const TimeSheetForm = lazy(() => import('@/pages/timesheets/TimeSheetForm'));
 const MyTimeSheets = lazy(() => import('@/pages/timesheets/MyTimeSheets'));
 const TimeSheetApproval = lazy(() => import('@/pages/timesheets/TimeSheetApproval'));
+const TimeSheetDetail = lazy(() => import('@/pages/timesheets/TimeSheetDetail'));
 
 // Expense pages
 const ExpenseList = lazy(() => import('@/pages/expenses/ExpenseList'));
 const ExpenseForm = lazy(() => import('@/pages/expenses/ExpenseForm'));
 const MyExpenses = lazy(() => import('@/pages/expenses/MyExpenses'));
 const ExpenseApproval = lazy(() => import('@/pages/expenses/ExpenseApproval'));
+const ExpenseDetail = lazy(() => import('@/pages/expenses/ExpenseDetail'));
 
 // Project pages
 const ProjectList = lazy(() => import('@/pages/projects/ProjectList'));
@@ -56,6 +58,7 @@ const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 const UserManagement = lazy(() => import('@/pages/admin/UserManagement'));
 const RoleManagement = lazy(() => import('@/pages/admin/RoleManagement'));
 const Settings = lazy(() => import('@/pages/admin/Settings'));
+const NotFound = lazy(() => import('@/pages/NotFound'));
 
 const LoadingScreen: React.FC = () => (
   <Box
@@ -132,18 +135,34 @@ const App: React.FC = () => {
             <Route path="/timesheets">
               <Route index element={<TimeSheetList />} />
               <Route path="my" element={<MyTimeSheets />} />
+              <Route path=":id" element={<TimeSheetDetail />} />
               <Route path="new" element={<TimeSheetForm />} />
               <Route path=":id/edit" element={<TimeSheetForm />} />
-              <Route path="approval" element={<TimeSheetApproval />} />
+            </Route>
+
+            {/* TimeSheets Approval (role-guarded) */}
+            <Route
+              path="/timesheets/approval"
+              element={<PrivateRoute roles={["TEAM_MANAGER", "HUMAN_RESOURCES"]} />}
+            >
+              <Route index element={<TimeSheetApproval />} />
             </Route>
 
             {/* Expenses */}
             <Route path="/expenses">
               <Route index element={<ExpenseList />} />
               <Route path="my" element={<MyExpenses />} />
+              <Route path=":id" element={<ExpenseDetail />} />
               <Route path="new" element={<ExpenseForm />} />
               <Route path=":id/edit" element={<ExpenseForm />} />
-              <Route path="approval" element={<ExpenseApproval />} />
+            </Route>
+
+            {/* Expenses Approval (role-guarded) */}
+            <Route
+              path="/expenses/approval"
+              element={<PrivateRoute roles={["TEAM_MANAGER", "HUMAN_RESOURCES", "FINANCE"]} />}
+            >
+              <Route index element={<ExpenseApproval />} />
             </Route>
 
             {/* Reports */}
@@ -169,7 +188,7 @@ const App: React.FC = () => {
         </Route>
 
         {/* 404 */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
   );

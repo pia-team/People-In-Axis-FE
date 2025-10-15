@@ -14,6 +14,9 @@ import App from './App';
 import { store } from './store';
 import { theme } from './theme';
 import { KeycloakProvider } from './providers/KeycloakProvider';
+import './sentry';
+import GlobalErrorBoundary from '@/components/GlobalErrorBoundary';
+import SnackbarConfigurator from '@/components/SnackbarConfigurator';
 import './i18n';
 import './index.css';
 
@@ -44,8 +47,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 }}
                 autoHideDuration={3000}
               >
+                <SnackbarConfigurator />
                 <KeycloakProvider>
-                  <App />
+                  <GlobalErrorBoundary>
+                    <App />
+                  </GlobalErrorBoundary>
                 </KeycloakProvider>
               </SnackbarProvider>
             </LocalizationProvider>

@@ -1,0 +1,20 @@
+name: FE CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: VITE_AUTH_ENABLED=false npm run build
+      - run: npx playwright install --with-deps
+      - run: VITE_AUTH_ENABLED=false npm run e2e:ci

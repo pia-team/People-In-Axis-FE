@@ -1,4 +1,5 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import { toast } from '@/utils/toast';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
 
@@ -37,32 +38,32 @@ api.interceptors.response.use(
     return response;
   },
   (error: AxiosError) => {
+    const authEnabled = String(import.meta.env.VITE_AUTH_ENABLED).toLowerCase() === 'true';
     if (error.response) {
-      switch (error.response.status) {
-        case 401:
-          // Unauthorized - redirect to login or refresh token
-          console.error('Unauthorized access - redirecting to login');
-          // You can dispatch a logout action or redirect here
-          break;
-        case 403:
-          // Forbidden
-          console.error('Access forbidden');
-          break;
-        case 404:
-          // Not found
-          console.error('Resource not found');
-          break;
-        case 500:
-          // Server error
-          console.error('Server error');
-          break;
-        default:
-          console.error('An error occurred:', error.response.data);
+      const status = error.response.status;
+      const corrId = (error.response.headers as any)?.['x-correlation-id'];
+      const baseMsg = typeof error.response.data === 'object' && error.response.data && (error.response.data as any).message
+        ? (error.response.data as any).message
+        : `Request failed with status ${status}`;
+      const msg = corrId ? `${baseMsg} (trace: ${corrId})` : baseMsg;
+      if (status === 401) {
+        toast.error('Session expired or unauthorized. Please login again.');
+        if (authEnabled) {
+          window.location.href = '/login';
+        }
+      } else if (status === 403) {
+        toast.error(msg || 'Access forbidden');
+      } else if (status === 404) {
+        toast.error(msg || 'Resource not found');
+      } else if (status >= 500) {
+        toast.error(msg || 'Server error');
+      } else {
+        toast.error(msg || 'An error occurred');
       }
     } else if (error.request) {
-      console.error('No response received:', error.request);
+      toast.error('No response from server. Please check your network.');
     } else {
-      console.error('Error setting up request:', error.message);
+      toast.error(error.message || 'Request error');
     }
     return Promise.reject(error);
   }

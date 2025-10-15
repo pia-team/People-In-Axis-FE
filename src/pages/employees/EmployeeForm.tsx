@@ -1,16 +1,160 @@
 import React from 'react';
-import { Box, Typography, Paper } from '@mui/material';
+import { Box, Typography, Paper, Stack, TextField, MenuItem, Button } from '@mui/material';
+import { useForm } from 'react-hook-form';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { employeeService } from '@/services/employeeService';
+import { Employee, EmployeeCreateDTO, EmployeeUpdateDTO, EmploymentType } from '@/types';
+
+const employmentTypes: EmploymentType[] = [
+  'FULL_TIME',
+  'PART_TIME',
+  'CONTRACT',
+  'TEMPORARY',
+  'INTERN',
+  'FREELANCE',
+  'CONSULTANT',
+  'VOLUNTEER',
+];
 
 const EmployeeForm: React.FC = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const isEdit = Boolean(id);
+
+  const { data: existing } = useQuery({
+    queryKey: ['employee', id],
+    queryFn: async () => employeeService.getById(Number(id)),
+    enabled: isEdit,
+  });
+
+  const { register, handleSubmit, reset } = useForm<
+    EmployeeCreateDTO & Partial<EmployeeUpdateDTO>
+  >({
+    defaultValues: {
+      firstName: existing?.firstName ?? '',
+      lastName: existing?.lastName ?? '',
+      email: existing?.email ?? '',
+      position: existing?.position ?? '',
+      startDate: existing?.startDate ?? '',
+      employmentType: (existing?.employmentType as EmploymentType) ?? 'FULL_TIME',
+      companyId: existing?.companyId ?? undefined,
+      departmentId: existing?.departmentId ?? undefined,
+      managerId: existing?.managerId ?? undefined,
+    },
+    values: existing
+      ? {
+          firstName: existing.firstName ?? '',
+          lastName: existing.lastName ?? '',
+          email: existing.email ?? '',
+          position: existing.position ?? '',
+          startDate: existing.startDate ?? '',
+          employmentType: (existing.employmentType as EmploymentType) ?? 'FULL_TIME',
+          companyId: existing.companyId,
+          departmentId: existing.departmentId,
+          managerId: existing.managerId,
+        }
+      : undefined,
+  });
+
+  React.useEffect(() => {
+    if (existing) {
+      reset({
+        firstName: existing.firstName ?? '',
+        lastName: existing.lastName ?? '',
+        email: existing.email ?? '',
+        position: existing.position ?? '',
+        startDate: existing.startDate ?? '',
+        employmentType: (existing.employmentType as EmploymentType) ?? 'FULL_TIME',
+        companyId: existing.companyId,
+        departmentId: existing.departmentId,
+        managerId: existing.managerId,
+      });
+    }
+  }, [existing, reset]);
+
+  const createMutation = useMutation({
+    mutationFn: (payload: EmployeeCreateDTO) => employeeService.create(payload),
+    onSuccess: (emp: Employee) => navigate(`/employees/${emp.id}`),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (payload: EmployeeUpdateDTO) => employeeService.update(Number(id), payload),
+    onSuccess: () => navigate(`/employees/${id}`),
+  });
+
+  const onSubmit = (values: EmployeeCreateDTO & Partial<EmployeeUpdateDTO>) => {
+    if (isEdit) {
+      const updatePayload: EmployeeUpdateDTO = {
+        firstName: values.firstName,
+        lastName: values.lastName,
+        email: values.email,
+        position: values.position,
+        startDate: values.startDate,
+        employmentType: values.employmentType,
+        companyId: values.companyId,
+        departmentId: values.departmentId,
+        managerId: values.managerId,
+      };
+      updateMutation.mutate(updatePayload);
+    } else {
+      const createPayload: EmployeeCreateDTO = {
+        firstName: values.firstName,
+        lastName: values.lastName,
+        email: values.email!,
+        position: values.position!,
+        startDate: values.startDate!,
+        employmentType: values.employmentType!,
+        companyId: values.companyId!,
+        departmentId: values.departmentId,
+        managerId: values.managerId,
+      };
+      createMutation.mutate(createPayload);
+    }
+  };
+
   return (
     <Box>
       <Typography variant="h4" component="h1" gutterBottom>
-        Employee Form
+        {isEdit ? 'Edit Employee' : 'New Employee'}
       </Typography>
       <Paper sx={{ p: 3, mt: 2 }}>
-        <Typography variant="body1" color="text.secondary">
-          This is the Employee Form page. Implementation coming soon.
-        </Typography>
+        <Box
+          component="form"
+          onSubmit={handleSubmit(onSubmit)}
+          noValidate
+        >
+          <Stack spacing={2}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+              <TextField label="First Name" fullWidth required {...register('firstName')} />
+              <TextField label="Last Name" fullWidth required {...register('lastName')} />
+            </Stack>
+            <TextField label="Email" type="email" required {...register('email')} />
+            <TextField label="Position" required {...register('position')} />
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+              <TextField label="Company ID" type="number" required {...register('companyId', { valueAsNumber: true })} />
+              <TextField label="Department ID" type="number" {...register('departmentId', { valueAsNumber: true })} />
+              <TextField label="Manager ID" type="number" {...register('managerId', { valueAsNumber: true })} />
+            </Stack>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+              <TextField label="Start Date" type="date" InputLabelProps={{ shrink: true }} required {...register('startDate')} />
+              <TextField label="Employment Type" select required defaultValue={employmentTypes[0]} {...register('employmentType')}>
+                {employmentTypes.map((et) => (
+                  <MenuItem key={et} value={et}>{et}</MenuItem>
+                ))}
+              </TextField>
+            </Stack>
+            <Stack direction="row" spacing={2}>
+              <Button variant="outlined" onClick={() => navigate('/employees')}>Cancel</Button>
+              <Button variant="contained" type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                {isEdit ? 'Save' : 'Create'}
+              </Button>
+            </Stack>
+            {(createMutation.isError || updateMutation.isError) && (
+              <Typography variant="body2" color="error">Submission failed.</Typography>
+            )}
+          </Stack>
+        </Box>
       </Paper>
     </Box>
   );
