@@ -1,2 +1,0 @@
-import{j as t,B as r,e,G as o}from"./mui-mV64ATsk.js";import"./vendor-Cgu4HazA.js";const s=()=>t.jsxs(r,{children:[t.jsx(e,{variant:"h4",component:"h1",gutterBottom:!0,children:"Department Form"}),t.jsx(o,{sx:{p:3,mt:2},children:t.jsx(e,{variant:"body1",color:"text.secondary",children:"This is the Department Form page. Implementation coming soon."})})]});export{s as default};
-//# sourceMappingURL=DepartmentForm-CE9E_uaF.js.map

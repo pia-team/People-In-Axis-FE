@@ -1,2 +1,0 @@
-import{j as e,B as r,e as o,G as t}from"./mui-mV64ATsk.js";import"./vendor-Cgu4HazA.js";const a=()=>e.jsxs(r,{children:[e.jsx(o,{variant:"h4",component:"h1",gutterBottom:!0,children:"Expense Form"}),e.jsx(t,{sx:{p:3,mt:2},children:e.jsx(o,{variant:"body1",color:"text.secondary",children:"This is the Expense Form page. Implementation coming soon."})})]});export{a as default};
-//# sourceMappingURL=ExpenseForm-BmlwhC_Z.js.map

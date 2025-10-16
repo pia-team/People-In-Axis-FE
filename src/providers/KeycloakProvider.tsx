@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import Keycloak, { KeycloakInstance, KeycloakTokenParsed } from "keycloak-js";
 import { AUTH_ENABLED } from "@/config/featureFlags";
 import { setAuthToken } from "@/services/api";
@@ -25,11 +25,16 @@ interface KeycloakProviderProps {
   children: React.ReactNode;
 }
 
+const computedKeycloakUrl = ((): string => {
+  const envUrl = import.meta.env.VITE_KEYCLOAK_URL as string | undefined;
+  if (envUrl && envUrl.length > 0) return envUrl;
+  return import.meta.env.DEV ? `${window.location.origin}/keycloak` : "https://diam.dnext-pia.com";
+})();
+
 const keycloakConfig = {
-  url: import.meta.env.VITE_KEYCLOAK_URL || "http://localhost:8180",
-  realm: import.meta.env.VITE_KEYCLOAK_REALM || "people-in-axis",
-  clientId:
-    import.meta.env.VITE_KEYCLOAK_CLIENT_ID || "people-in-axis-frontend",
+  url: computedKeycloakUrl,
+  realm: import.meta.env.VITE_KEYCLOAK_REALM || "orbitant-realm",
+  clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID || "orbitant-ui-client",
 };
 
 export const KeycloakProvider: React.FC<KeycloakProviderProps> = ({
@@ -42,6 +47,8 @@ export const KeycloakProvider: React.FC<KeycloakProviderProps> = ({
   const [tokenParsed, setTokenParsed] = useState<
     KeycloakTokenParsed | undefined
   >();
+  const didInitRef = useRef(false);
+  type WindowWithKc = Window & { __kcInitDone?: boolean };
 
   useEffect(() => {
     // If auth is disabled, short-circuit and expose a permissive context
@@ -58,13 +65,19 @@ export const KeycloakProvider: React.FC<KeycloakProviderProps> = ({
       try {
         const kc = new Keycloak(keycloakConfig);
 
+        const redirectUriEnv = import.meta.env.VITE_KEYCLOAK_REDIRECT_URI as string | undefined;
+        const redirectPath = (import.meta.env.VITE_KEYCLOAK_REDIRECT_PATH as string | undefined) ?? '/dashboard';
+        const redirectUri = redirectUriEnv && redirectUriEnv.length > 0
+          ? redirectUriEnv
+          : new URL(redirectPath, window.location.origin).toString();
+
         const auth = await kc.init({
-          onLoad: "check-sso",
-          silentCheckSsoRedirectUri:
-            window.location.origin + "/silent-check-sso.html",
+          onLoad: 'login-required',
           checkLoginIframe: false,
-          silentCheckSsoFallback: true,
-          pkceMethod: "S256",
+          pkceMethod: 'S256',
+          responseMode: 'query',
+          flow: 'standard',
+          redirectUri,
         });
 
         setKeycloak(kc);
@@ -73,6 +86,13 @@ export const KeycloakProvider: React.FC<KeycloakProviderProps> = ({
         setToken(kc.token);
         setTokenParsed(kc.tokenParsed);
         setAuthToken(kc.token ?? null);
+
+        const urlNow = new URL(window.location.href);
+        if (urlNow.hash && (urlNow.hash.includes('code=') || urlNow.hash.includes('state=') || urlNow.hash.includes('session_state='))) {
+          urlNow.hash = '';
+        }
+        ['code', 'state', 'session_state'].forEach((p) => urlNow.searchParams.delete(p));
+        window.history.replaceState({}, document.title, urlNow.toString());
 
         // Token refresh
         kc.onTokenExpired = () => {
@@ -117,6 +137,11 @@ export const KeycloakProvider: React.FC<KeycloakProviderProps> = ({
       }
     };
 
+    if (didInitRef.current) return;
+    didInitRef.current = true;
+    const w = window as WindowWithKc;
+    if (w.__kcInitDone) return;
+    w.__kcInitDone = true;
     initKeycloak();
   }, []);
 

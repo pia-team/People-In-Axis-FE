@@ -28,6 +28,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/keycloak': {
+        target: 'https://diam.dnext-pia.com',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/keycloak/, ''),
+      },
     },
   },
   build: {

@@ -1,2 +1,0 @@
-import{j as t,B as e,e as o,G as a}from"./mui-mV64ATsk.js";import"./vendor-Cgu4HazA.js";const s=()=>t.jsxs(e,{children:[t.jsx(o,{variant:"h4",component:"h1",gutterBottom:!0,children:"Company Detail"}),t.jsx(a,{sx:{p:3,mt:2},children:t.jsx(o,{variant:"body1",color:"text.secondary",children:"This is the Company Detail page. Implementation coming soon."})})]});export{s as default};
-//# sourceMappingURL=CompanyDetail-Y-So_ZPV.js.map

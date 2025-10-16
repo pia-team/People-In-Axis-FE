@@ -10,17 +10,15 @@ const ProjectList: React.FC = () => {
   const navigate = useNavigate();
   const [search, setSearch] = React.useState('');
   const [companyId, setCompanyId] = React.useState<number | ''>('');
-  const [status, setStatus] = React.useState<string>('');
   const [paginationModel, setPaginationModel] = React.useState<{ page: number; pageSize: number }>({ page: 0, pageSize: 10 });
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['projects', paginationModel.page, paginationModel.pageSize, search, companyId, status],
+    queryKey: ['projects', paginationModel.page, paginationModel.pageSize, search, companyId],
     queryFn: async () => projectService.getAll({
       page: paginationModel.page,
       size: paginationModel.pageSize,
       search: search || undefined,
       companyId: companyId === '' ? undefined : Number(companyId),
-      status: status || undefined,
     }),
     placeholderData: keepPreviousData,
   });
@@ -55,7 +53,6 @@ const ProjectList: React.FC = () => {
         <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
           <TextField size="small" label="Search" value={search} onChange={(e) => setSearch(e.target.value)} />
           <TextField size="small" label="Company ID" type="number" value={companyId} onChange={(e) => setCompanyId(e.target.value === '' ? '' : Number(e.target.value))} sx={{ width: 140 }} />
-          <TextField size="small" label="Status" value={status} onChange={(e) => setStatus(e.target.value)} sx={{ width: 160 }} />
           <Button variant="contained" onClick={() => refetch()}>Search</Button>
           <Box flexGrow={1} />
           <Button variant="outlined" onClick={() => refetch()}>Refresh</Button>

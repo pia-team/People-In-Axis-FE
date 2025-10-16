@@ -1,2 +1,0 @@
-import{j as e,B as o,e as t,G as n}from"./mui-mV64ATsk.js";import"./vendor-Cgu4HazA.js";const s=()=>e.jsxs(o,{children:[e.jsx(t,{variant:"h4",component:"h1",gutterBottom:!0,children:"Role Management"}),e.jsx(n,{sx:{p:3,mt:2},children:e.jsx(t,{variant:"body1",color:"text.secondary",children:"This is the Role Management page. Implementation coming soon."})})]});export{s as default};
-//# sourceMappingURL=RoleManagement-DsnyNHZe.js.map

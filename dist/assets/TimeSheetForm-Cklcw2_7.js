@@ -1,2 +1,0 @@
-import{j as e,B as o,e as t,G as r}from"./mui-mV64ATsk.js";import"./vendor-Cgu4HazA.js";const m=()=>e.jsxs(o,{children:[e.jsx(t,{variant:"h4",component:"h1",gutterBottom:!0,children:"TimeSheet Form"}),e.jsx(r,{sx:{p:3,mt:2},children:e.jsx(t,{variant:"body1",color:"text.secondary",children:"This is the TimeSheet Form page. Implementation coming soon."})})]});export{m as default};
-//# sourceMappingURL=TimeSheetForm-Cklcw2_7.js.map

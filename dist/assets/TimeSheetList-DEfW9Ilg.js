@@ -1,2 +1,0 @@
-import{j as e,B as s,e as t,G as o}from"./mui-mV64ATsk.js";import"./vendor-Cgu4HazA.js";const n=()=>e.jsxs(s,{children:[e.jsx(t,{variant:"h4",component:"h1",gutterBottom:!0,children:"TimeSheet List"}),e.jsx(o,{sx:{p:3,mt:2},children:e.jsx(t,{variant:"body1",color:"text.secondary",children:"This is the TimeSheet List page. Implementation coming soon."})})]});export{n as default};
-//# sourceMappingURL=TimeSheetList-DEfW9Ilg.js.map

@@ -247,3 +247,13 @@ export interface ProjectCreateDTO {
 }
 
 export interface ProjectUpdateDTO extends Partial<ProjectCreateDTO> {}
+
+// Auth/User (minimal shape used by Redux store)
+export interface User {
+  id?: string | number;
+  username: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  roles?: string[];
+}

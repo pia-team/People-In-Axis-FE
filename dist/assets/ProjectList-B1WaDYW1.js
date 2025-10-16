@@ -1,2 +1,0 @@
-import{j as t,B as e,e as o,G as r}from"./mui-mV64ATsk.js";import"./vendor-Cgu4HazA.js";const n=()=>t.jsxs(e,{children:[t.jsx(o,{variant:"h4",component:"h1",gutterBottom:!0,children:"Project List"}),t.jsx(r,{sx:{p:3,mt:2},children:t.jsx(o,{variant:"body1",color:"text.secondary",children:"This is the Project List page. Implementation coming soon."})})]});export{n as default};
-//# sourceMappingURL=ProjectList-B1WaDYW1.js.map

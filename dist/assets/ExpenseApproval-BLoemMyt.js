@@ -1,2 +1,0 @@
-import{j as e,B as r,e as o,G as t}from"./mui-mV64ATsk.js";import"./vendor-Cgu4HazA.js";const n=()=>e.jsxs(r,{children:[e.jsx(o,{variant:"h4",component:"h1",gutterBottom:!0,children:"Expense Approval"}),e.jsx(t,{sx:{p:3,mt:2},children:e.jsx(o,{variant:"body1",color:"text.secondary",children:"This is the Expense Approval page. Implementation coming soon."})})]});export{n as default};
-//# sourceMappingURL=ExpenseApproval-BLoemMyt.js.map

@@ -1,2 +1,0 @@
-import{j as e,B as n,e as t,G as r}from"./mui-mV64ATsk.js";import"./vendor-Cgu4HazA.js";const o=()=>e.jsxs(n,{children:[e.jsx(t,{variant:"h4",component:"h1",gutterBottom:!0,children:"User Management"}),e.jsx(r,{sx:{p:3,mt:2},children:e.jsx(t,{variant:"body1",color:"text.secondary",children:"This is the User Management page. Implementation coming soon."})})]});export{o as default};
-//# sourceMappingURL=UserManagement-DwyImOoH.js.map

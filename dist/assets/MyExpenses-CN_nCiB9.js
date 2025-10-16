@@ -1,2 +1,0 @@
-import{j as e,B as t,e as s,G as o}from"./mui-mV64ATsk.js";import"./vendor-Cgu4HazA.js";const a=()=>e.jsxs(t,{children:[e.jsx(s,{variant:"h4",component:"h1",gutterBottom:!0,children:"My Expenses"}),e.jsx(o,{sx:{p:3,mt:2},children:e.jsx(s,{variant:"body1",color:"text.secondary",children:"This is the My Expenses page. Implementation coming soon."})})]});export{a as default};
-//# sourceMappingURL=MyExpenses-CN_nCiB9.js.map

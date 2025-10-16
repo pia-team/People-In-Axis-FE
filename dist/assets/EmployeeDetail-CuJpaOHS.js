@@ -1,2 +1,0 @@
-import{j as e,B as o,e as t,G as r}from"./mui-mV64ATsk.js";import"./vendor-Cgu4HazA.js";const i=()=>e.jsxs(o,{children:[e.jsx(t,{variant:"h4",component:"h1",gutterBottom:!0,children:"Employee Detail"}),e.jsx(r,{sx:{p:3,mt:2},children:e.jsx(t,{variant:"body1",color:"text.secondary",children:"This is the Employee Detail page. Implementation coming soon."})})]});export{i as default};
-//# sourceMappingURL=EmployeeDetail-CuJpaOHS.js.map

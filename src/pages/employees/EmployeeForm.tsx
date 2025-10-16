@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography, Paper, Stack, TextField, MenuItem, Button } from '@mui/material';
-import { useForm } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { employeeService } from '@/services/employeeService';
@@ -42,19 +42,6 @@ const EmployeeForm: React.FC = () => {
       departmentId: existing?.departmentId ?? undefined,
       managerId: existing?.managerId ?? undefined,
     },
-    values: existing
-      ? {
-          firstName: existing.firstName ?? '',
-          lastName: existing.lastName ?? '',
-          email: existing.email ?? '',
-          position: existing.position ?? '',
-          startDate: existing.startDate ?? '',
-          employmentType: (existing.employmentType as EmploymentType) ?? 'FULL_TIME',
-          companyId: existing.companyId,
-          departmentId: existing.departmentId,
-          managerId: existing.managerId,
-        }
-      : undefined,
   });
 
   React.useEffect(() => {
@@ -83,7 +70,7 @@ const EmployeeForm: React.FC = () => {
     onSuccess: () => navigate(`/employees/${id}`),
   });
 
-  const onSubmit = (values: EmployeeCreateDTO & Partial<EmployeeUpdateDTO>) => {
+  const onSubmit: SubmitHandler<EmployeeCreateDTO & Partial<EmployeeUpdateDTO>> = (values) => {
     if (isEdit) {
       const updatePayload: EmployeeUpdateDTO = {
         firstName: values.firstName,

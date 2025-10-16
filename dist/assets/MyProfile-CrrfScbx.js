@@ -1,2 +1,0 @@
-import{j as o,B as r,e,G as t}from"./mui-mV64ATsk.js";import"./vendor-Cgu4HazA.js";const n=()=>o.jsxs(r,{children:[o.jsx(e,{variant:"h4",component:"h1",gutterBottom:!0,children:"My Profile"}),o.jsx(t,{sx:{p:3,mt:2},children:o.jsx(e,{variant:"body1",color:"text.secondary",children:"This is the My Profile page. Implementation coming soon."})})]});export{n as default};
-//# sourceMappingURL=MyProfile-CrrfScbx.js.map

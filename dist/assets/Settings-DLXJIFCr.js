@@ -1,2 +1,0 @@
-import{j as t,B as s,e,G as o}from"./mui-mV64ATsk.js";import"./vendor-Cgu4HazA.js";const i=()=>t.jsxs(s,{children:[t.jsx(e,{variant:"h4",component:"h1",gutterBottom:!0,children:"Settings"}),t.jsx(o,{sx:{p:3,mt:2},children:t.jsx(e,{variant:"body1",color:"text.secondary",children:"This is the Settings page. Implementation coming soon."})})]});export{i as default};
-//# sourceMappingURL=Settings-DLXJIFCr.js.map
