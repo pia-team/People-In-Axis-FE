@@ -108,9 +108,13 @@ export type TimeSheetBaseStatus =
   | 'WAITING_FOR_MANAGER_APPROVAL'
   | 'PROCESSING'
   | 'WAITING_FOR_ADMIN_APPROVAL'
+  | 'COMPLETED'
   | 'CLOSED'
   | 'CANCELLED'
-  | 'REVISION_REQUESTED';
+  | 'REVISION_REQUESTED'
+  | 'COMPANY_REJECTED'
+  | 'MANAGER_REJECTED'
+  | 'ADMIN_REJECTED';
 
 export type TimeSheetRowStatus =
   | 'CREATED'
@@ -295,4 +299,24 @@ export interface User {
   firstName?: string;
   lastName?: string;
   roles?: string[];
+}
+
+// TimeSheet Import Result
+export interface TimeSheetImportRowResult {
+  rowNumber: number;
+  employeeId?: number;
+  projectId?: number;
+  workDate?: string;
+  hoursWorked?: number;
+  timeSheetId?: number;
+  status: 'SUCCESS' | 'FAILURE';
+  message?: string;
+}
+
+export interface TimeSheetImportResult {
+  totalRows: number;
+  importedCount: number;
+  failedCount: number;
+  successRows: TimeSheetImportRowResult[];
+  failedRows: TimeSheetImportRowResult[];
 }

@@ -1,5 +1,5 @@
 import { apiClient } from './api';
-import { PaginatedResponse, TimeSheet, TimeSheetRow } from '@/types';
+import { PaginatedResponse, TimeSheet, TimeSheetRow, TimeSheetImportResult } from '@/types';
 
 const ENDPOINT = '/timesheets';
 
@@ -19,8 +19,23 @@ export const timeSheetService = {
     return response.data;
   },
 
+  getManagerPending: async (params?: { page?: number; size?: number }) => {
+    const response = await apiClient.get<PaginatedResponse<TimeSheet>>(`${ENDPOINT}/manager-pending`, { params });
+    return response.data;
+  },
+
+  getManagerPendingCount: async () => {
+    const response = await apiClient.get<number>(`${ENDPOINT}/manager-pending/count`);
+    return response.data;
+  },
+
   getAdminPending: async (params?: { page?: number; size?: number }) => {
     const response = await apiClient.get<PaginatedResponse<TimeSheet>>(`${ENDPOINT}/admin-pending`, { params });
+    return response.data;
+  },
+
+  getAdminPendingCount: async () => {
+    const response = await apiClient.get<number>(`${ENDPOINT}/admin-pending/count`);
     return response.data;
   },
 
@@ -49,6 +64,11 @@ export const timeSheetService = {
     return response.data;
   },
 
+  companyAction: async (id: number, action: 'reject', note?: string) => {
+    const response = await apiClient.post<TimeSheet>(`${ENDPOINT}/${id}/company-action`, undefined, { params: { action, note } });
+    return response.data;
+  },
+
   // Row APIs
   getHistory: async (id: number) => {
     const response = await apiClient.get<
@@ -59,6 +79,17 @@ export const timeSheetService = {
 
   getRows: async (id: number, params?: { page?: number; size?: number }) => {
     const response = await apiClient.get<PaginatedResponse<TimeSheetRow>>(`${ENDPOINT}/${id}/rows`, { params });
+    return response.data;
+  },
+
+  // TeamLead assigned rows
+  getTeamLeadAssignedRows: async (params?: { page?: number; size?: number }) => {
+    const response = await apiClient.get<PaginatedResponse<TimeSheetRow>>(`${ENDPOINT}/teamlead-assigned-rows`, { params });
+    return response.data;
+  },
+
+  getTeamLeadAssignedCount: async () => {
+    const response = await apiClient.get<number>(`${ENDPOINT}/teamlead-assigned-count`);
     return response.data;
   },
 
@@ -110,10 +141,17 @@ export const timeSheetService = {
     return response.data;
   },
 
-  importExcel: async (file: File) => {
+  downloadImportTemplate: async () => {
+    const response = await apiClient.get<Blob>(`${ENDPOINT}/import/template`, {
+      responseType: 'blob' as any,
+    });
+    return response.data;
+  },
+
+  importExcel: async (file: File): Promise<TimeSheetImportResult> => {
     const form = new FormData();
     form.append('file', file);
-    const response = await apiClient.post<number>(`${ENDPOINT}/import`, form, {
+    const response = await apiClient.post<TimeSheetImportResult>(`${ENDPOINT}/import`, form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data;

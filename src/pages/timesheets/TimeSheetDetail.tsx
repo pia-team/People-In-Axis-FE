@@ -4,10 +4,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { timeSheetService } from '@/services/timesheetService';
 import type { TimeSheetRow } from '@/types';
+import { useKeycloak } from '@/hooks/useKeycloak';
 
 const TimeSheetDetail: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { hasRole } = useKeycloak();
+  const formatBaseStatus = (s?: string) => (s === 'COMPLETED' ? 'Closed' : s || '-');
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['timesheet', id],
@@ -22,6 +25,11 @@ const TimeSheetDetail: React.FC = () => {
 
   const cancelMutation = useMutation({
     mutationFn: (reason: string) => timeSheetService.cancel(Number(id), reason),
+    onSuccess: () => refetch(),
+  });
+
+  const companyRejectMutation = useMutation({
+    mutationFn: (note: string) => timeSheetService.companyAction(Number(id), 'reject', note),
     onSuccess: () => refetch(),
   });
 
@@ -102,6 +110,19 @@ const TimeSheetDetail: React.FC = () => {
           >
             Cancel
           </Button>
+          {hasRole('COMPANY_MANAGER') && data && String(data.baseStatus) === 'CREATED' && (
+            <Button
+              variant="outlined"
+              color="error"
+              onClick={() => {
+                const note = window.prompt('Company reject note?') || '';
+                companyRejectMutation.mutate(note);
+              }}
+              disabled={companyRejectMutation.isPending}
+            >
+              Company Reject
+            </Button>
+          )}
         </Stack>
       </Stack>
       <Paper sx={{ p: 3, mt: 2 }}>
@@ -121,7 +142,7 @@ const TimeSheetDetail: React.FC = () => {
               <Typography>Overtime: {data.overtimeHours}</Typography>
             )}
             <Typography>Status: {data.status || '-'}</Typography>
-            <Typography>Base Status: {data.baseStatus || '-'}</Typography>
+            <Typography>Base Status: {formatBaseStatus(String(data.baseStatus))}</Typography>
             <Typography>Billable: {data.billable ? 'Yes' : 'No'}</Typography>
             <Typography>Task: {data.taskDescription || '-'}</Typography>
 

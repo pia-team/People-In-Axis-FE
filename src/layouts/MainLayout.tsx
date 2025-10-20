@@ -42,6 +42,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { toggleSidebar } from '@/store/slices/uiSlice';
 import { useKeycloak } from '@/hooks/useKeycloak';
+import { useQuery } from '@tanstack/react-query';
+import { timeSheetService } from '@/services/timesheetService';
 
 const drawerWidth = 280;
 
@@ -80,7 +82,9 @@ const menuItems: MenuItemType[] = [
     children: [
       { title: 'My Timesheets', path: '/timesheets/my', icon: <Assignment /> },
       { title: 'All Timesheets', path: '/timesheets', icon: <Assignment />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES'] },
+      { title: 'Assigned Rows', path: '/timesheets/assigned', icon: <Assignment />, roles: ['TEAM_MANAGER'] },
       { title: 'Approval', path: '/timesheets/approval', icon: <Assignment />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES'] },
+      { title: 'Admin Approval', path: '/timesheets/admin-approval', icon: <Assignment />, roles: ['ADMIN'] },
     ],
   },
   {
@@ -123,6 +127,24 @@ const MainLayout: React.FC = () => {
   const dispatch = useDispatch();
   const { sidebarOpen } = useSelector((state: RootState) => state.ui);
   const { tokenParsed, logout, hasAnyRole } = useKeycloak();
+  const showManagerCounts = hasAnyRole(['TEAM_MANAGER', 'HUMAN_RESOURCES']);
+  const { data: managerPendingCount } = useQuery({
+    queryKey: ['timesheets', 'manager-pending', 'count'],
+    queryFn: timeSheetService.getManagerPendingCount,
+    enabled: showManagerCounts,
+  });
+  const showAdminCounts = hasAnyRole(['ADMIN']);
+  const { data: adminPendingCount } = useQuery({
+    queryKey: ['timesheets', 'admin-pending', 'count'],
+    queryFn: timeSheetService.getAdminPendingCount,
+    enabled: showAdminCounts,
+  });
+  const showTeamLeadCounts = hasAnyRole(['TEAM_MANAGER']);
+  const { data: teamLeadAssignedCount } = useQuery({
+    queryKey: ['timesheets', 'teamlead-assigned', 'count'],
+    queryFn: timeSheetService.getTeamLeadAssignedCount,
+    enabled: showTeamLeadCounts,
+  });
   
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
@@ -185,7 +207,20 @@ const MainLayout: React.FC = () => {
             }}
           >
             <ListItemIcon>{item.icon}</ListItemIcon>
-            <ListItemText primary={item.title} />
+            <ListItemText
+              primary={(() => {
+                if (item.title === 'Approval' && typeof managerPendingCount === 'number' && managerPendingCount > 0) {
+                  return `${item.title} (${managerPendingCount})`;
+                }
+                if (item.title === 'Assigned Rows' && typeof teamLeadAssignedCount === 'number' && teamLeadAssignedCount > 0) {
+                  return `${item.title} (${teamLeadAssignedCount})`;
+                }
+                if (item.title === 'Admin Approval' && typeof adminPendingCount === 'number' && adminPendingCount > 0) {
+                  return `${item.title} (${adminPendingCount})`;
+                }
+                return item.title;
+              })()}
+            />
             {hasChildren && (isExpanded ? <ExpandLess /> : <ExpandMore />)}
           </ListItemButton>
         </ListItem>

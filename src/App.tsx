@@ -35,6 +35,7 @@ const TimeSheetForm = lazy(() => import('@/pages/timesheets/TimeSheetForm'));
 const MyTimeSheets = lazy(() => import('@/pages/timesheets/MyTimeSheets'));
 const TimeSheetApproval = lazy(() => import('@/pages/timesheets/TimeSheetApproval'));
 const TimeSheetDetail = lazy(() => import('@/pages/timesheets/TimeSheetDetail'));
+const TeamLeadAssigned = lazy(() => import('@/pages/timesheets/TeamLeadAssigned'));
 
 // Expense pages
 const ExpenseList = lazy(() => import('@/pages/expenses/ExpenseList'));
@@ -143,9 +144,17 @@ const App: React.FC = () => {
             {/* TimeSheets Approval (role-guarded) */}
             <Route
               path="/timesheets/approval"
-              element={<PrivateRoute roles={["TEAM_MANAGER"]} />}
+              element={<PrivateRoute roles={["TEAM_MANAGER", "HUMAN_RESOURCES"]} />}
             >
               <Route index element={<TimeSheetApproval />} />
+            </Route>
+
+            {/* TeamLead Assigned Rows (role-guarded) */}
+            <Route
+              path="/timesheets/assigned"
+              element={<PrivateRoute roles={["TEAM_MANAGER"]} />}
+            >
+              <Route index element={<TeamLeadAssigned />} />
             </Route>
 
             {/* Admin TimeSheets Approval (role-guarded) */}

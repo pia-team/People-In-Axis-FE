@@ -12,9 +12,14 @@ const TimeSheetApproval: React.FC = () => {
   );
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['timesheets', 'pending', paginationModel.page, paginationModel.pageSize],
-    queryFn: async () => timeSheetService.getPending({ page: paginationModel.page, size: paginationModel.pageSize }),
+    queryKey: ['timesheets', 'manager-pending', paginationModel.page, paginationModel.pageSize],
+    queryFn: async () => timeSheetService.getManagerPending({ page: paginationModel.page, size: paginationModel.pageSize }),
     placeholderData: keepPreviousData,
+  });
+
+  const { data: pendingCount } = useQuery({
+    queryKey: ['timesheets', 'manager-pending', 'count'],
+    queryFn: timeSheetService.getManagerPendingCount,
   });
 
   const approveMutation = useMutation({
@@ -39,7 +44,7 @@ const TimeSheetApproval: React.FC = () => {
       { field: 'workDate', headerName: 'Date', width: 120 },
       { field: 'hoursWorked', headerName: 'Hours', width: 100 },
       { field: 'status', headerName: 'Status', width: 140 },
-      { field: 'baseStatus', headerName: 'Base Status', width: 180 },
+      { field: 'baseStatus', headerName: 'Base Status', width: 180, valueFormatter: ({ value }) => (value === 'COMPLETED' ? 'Closed' : value) },
       {
         field: 'actions',
         headerName: 'Actions',
@@ -88,7 +93,7 @@ const TimeSheetApproval: React.FC = () => {
   return (
     <Box>
       <Typography variant="h4" component="h1" gutterBottom>
-        TimeSheet Approval
+        TimeSheet Approval {typeof pendingCount === 'number' ? `(Pending: ${pendingCount})` : ''}
       </Typography>
       <Paper sx={{ p: 2, mt: 2 }}>
         <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
