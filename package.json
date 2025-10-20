@@ -28,14 +28,15 @@
     "@mui/x-data-grid": "^6.19.4",
     "@mui/x-date-pickers": "^6.19.4",
     "@reduxjs/toolkit": "^2.2.1",
+    "@sentry/react": "^7.114.0",
     "@tanstack/react-query": "^5.22.2",
     "axios": "^1.6.7",
-    "@sentry/react": "^7.114.0",
     "chart.js": "^4.4.1",
     "date-fns": "^2.30.0",
     "i18next": "^23.10.0",
     "keycloak-js": "^24.0.1",
     "notistack": "^3.0.1",
+    "people-in-axis-fe": "file:",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.2.0",
@@ -47,6 +48,7 @@
     "yup": "^1.3.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.48.2",
     "@tanstack/react-query-devtools": "^5.90.2",
     "@types/node": "^20.11.19",
     "@types/react": "^18.2.56",
@@ -54,16 +56,15 @@
     "@typescript-eslint/eslint-plugin": "^7.0.1",
     "@typescript-eslint/parser": "^7.0.1",
     "@vitejs/plugin-react": "^4.2.1",
-    "@playwright/test": "^1.48.2",
     "eslint": "^8.56.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
-    "start-server-and-test": "^2.0.3",
-    "wait-on": "^7.0.1",
     "prettier": "^3.2.5",
+    "start-server-and-test": "^2.0.3",
     "typescript": "^5.3.3",
     "vite": "^6.3.6",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "wait-on": "^7.0.1"
   },
   "browserslist": {
     "production": [

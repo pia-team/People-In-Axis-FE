@@ -98,7 +98,46 @@ export interface TimeSheet {
   overtimeHours?: number;
   taskDescription?: string;
   status?: TimeSheetStatus;
+  baseStatus?: TimeSheetBaseStatus;
   billable?: boolean;
+}
+
+export type TimeSheetBaseStatus =
+  | 'CREATED'
+  | 'SUBMITTED'
+  | 'WAITING_FOR_MANAGER_APPROVAL'
+  | 'PROCESSING'
+  | 'WAITING_FOR_ADMIN_APPROVAL'
+  | 'CLOSED'
+  | 'CANCELLED'
+  | 'REVISION_REQUESTED';
+
+export type TimeSheetRowStatus =
+  | 'CREATED'
+  | 'MANAGER_APPROVED'
+  | 'MANAGER_REJECTED'
+  | 'ASSIGNED'
+  | 'TEAM_LEAD_APPROVE'
+  | 'TEAM_LEAD_REJECT'
+  | 'COMPLETED'
+  | 'ADMIN_REJECTED';
+
+export interface TimeSheetRow {
+  id: number;
+  timesheetId: number;
+  workDate: string; // ISO
+  startTime?: string; // ISO
+  endTime?: string; // ISO
+  hours: number;
+  taskDescription?: string;
+  location?: string;
+  status?: TimeSheetRowStatus;
+  assignedToEmployeeId?: number | null;
+  assignedToName?: string | null;
+  reviewerId?: number | null;
+  reviewerName?: string | null;
+  rejectionReason?: string | null;
+  approvalComments?: string | null;
 }
 
 export type ExpenseStatus =

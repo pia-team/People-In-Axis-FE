@@ -143,9 +143,17 @@ const App: React.FC = () => {
             {/* TimeSheets Approval (role-guarded) */}
             <Route
               path="/timesheets/approval"
-              element={<PrivateRoute roles={["TEAM_MANAGER", "HUMAN_RESOURCES"]} />}
+              element={<PrivateRoute roles={["TEAM_MANAGER"]} />}
             >
               <Route index element={<TimeSheetApproval />} />
+            </Route>
+
+            {/* Admin TimeSheets Approval (role-guarded) */}
+            <Route
+              path="/timesheets/admin-approval"
+              element={<PrivateRoute roles={["ADMIN"]} />}
+            >
+              <Route index element={React.createElement(React.lazy(() => import('@/pages/timesheets/AdminTimeSheetApproval')))} />
             </Route>
 
             {/* Expenses */}

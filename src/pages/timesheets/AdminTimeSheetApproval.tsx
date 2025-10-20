@@ -6,24 +6,24 @@ import { timeSheetService } from '@/services/timesheetService';
 import { TimeSheet } from '@/types';
 import { useNavigate } from 'react-router-dom';
 
-const TimeSheetApproval: React.FC = () => {
+const AdminTimeSheetApproval: React.FC = () => {
   const [paginationModel, setPaginationModel] = React.useState<{ page: number; pageSize: number }>(
     { page: 0, pageSize: 10 }
   );
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['timesheets', 'pending', paginationModel.page, paginationModel.pageSize],
-    queryFn: async () => timeSheetService.getPending({ page: paginationModel.page, size: paginationModel.pageSize }),
+    queryKey: ['timesheets', 'admin-pending', paginationModel.page, paginationModel.pageSize],
+    queryFn: async () => timeSheetService.getAdminPending({ page: paginationModel.page, size: paginationModel.pageSize }),
     placeholderData: keepPreviousData,
   });
 
-  const approveMutation = useMutation({
-    mutationFn: ({ id, comments }: { id: number; comments?: string }) => timeSheetService.approve(id, comments),
+  const adminApproveMutation = useMutation({
+    mutationFn: ({ id }: { id: number }) => timeSheetService.adminApprove(id),
     onSuccess: () => refetch(),
   });
 
-  const rejectMutation = useMutation({
-    mutationFn: ({ id, reason }: { id: number; reason: string }) => timeSheetService.reject(id, reason),
+  const adminRejectMutation = useMutation({
+    mutationFn: ({ id, reason }: { id: number; reason: string }) => timeSheetService.adminReject(id, reason),
     onSuccess: () => refetch(),
   });
 
@@ -43,7 +43,7 @@ const TimeSheetApproval: React.FC = () => {
       {
         field: 'actions',
         headerName: 'Actions',
-        width: 220,
+        width: 260,
         sortable: false,
         renderCell: (params) => (
           <Stack direction="row" spacing={1}>
@@ -57,8 +57,9 @@ const TimeSheetApproval: React.FC = () => {
             <Button
               size="small"
               variant="contained"
-              onClick={() => approveMutation.mutate({ id: params.row.id })}
-              disabled={approveMutation.isPending}
+              color="success"
+              onClick={() => adminApproveMutation.mutate({ id: params.row.id })}
+              disabled={adminApproveMutation.isPending}
             >
               Approve
             </Button>
@@ -68,9 +69,9 @@ const TimeSheetApproval: React.FC = () => {
               color="error"
               onClick={() => {
                 const reason = window.prompt('Reject reason?') || '';
-                if (reason.trim()) rejectMutation.mutate({ id: params.row.id, reason });
+                if (reason.trim()) adminRejectMutation.mutate({ id: params.row.id, reason });
               }}
-              disabled={rejectMutation.isPending}
+              disabled={adminRejectMutation.isPending}
             >
               Reject
             </Button>
@@ -78,7 +79,7 @@ const TimeSheetApproval: React.FC = () => {
         ),
       },
     ],
-    [approveMutation.isPending, rejectMutation.isPending]
+    [adminApproveMutation.isPending, adminRejectMutation.isPending]
   );
 
   const handlePaginationChange = (model: GridPaginationModel) => {
@@ -88,7 +89,7 @@ const TimeSheetApproval: React.FC = () => {
   return (
     <Box>
       <Typography variant="h4" component="h1" gutterBottom>
-        TimeSheet Approval
+        Admin TimeSheet Approval
       </Typography>
       <Paper sx={{ p: 2, mt: 2 }}>
         <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
@@ -110,7 +111,7 @@ const TimeSheetApproval: React.FC = () => {
         </div>
         {isError && (
           <Typography variant="body2" color="error" sx={{ mt: 2 }}>
-            Failed to load pending timesheets.
+            Failed to load admin pending timesheets.
           </Typography>
         )}
       </Paper>
@@ -118,4 +119,4 @@ const TimeSheetApproval: React.FC = () => {
   );
 };
 
-export default TimeSheetApproval;
+export default AdminTimeSheetApproval;
