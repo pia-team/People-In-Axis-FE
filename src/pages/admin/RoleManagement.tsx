@@ -1,16 +1,15 @@
 import React from 'react';
-import { Box, Typography, Paper, Stack, Button } from '@mui/material';
+import { Typography, Stack, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import PageContainer from '@/components/ui/PageContainer';
+import SectionCard from '@/components/ui/SectionCard';
 
 const RoleManagement: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Role Management
-      </Typography>
-      <Paper sx={{ p: 3, mt: 2 }}>
+    <PageContainer title="Role Management">
+      <SectionCard>
         <Stack spacing={2}>
           <Typography>
             Roles and access are managed via Keycloak. Use the links below to navigate to common admin pages
@@ -28,8 +27,8 @@ const RoleManagement: React.FC = () => {
             - HR and Admin can manage employees, companies, departments, and projects.
           </Typography>
         </Stack>
-      </Paper>
-    </Box>
+      </SectionCard>
+    </PageContainer>
   );
 };
 

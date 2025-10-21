@@ -1,8 +1,10 @@
 import React from 'react';
-import { Box, Typography, Paper, Stack, Divider } from '@mui/material';
+import { Typography, Stack, Divider } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { employeeService } from '@/services/employeeService';
 import { Employee } from '@/types';
+import PageContainer from '@/components/ui/PageContainer';
+import SectionCard from '@/components/ui/SectionCard';
 
 const MyProfile: React.FC = () => {
   const { data, isLoading, isError } = useQuery({
@@ -13,11 +15,8 @@ const MyProfile: React.FC = () => {
   const me = data as Employee | undefined;
 
   return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        My Profile
-      </Typography>
-      <Paper sx={{ p: 3, mt: 2 }}>
+    <PageContainer title="My Profile">
+      <SectionCard>
         {isLoading && <Typography>Loading...</Typography>}
         {isError && <Typography color="error">Failed to load profile.</Typography>}
         {me && (
@@ -32,8 +31,8 @@ const MyProfile: React.FC = () => {
             <Typography>Status: {me.status}</Typography>
           </Stack>
         )}
-      </Paper>
-    </Box>
+      </SectionCard>
+    </PageContainer>
   );
 };
 

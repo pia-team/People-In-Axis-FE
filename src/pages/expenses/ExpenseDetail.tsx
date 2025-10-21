@@ -1,8 +1,10 @@
 import React from 'react';
-import { Box, Typography, Paper, Stack, Divider, Button } from '@mui/material';
+import { Typography, Stack, Divider, Button } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { expenseService } from '@/services/expenseService';
+import PageContainer from '@/components/ui/PageContainer';
+import SectionCard from '@/components/ui/SectionCard';
 
 const ExpenseDetail: React.FC = () => {
   const { id } = useParams();
@@ -20,25 +22,22 @@ const ExpenseDetail: React.FC = () => {
   });
 
   return (
-    <Box>
-      <Stack direction="row" justifyContent="space-between" alignItems="center">
-        <Typography variant="h4" component="h1" gutterBottom>
-          Expense Detail
-        </Typography>
+    <PageContainer
+      title="Expense Detail"
+      actions={
         <Stack direction="row" spacing={1}>
           <Button variant="outlined" onClick={() => navigate('/expenses')}>Back</Button>
           <Button
             variant="contained"
             onClick={() => submitMutation.mutate()}
-            disabled={
-              !data || !['PENDING', 'REJECTED'].includes(String(data.status)) || submitMutation.isPending
-            }
+            disabled={!data || !['PENDING', 'REJECTED'].includes(String(data?.status)) || submitMutation.isPending}
           >
             Submit
           </Button>
         </Stack>
-      </Stack>
-      <Paper sx={{ p: 3, mt: 2 }}>
+      }
+    >
+      <SectionCard>
         {isLoading && (
           <Typography variant="body1">Loading...</Typography>
         )}
@@ -55,8 +54,8 @@ const ExpenseDetail: React.FC = () => {
             <Typography>Status: {data.status || '-'}</Typography>
           </Stack>
         )}
-      </Paper>
-    </Box>
+      </SectionCard>
+    </PageContainer>
   );
 };
 

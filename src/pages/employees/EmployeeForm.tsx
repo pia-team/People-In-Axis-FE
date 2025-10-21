@@ -1,10 +1,12 @@
 import React from 'react';
-import { Box, Typography, Paper, Stack, TextField, MenuItem, Button } from '@mui/material';
+import { Typography, Stack, TextField, MenuItem, Button } from '@mui/material';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { employeeService } from '@/services/employeeService';
 import { Employee, EmployeeCreateDTO, EmployeeUpdateDTO, EmploymentType } from '@/types';
+import PageContainer from '@/components/ui/PageContainer';
+import SectionCard from '@/components/ui/SectionCard';
 
 const employmentTypes: EmploymentType[] = [
   'FULL_TIME',
@@ -101,16 +103,9 @@ const EmployeeForm: React.FC = () => {
   };
 
   return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        {isEdit ? 'Edit Employee' : 'New Employee'}
-      </Typography>
-      <Paper sx={{ p: 3, mt: 2 }}>
-        <Box
-          component="form"
-          onSubmit={handleSubmit(onSubmit)}
-          noValidate
-        >
+    <PageContainer title={isEdit ? 'Edit Employee' : 'New Employee'}>
+      <SectionCard>
+        <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <Stack spacing={2}>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <TextField label="First Name" fullWidth required {...register('firstName')} />
@@ -141,9 +136,9 @@ const EmployeeForm: React.FC = () => {
               <Typography variant="body2" color="error">Submission failed.</Typography>
             )}
           </Stack>
-        </Box>
-      </Paper>
-    </Box>
+        </form>
+      </SectionCard>
+    </PageContainer>
   );
 };
 

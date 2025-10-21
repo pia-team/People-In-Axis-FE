@@ -1,10 +1,14 @@
 import React from 'react';
-import { Box, Typography, Paper, Button, Stack } from '@mui/material';
+import { Box, Button, Stack, Typography } from '@mui/material';
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { timeSheetService } from '@/services/timesheetService';
 import { TimeSheet, PaginatedResponse } from '@/types';
+import PageContainer from '@/components/ui/PageContainer';
+import SectionCard from '@/components/ui/SectionCard';
+import { standardDataGridSx } from '@/components/ui/dataGridStyles';
+import EmptyState from '@/components/ui/EmptyState';
 
 const TimeSheetList: React.FC = () => {
   const navigate = useNavigate();
@@ -38,14 +42,19 @@ const TimeSheetList: React.FC = () => {
     setPaginationModel({ page: model.page, pageSize: model.pageSize });
   };
 
+  const NoTimeSheetsOverlay = React.useCallback(() => (
+    <EmptyState
+      title="No timesheets"
+      description="There are no timesheets to display."
+    />
+  ), [refetch]);
+
   return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        TimeSheets
-      </Typography>
-      <Paper sx={{ p: 2, mt: 2 }}>
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-          <Button variant="contained" onClick={() => refetch()}>Refresh</Button>
+    <PageContainer
+      title="TimeSheets"
+      actions={
+        <Stack direction="row" spacing={1}>
+          <Button variant="outlined" onClick={() => refetch()}>Refresh</Button>
           <Button
             variant="outlined"
             onClick={async () => {
@@ -60,45 +69,56 @@ const TimeSheetList: React.FC = () => {
           >
             Export
           </Button>
-          <Button variant="outlined" onClick={() => fileInputRef.current?.click()}>Import</Button>
-          <input
-            type="file"
-            accept=".xlsx,.xls"
-            ref={fileInputRef}
-            style={{ display: 'none' }}
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              await timeSheetService.importExcel(file);
-              e.currentTarget.value = '';
-              refetch();
-            }}
-          />
-          <Box flexGrow={1} />
           <Button variant="contained" onClick={() => navigate('/timesheets/new')}>New</Button>
         </Stack>
-        <div style={{ height: 600, width: '100%' }}>
-          <DataGrid
-            rows={rows}
-            columns={columns}
-            getRowId={(row) => row.id}
-            loading={isLoading}
-            paginationMode="server"
-            rowCount={rowCount}
-            pageSizeOptions={[5, 10, 25, 50]}
-            paginationModel={{ page: paginationModel.page, pageSize: paginationModel.pageSize }}
-            onPaginationModelChange={handlePaginationChange}
-            onRowClick={(params) => navigate(`/timesheets/${params.id}`)}
-            disableRowSelectionOnClick
-          />
-        </div>
+      }
+    >
+      <Stack spacing={2}>
+        <SectionCard>
+          <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
+            <Button variant="outlined" onClick={() => fileInputRef.current?.click()}>Import</Button>
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              ref={fileInputRef}
+              style={{ display: 'none' }}
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                await timeSheetService.importExcel(file);
+                e.currentTarget.value = '';
+                refetch();
+              }}
+            />
+          </Stack>
+        </SectionCard>
+
+        <SectionCard>
+          <Box sx={{ height: 600, width: '100%' }}>
+            <DataGrid
+              rows={rows}
+              columns={columns}
+              getRowId={(row) => row.id}
+              loading={isLoading}
+              paginationMode="server"
+              rowCount={rowCount}
+              pageSizeOptions={[5, 10, 25, 50]}
+              paginationModel={{ page: paginationModel.page, pageSize: paginationModel.pageSize }}
+              onPaginationModelChange={handlePaginationChange}
+              onRowClick={(params) => navigate(`/timesheets/${params.id}`)}
+              disableRowSelectionOnClick
+              sx={standardDataGridSx}
+              slots={{ noRowsOverlay: NoTimeSheetsOverlay }}
+            />
+          </Box>
+        </SectionCard>
         {isError && (
-          <Typography variant="body2" color="error" sx={{ mt: 2 }}>
+          <Typography variant="body2" color="error" sx={{ mt: -1 }}>
             Failed to load timesheets.
           </Typography>
         )}
-      </Paper>
-    </Box>
+      </Stack>
+    </PageContainer>
   );
 };
 

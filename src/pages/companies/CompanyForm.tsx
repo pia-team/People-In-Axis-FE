@@ -1,9 +1,11 @@
 import React from 'react';
-import { Box, Typography, Paper, Stack, TextField, Button } from '@mui/material';
+import { Stack, TextField, Button } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
 import { Company, CompanyCreateDTO, CompanyUpdateDTO } from '@/types';
+import PageContainer from '@/components/ui/PageContainer';
+import SectionCard from '@/components/ui/SectionCard';
 
 const CompanyForm: React.FC = () => {
   const { id } = useParams();
@@ -96,11 +98,8 @@ const CompanyForm: React.FC = () => {
   };
 
   return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        {isEdit ? 'Edit Company' : 'New Company'}
-      </Typography>
-      <Paper sx={{ p: 3, mt: 2 }}>
+    <PageContainer title={isEdit ? 'Edit Company' : 'New Company'}>
+      <SectionCard>
         <Stack spacing={2}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <TextField label="Name" value={form.name || ''} onChange={handleChange('name')} fullWidth required />
@@ -135,8 +134,8 @@ const CompanyForm: React.FC = () => {
             <Button variant="contained" onClick={onSubmit} disabled={isPending}>{isEdit ? 'Save' : 'Create'}</Button>
           </Stack>
         </Stack>
-      </Paper>
-    </Box>
+      </SectionCard>
+    </PageContainer>
   );
 };
 

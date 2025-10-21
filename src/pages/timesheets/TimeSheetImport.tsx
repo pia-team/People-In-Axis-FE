@@ -1,7 +1,9 @@
 import React from 'react';
-import { Box, Typography, Paper, Stack, Button, LinearProgress } from '@mui/material';
+import { Box, Typography, Stack, Button, LinearProgress } from '@mui/material';
 import { useMutation } from '@tanstack/react-query';
 import { timeSheetService } from '@/services/timesheetService';
+import PageContainer from '@/components/ui/PageContainer';
+import SectionCard from '@/components/ui/SectionCard';
 
 const TimeSheetImport: React.FC = () => {
   const [file, setFile] = React.useState<File | null>(null);
@@ -31,11 +33,8 @@ const TimeSheetImport: React.FC = () => {
   });
 
   return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Timesheet Import
-      </Typography>
-      <Paper sx={{ p: 2, mt: 2 }}>
+    <PageContainer title="Timesheet Import">
+      <SectionCard>
         <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
           <Button
             variant="outlined"
@@ -67,8 +66,8 @@ const TimeSheetImport: React.FC = () => {
             <Typography>Failed: {result.failedCount}</Typography>
           </Box>
         )}
-      </Paper>
-    </Box>
+      </SectionCard>
+    </PageContainer>
   );
 };
 

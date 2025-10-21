@@ -1,9 +1,11 @@
 import React from 'react';
-import { Box, Typography, Paper, Stack, TextField, Button } from '@mui/material';
+import { Stack, TextField, Button } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { projectService } from '@/services/projectService';
 import { Project, ProjectCreateDTO, ProjectUpdateDTO } from '@/types';
+import PageContainer from '@/components/ui/PageContainer';
+import SectionCard from '@/components/ui/SectionCard';
 
 const ProjectForm: React.FC = () => {
   const { id } = useParams();
@@ -90,11 +92,8 @@ const ProjectForm: React.FC = () => {
   };
 
   return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        {isEdit ? 'Edit Project' : 'New Project'}
-      </Typography>
-      <Paper sx={{ p: 3, mt: 2 }}>
+    <PageContainer title={isEdit ? 'Edit Project' : 'New Project'}>
+      <SectionCard>
         <Stack spacing={2}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <TextField label="Name" value={form.name || ''} onChange={handleChange('name')} fullWidth required />
@@ -124,8 +123,8 @@ const ProjectForm: React.FC = () => {
             <Button variant="contained" onClick={onSubmit} disabled={isPending}>{isEdit ? 'Save' : 'Create'}</Button>
           </Stack>
         </Stack>
-      </Paper>
-    </Box>
+      </SectionCard>
+    </PageContainer>
   );
 };
 

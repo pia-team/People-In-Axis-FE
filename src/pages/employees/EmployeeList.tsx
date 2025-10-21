@@ -1,10 +1,12 @@
 import React from 'react';
-import { Box, Typography, Paper, TextField, Button, Stack, MenuItem } from '@mui/material';
+import { Box, TextField, Button, Stack, MenuItem, Typography } from '@mui/material';
 import { DataGrid, GridColDef, GridPaginationModel, GridSortModel } from '@mui/x-data-grid';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { employeeService } from '@/services/employeeService';
 import { Employee, PaginatedResponse } from '@/types';
+import PageContainer from '@/components/ui/PageContainer';
+import SectionCard from '@/components/ui/SectionCard';
 
 const EmployeeList: React.FC = () => {
   const navigate = useNavigate();
@@ -71,78 +73,106 @@ const EmployeeList: React.FC = () => {
   };
 
   return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Employees
-      </Typography>
-      <Paper sx={{ p: 2, mt: 2 }}>
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-          <TextField
-            size="small"
-            label="Search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <TextField
-            size="small"
-            label="Company ID"
-            type="number"
-            value={companyId}
-            onChange={(e) => setCompanyId(e.target.value === '' ? '' : Number(e.target.value))}
-            sx={{ width: 140 }}
-          />
-          <TextField
-            size="small"
-            label="Department ID"
-            type="number"
-            value={departmentId}
-            onChange={(e) => setDepartmentId(e.target.value === '' ? '' : Number(e.target.value))}
-            sx={{ width: 160 }}
-          />
-          <TextField
-            size="small"
-            label="Status"
-            select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            sx={{ width: 160 }}
-          >
-            <MenuItem value="">All</MenuItem>
-            <MenuItem value="ACTIVE">ACTIVE</MenuItem>
-            <MenuItem value="INACTIVE">INACTIVE</MenuItem>
-            <MenuItem value="ON_LEAVE">ON_LEAVE</MenuItem>
-            <MenuItem value="TERMINATED">TERMINATED</MenuItem>
-          </TextField>
-          <Button variant="contained" onClick={() => refetch()}>Search</Button>
-          <Box flexGrow={1} />
+    <PageContainer
+      title="Employees"
+      actions={
+        <Stack direction="row" spacing={1}>
           <Button variant="outlined" onClick={() => refetch()}>Refresh</Button>
           <Button variant="contained" onClick={() => navigate('/employees/new')}>New</Button>
         </Stack>
-        <div style={{ height: 600, width: '100%' }}>
-          <DataGrid
-            rows={rows}
-            columns={columns}
-            getRowId={(row) => row.id}
-            loading={isLoading}
-            paginationMode="server"
-            sortingMode="server"
-            rowCount={rowCount}
-            pageSizeOptions={[5, 10, 25, 50]}
-            paginationModel={{ page: paginationModel.page, pageSize: paginationModel.pageSize }}
-            onPaginationModelChange={handlePaginationChange}
-            sortModel={sortModel}
-            onSortModelChange={handleSortModelChange}
-            onRowClick={(params) => navigate(`/employees/${params.id}`)}
-            disableRowSelectionOnClick
-          />
-        </div>
-        {isError && (
-          <Typography variant="body2" color="error" sx={{ mt: 2 }}>
-            Failed to load employees.
-          </Typography>
-        )}
-      </Paper>
-    </Box>
+      }
+    >
+      <Stack spacing={2}>
+        <SectionCard>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }} flexWrap="wrap">
+            <TextField
+              size="small"
+              label="Search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              sx={{ minWidth: { xs: '100%', sm: 240 } }}
+            />
+            <TextField
+              size="small"
+              label="Company ID"
+              type="number"
+              value={companyId}
+              onChange={(e) => setCompanyId(e.target.value === '' ? '' : Number(e.target.value))}
+              sx={{ width: { xs: '100%', sm: 160 } }}
+            />
+            <TextField
+              size="small"
+              label="Department ID"
+              type="number"
+              value={departmentId}
+              onChange={(e) => setDepartmentId(e.target.value === '' ? '' : Number(e.target.value))}
+              sx={{ width: { xs: '100%', sm: 180 } }}
+            />
+            <TextField
+              size="small"
+              label="Status"
+              select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              sx={{ width: { xs: '100%', sm: 180 } }}
+            >
+              <MenuItem value="">All</MenuItem>
+              <MenuItem value="ACTIVE">ACTIVE</MenuItem>
+              <MenuItem value="INACTIVE">INACTIVE</MenuItem>
+              <MenuItem value="ON_LEAVE">ON_LEAVE</MenuItem>
+              <MenuItem value="TERMINATED">TERMINATED</MenuItem>
+            </TextField>
+            <Box sx={{ flexGrow: 1 }} />
+            <Stack direction="row" spacing={1}>
+              <Button variant="outlined" onClick={() => refetch()}>Reset</Button>
+              <Button variant="contained" onClick={() => refetch()}>Search</Button>
+            </Stack>
+          </Stack>
+        </SectionCard>
+
+        <SectionCard>
+          <Box sx={{ height: 620, width: '100%' }}>
+            <DataGrid
+              rows={rows}
+              columns={columns}
+              getRowId={(row) => row.id}
+              loading={isLoading}
+              paginationMode="server"
+              sortingMode="server"
+              rowCount={rowCount}
+              pageSizeOptions={[5, 10, 25, 50]}
+              paginationModel={{ page: paginationModel.page, pageSize: paginationModel.pageSize }}
+              onPaginationModelChange={handlePaginationChange}
+              sortModel={sortModel}
+              onSortModelChange={handleSortModelChange}
+              onRowClick={(params) => navigate(`/employees/${params.id}`)}
+              disableRowSelectionOnClick
+              sx={{
+                borderRadius: 2,
+                backgroundColor: 'background.paper',
+                border: '1px solid',
+                borderColor: 'divider',
+                '& .MuiDataGrid-columnHeaders': {
+                  backgroundColor: 'background.default',
+                  borderBottom: '1px solid rgba(0,0,0,0.08)'
+                },
+                '& .MuiDataGrid-cell': {
+                  borderBottom: '1px solid rgba(0,0,0,0.05)'
+                },
+                '& .MuiDataGrid-row:hover': {
+                  backgroundColor: 'rgba(79,70,229,0.04)'
+                },
+              }}
+            />
+          </Box>
+          {isError && (
+            <Typography variant="body2" color="error" sx={{ mt: 2 }}>
+              Failed to load employees.
+            </Typography>
+          )}
+        </SectionCard>
+      </Stack>
+    </PageContainer>
   );
 };
 

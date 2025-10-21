@@ -1,9 +1,11 @@
 import React from 'react';
-import { Box, Typography, Paper, Stack, TextField, Button } from '@mui/material';
+import { Stack, TextField, Button } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { departmentService } from '@/services/departmentService';
 import { Department, DepartmentCreateDTO, DepartmentUpdateDTO } from '@/types';
+import PageContainer from '@/components/ui/PageContainer';
+import SectionCard from '@/components/ui/SectionCard';
 
 const DepartmentForm: React.FC = () => {
   const { id } = useParams();
@@ -74,11 +76,8 @@ const DepartmentForm: React.FC = () => {
   };
 
   return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        {isEdit ? 'Edit Department' : 'New Department'}
-      </Typography>
-      <Paper sx={{ p: 3, mt: 2 }}>
+    <PageContainer title={isEdit ? 'Edit Department' : 'New Department'}>
+      <SectionCard>
         <Stack spacing={2}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <TextField label="Name" value={form.name || ''} onChange={handleChange('name')} fullWidth required />
@@ -96,8 +95,8 @@ const DepartmentForm: React.FC = () => {
             <Button variant="contained" onClick={onSubmit} disabled={isPending}>{isEdit ? 'Save' : 'Create'}</Button>
           </Stack>
         </Stack>
-      </Paper>
-    </Box>
+      </SectionCard>
+    </PageContainer>
   );
 };
 

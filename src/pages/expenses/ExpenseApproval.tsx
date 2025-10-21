@@ -1,9 +1,14 @@
 import React from 'react';
-import { Box, Typography, Paper, Stack, Button } from '@mui/material';
+import { Box, Typography, Stack, Button, TextField } from '@mui/material';
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import { useQuery, useMutation, keepPreviousData } from '@tanstack/react-query';
 import { expenseService } from '@/services/expenseService';
 import { Expense } from '@/types';
+import PageContainer from '@/components/ui/PageContainer';
+import SectionCard from '@/components/ui/SectionCard';
+import { standardDataGridSx } from '@/components/ui/dataGridStyles';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import EmptyState from '@/components/ui/EmptyState';
 
 const ExpenseApproval: React.FC = () => {
   const [paginationModel, setPaginationModel] = React.useState<{ page: number; pageSize: number }>(
@@ -34,6 +39,13 @@ const ExpenseApproval: React.FC = () => {
   const rows: Expense[] = data?.content ?? [];
   const rowCount = data?.totalElements ?? 0;
 
+  const [rejectOpen, setRejectOpen] = React.useState(false);
+  const [rejectId, setRejectId] = React.useState<number | null>(null);
+  const [rejectReason, setRejectReason] = React.useState('');
+  const [reimburseOpen, setReimburseOpen] = React.useState(false);
+  const [reimburseId, setReimburseId] = React.useState<number | null>(null);
+  const [reimburseRef, setReimburseRef] = React.useState('');
+
   const columns = React.useMemo<GridColDef<Expense>[]>(
     () => [
       { field: 'employeeName', headerName: 'Employee', flex: 1.2, minWidth: 160 },
@@ -62,10 +74,7 @@ const ExpenseApproval: React.FC = () => {
               size="small"
               variant="outlined"
               color="error"
-              onClick={() => {
-                const reason = window.prompt('Reject reason?') || '';
-                if (reason.trim()) rejectMutation.mutate({ id: params.row.id, reason });
-              }}
+              onClick={() => { setRejectId(params.row.id); setRejectReason(''); setRejectOpen(true); }}
               disabled={rejectMutation.isPending}
             >
               Reject
@@ -73,10 +82,7 @@ const ExpenseApproval: React.FC = () => {
             <Button
               size="small"
               variant="outlined"
-              onClick={() => {
-                const ref = window.prompt('Reimbursement reference (optional)') || undefined;
-                reimburseMutation.mutate({ id: params.row.id, reference: ref });
-              }}
+              onClick={() => { setReimburseId(params.row.id); setReimburseRef(''); setReimburseOpen(true); }}
               disabled={reimburseMutation.isPending}
             >
               Reimburse
@@ -92,16 +98,17 @@ const ExpenseApproval: React.FC = () => {
     setPaginationModel({ page: model.page, pageSize: model.pageSize });
   };
 
+  const NoPendingOverlay = React.useCallback(() => (
+    <EmptyState
+      title="No pending expenses"
+      description="There are no expenses awaiting your approval."
+    />
+  ), [refetch]);
+
   return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Expense Approval
-      </Typography>
-      <Paper sx={{ p: 2, mt: 2 }}>
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-          <Button variant="outlined" onClick={() => refetch()}>Refresh</Button>
-        </Stack>
-        <div style={{ height: 600, width: '100%' }}>
+    <PageContainer title="Expense Approval" actions={<Button variant="outlined" onClick={() => refetch()}>Refresh</Button>}>
+      <SectionCard>
+        <Box sx={{ height: 600, width: '100%' }}>
           <DataGrid
             rows={rows}
             columns={columns}
@@ -113,15 +120,69 @@ const ExpenseApproval: React.FC = () => {
             paginationModel={{ page: paginationModel.page, pageSize: paginationModel.pageSize }}
             onPaginationModelChange={handlePaginationChange}
             disableRowSelectionOnClick
+            sx={standardDataGridSx}
+            slots={{ noRowsOverlay: NoPendingOverlay }}
           />
-        </div>
+        </Box>
         {isError && (
           <Typography variant="body2" color="error" sx={{ mt: 2 }}>
             Failed to load pending expenses.
           </Typography>
         )}
-      </Paper>
-    </Box>
+      </SectionCard>
+      <ConfirmDialog
+        open={rejectOpen}
+        title="Reject Expense"
+        description="Please provide a reason for rejection."
+        confirmLabel="Reject"
+        confirmColor="error"
+        loading={rejectMutation.isPending}
+        confirmDisabled={rejectReason.trim().length === 0}
+        onClose={() => setRejectOpen(false)}
+        onConfirm={() => {
+          if (rejectId && rejectReason.trim()) {
+            rejectMutation.mutate({ id: rejectId, reason: rejectReason.trim() });
+            setRejectOpen(false);
+          }
+        }}
+      >
+        <TextField
+          autoFocus
+          fullWidth
+          label="Reason"
+          multiline
+          minRows={2}
+          value={rejectReason}
+          error={rejectReason.trim().length === 0}
+          helperText={rejectReason.trim().length === 0 ? 'Reason is required' : ''}
+          onChange={(e) => setRejectReason(e.target.value)}
+        />
+      </ConfirmDialog>
+      <ConfirmDialog
+        open={reimburseOpen}
+        title="Reimburse Expense"
+        description="You can optionally provide a reimbursement reference."
+        confirmLabel="Reimburse"
+        confirmColor="primary"
+        loading={reimburseMutation.isPending}
+        onClose={() => setReimburseOpen(false)}
+        onConfirm={() => {
+          if (reimburseId) {
+            const ref = reimburseRef.trim();
+            reimburseMutation.mutate({ id: reimburseId, reference: ref === '' ? undefined : ref });
+            setReimburseOpen(false);
+          }
+        }}
+      >
+        <TextField
+          autoFocus
+          fullWidth
+          label="Reference (optional)"
+          value={reimburseRef}
+          onChange={(e) => setReimburseRef(e.target.value)}
+        />
+      </ConfirmDialog>
+    </PageContainer>
   );
 };
 

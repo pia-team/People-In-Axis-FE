@@ -1,3 +1,4 @@
+import PageContainer from '@/components/ui/PageContainer';
 import React from 'react';
 import { Box, Typography, Grid, Paper, Stack, Button, Skeleton, Table, TableBody, TableCell, TableHead, TableRow, Divider } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
@@ -69,10 +70,7 @@ const Dashboard: React.FC = () => {
   );
 
   return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Dashboard
-      </Typography>
+    <PageContainer title="Dashboard">
       <Grid container spacing={2.5}>
         <Grid item xs={12} sm={6} md={3}>
           <MetricCard title="Total Employees" value={data?.totalEmployees} loading={isLoading} to="/employees" icon={<PeopleAltIcon color="primary" />} />
@@ -230,7 +228,7 @@ const Dashboard: React.FC = () => {
           </Paper>
         </Grid>
       </Grid>
-    </Box>
+    </PageContainer>
   );
 };
 

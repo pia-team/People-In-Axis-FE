@@ -4,7 +4,7 @@ import { Provider } from 'react-redux';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { BrowserRouter } from 'react-router-dom';
-import { ThemeProvider } from '@mui/material/styles';
+import { ThemeModeProvider } from './providers/ThemeModeProvider';
 import CssBaseline from '@mui/material/CssBaseline';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -12,7 +12,7 @@ import { SnackbarProvider } from 'notistack';
 
 import App from './App';
 import { store } from './store';
-import { theme } from './theme';
+// theme is provided by ThemeModeProvider
 import { KeycloakProvider } from './providers/KeycloakProvider';
 import './sentry';
 import GlobalErrorBoundary from '@/components/GlobalErrorBoundary';
@@ -36,7 +36,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <ThemeProvider theme={theme}>
+          <ThemeModeProvider>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <CssBaseline />
               <SnackbarProvider
@@ -55,7 +55,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 </KeycloakProvider>
               </SnackbarProvider>
             </LocalizationProvider>
-          </ThemeProvider>
+          </ThemeModeProvider>
         </BrowserRouter>
         <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>

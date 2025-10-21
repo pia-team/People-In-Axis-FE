@@ -1,9 +1,12 @@
 import React from 'react';
-import { Box, Typography, Paper, Stack, Button } from '@mui/material';
+import { Typography, Stack, Button } from '@mui/material';
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { timeSheetService } from '@/services/timesheetService';
 import { TimeSheet, PaginatedResponse } from '@/types';
+import PageContainer from '@/components/ui/PageContainer';
+import SectionCard from '@/components/ui/SectionCard';
+import { standardDataGridSx, NoRowsOverlay } from '@/components/ui/dataGridStyles';
 
 const TimeSheetReport: React.FC = () => {
   const [paginationModel, setPaginationModel] = React.useState<{ page: number; pageSize: number }>(
@@ -50,13 +53,9 @@ const TimeSheetReport: React.FC = () => {
   };
 
   return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        TimeSheet Report
-      </Typography>
-      <Paper sx={{ p: 2, mt: 2 }}>
+    <PageContainer title="TimeSheet Report" actions={<Button variant="outlined" onClick={() => refetch()}>Refresh</Button>}>
+      <SectionCard>
         <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-          <Button variant="outlined" onClick={() => refetch()}>Refresh</Button>
           <Button variant="contained" onClick={exportExcel}>Export</Button>
         </Stack>
         <div style={{ height: 600, width: '100%' }}>
@@ -71,6 +70,8 @@ const TimeSheetReport: React.FC = () => {
             paginationModel={{ page: paginationModel.page, pageSize: paginationModel.pageSize }}
             onPaginationModelChange={handlePaginationChange}
             disableRowSelectionOnClick
+            sx={standardDataGridSx}
+            slots={{ noRowsOverlay: NoRowsOverlay }}
           />
         </div>
         {isError && (
@@ -78,8 +79,8 @@ const TimeSheetReport: React.FC = () => {
             Failed to load timesheets.
           </Typography>
         )}
-      </Paper>
-    </Box>
+      </SectionCard>
+    </PageContainer>
   );
 };
 

@@ -1,9 +1,11 @@
 import React from 'react';
-import { Box, Typography, Paper, Stack, Divider, Button } from '@mui/material';
+import { Typography, Stack, Divider, Button } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { companyService } from '@/services/companyService';
 import { Company } from '@/types';
+import PageContainer from '@/components/ui/PageContainer';
+import SectionCard from '@/components/ui/SectionCard';
 
 const CompanyDetail: React.FC = () => {
   const { id } = useParams();
@@ -18,17 +20,16 @@ const CompanyDetail: React.FC = () => {
   const company = data as Company | undefined;
 
   return (
-    <Box>
-      <Stack direction="row" justifyContent="space-between" alignItems="center">
-        <Typography variant="h4" component="h1" gutterBottom>
-          Company Detail
-        </Typography>
+    <PageContainer
+      title="Company Detail"
+      actions={
         <Stack direction="row" spacing={1}>
           <Button variant="outlined" onClick={() => navigate('/companies')}>Back</Button>
           <Button variant="contained" onClick={() => navigate(`/companies/${id}/edit`)}>Edit</Button>
         </Stack>
-      </Stack>
-      <Paper sx={{ p: 3, mt: 2 }}>
+      }
+    >
+      <SectionCard>
         {isLoading && <Typography>Loading...</Typography>}
         {isError && <Typography color="error">Failed to load company.</Typography>}
         {company && (
@@ -54,8 +55,8 @@ const CompanyDetail: React.FC = () => {
             )}
           </Stack>
         )}
-      </Paper>
-    </Box>
+      </SectionCard>
+    </PageContainer>
   );
 };
 

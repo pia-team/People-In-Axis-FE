@@ -1,8 +1,10 @@
 import React from 'react';
-import { Box, Typography, Paper, Stack, Button, Divider, Alert, Table, TableHead, TableRow, TableCell, TableBody } from '@mui/material';
+import { Box, Typography, Stack, Button, Divider, Alert, Table, TableHead, TableRow, TableCell, TableBody } from '@mui/material';
 import { useMutation } from '@tanstack/react-query';
 import { timeSheetService } from '@/services/timesheetService';
 import { TimeSheetImportResult } from '@/types';
+import PageContainer from '@/components/ui/PageContainer';
+import SectionCard from '@/components/ui/SectionCard';
 
 const TimeSheetForm: React.FC = () => {
   const [file, setFile] = React.useState<File | null>(null);
@@ -43,11 +45,8 @@ const TimeSheetForm: React.FC = () => {
   };
 
   return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Import TimeSheets from Excel
-      </Typography>
-      <Paper sx={{ p: 3, mt: 2 }}>
+    <PageContainer title="Import TimeSheets from Excel">
+      <SectionCard>
         <Stack spacing={2}>
           <Typography variant="body2" color="text.secondary">
             Choose an .xlsx file to import timesheets. After a successful import, check the TimeSheets list.
@@ -150,8 +149,8 @@ const TimeSheetForm: React.FC = () => {
             </Box>
           )}
         </Stack>
-      </Paper>
-    </Box>
+      </SectionCard>
+    </PageContainer>
   );
 };
 

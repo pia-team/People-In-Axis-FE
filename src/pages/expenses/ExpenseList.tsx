@@ -1,10 +1,14 @@
 import React from 'react';
-import { Box, Typography, Paper, Button, Stack } from '@mui/material';
+import { Box, Button, Stack, Typography } from '@mui/material';
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { expenseService } from '@/services/expenseService';
 import { Expense, PaginatedResponse } from '@/types';
+import PageContainer from '@/components/ui/PageContainer';
+import SectionCard from '@/components/ui/SectionCard';
+import { standardDataGridSx } from '@/components/ui/dataGridStyles';
+import EmptyState from '@/components/ui/EmptyState';
 
 const ExpenseList: React.FC = () => {
   const navigate = useNavigate();
@@ -40,14 +44,19 @@ const ExpenseList: React.FC = () => {
     setPaginationModel({ page: model.page, pageSize: model.pageSize });
   };
 
+  const NoExpensesOverlay = React.useCallback(() => (
+    <EmptyState
+      title="No expenses"
+      description="There are no expenses to display."
+    />
+  ), [refetch]);
+
   return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Expenses
-      </Typography>
-      <Paper sx={{ p: 2, mt: 2 }}>
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-          <Button variant="contained" onClick={() => refetch()}>Refresh</Button>
+    <PageContainer
+      title="Expenses"
+      actions={
+        <Stack direction="row" spacing={1}>
+          <Button variant="outlined" onClick={() => refetch()}>Refresh</Button>
           <Button
             variant="outlined"
             onClick={async () => {
@@ -62,45 +71,56 @@ const ExpenseList: React.FC = () => {
           >
             Export
           </Button>
-          <Button variant="outlined" onClick={() => fileInputRef.current?.click()}>Import</Button>
-          <input
-            type="file"
-            accept=".xlsx,.xls"
-            ref={fileInputRef}
-            style={{ display: 'none' }}
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              await expenseService.importExcel(file);
-              e.currentTarget.value = '';
-              refetch();
-            }}
-          />
-          <Box flexGrow={1} />
           <Button variant="contained" onClick={() => navigate('/expenses/new')}>New</Button>
         </Stack>
-        <div style={{ height: 600, width: '100%' }}>
-          <DataGrid
-            rows={rows}
-            columns={columns}
-            getRowId={(row) => row.id}
-            loading={isLoading}
-            paginationMode="server"
-            rowCount={rowCount}
-            pageSizeOptions={[5, 10, 25, 50]}
-            paginationModel={{ page: paginationModel.page, pageSize: paginationModel.pageSize }}
-            onPaginationModelChange={handlePaginationChange}
-            onRowClick={(params) => navigate(`/expenses/${params.id}`)}
-            disableRowSelectionOnClick
-          />
-        </div>
-        {isError && (
-          <Typography variant="body2" color="error" sx={{ mt: 2 }}>
-            Failed to load expenses.
-          </Typography>
-        )}
-      </Paper>
-    </Box>
+      }
+    >
+      <Stack spacing={2}>
+        <SectionCard>
+          <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
+            <Button variant="outlined" onClick={() => fileInputRef.current?.click()}>Import</Button>
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              ref={fileInputRef}
+              style={{ display: 'none' }}
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                await expenseService.importExcel(file);
+                e.currentTarget.value = '';
+                refetch();
+              }}
+            />
+          </Stack>
+        </SectionCard>
+
+        <SectionCard>
+          <Box sx={{ height: 600, width: '100%' }}>
+            <DataGrid
+              rows={rows}
+              columns={columns}
+              getRowId={(row) => row.id}
+              loading={isLoading}
+              paginationMode="server"
+              rowCount={rowCount}
+              pageSizeOptions={[5, 10, 25, 50]}
+              paginationModel={{ page: paginationModel.page, pageSize: paginationModel.pageSize }}
+              onPaginationModelChange={handlePaginationChange}
+              onRowClick={(params) => navigate(`/expenses/${params.id}`)}
+              disableRowSelectionOnClick
+              sx={standardDataGridSx}
+              slots={{ noRowsOverlay: NoExpensesOverlay }}
+            />
+          </Box>
+          {isError && (
+            <Typography variant="body2" color="error" sx={{ mt: 2 }}>
+              Failed to load expenses.
+            </Typography>
+          )}
+        </SectionCard>
+      </Stack>
+    </PageContainer>
   );
 };
 

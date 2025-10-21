@@ -1,5 +1,7 @@
 import React from 'react';
-import { Box, Typography, Paper, Stack } from '@mui/material';
+import { Typography, Stack } from '@mui/material';
+import PageContainer from '@/components/ui/PageContainer';
+import SectionCard from '@/components/ui/SectionCard';
 
 const Settings: React.FC = () => {
   const env = import.meta.env;
@@ -12,11 +14,8 @@ const Settings: React.FC = () => {
   ];
 
   return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Settings
-      </Typography>
-      <Paper sx={{ p: 3, mt: 2 }}>
+    <PageContainer title="Settings">
+      <SectionCard>
         <Stack spacing={1}>
           <Typography variant="body2" color="text.secondary">Frontend environment configuration</Typography>
           {rows.map((r) => (
@@ -26,8 +25,8 @@ const Settings: React.FC = () => {
             </Stack>
           ))}
         </Stack>
-      </Paper>
-    </Box>
+      </SectionCard>
+    </PageContainer>
   );
 };
 

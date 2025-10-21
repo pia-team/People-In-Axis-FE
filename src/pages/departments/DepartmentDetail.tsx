@@ -1,9 +1,11 @@
 import React from 'react';
-import { Box, Typography, Paper, Stack, Divider, Button } from '@mui/material';
+import { Typography, Stack, Divider, Button } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { departmentService } from '@/services/departmentService';
 import { Department } from '@/types';
+import PageContainer from '@/components/ui/PageContainer';
+import SectionCard from '@/components/ui/SectionCard';
 
 const DepartmentDetail: React.FC = () => {
   const { id } = useParams();
@@ -18,17 +20,16 @@ const DepartmentDetail: React.FC = () => {
   const dept = data as Department | undefined;
 
   return (
-    <Box>
-      <Stack direction="row" justifyContent="space-between" alignItems="center">
-        <Typography variant="h4" component="h1" gutterBottom>
-          Department Detail
-        </Typography>
+    <PageContainer
+      title="Department Detail"
+      actions={
         <Stack direction="row" spacing={1}>
           <Button variant="outlined" onClick={() => navigate('/departments')}>Back</Button>
           <Button variant="contained" onClick={() => navigate(`/departments/${id}/edit`)}>Edit</Button>
         </Stack>
-      </Stack>
-      <Paper sx={{ p: 3, mt: 2 }}>
+      }
+    >
+      <SectionCard>
         {isLoading && <Typography>Loading...</Typography>}
         {isError && <Typography color="error">Failed to load department.</Typography>}
         {dept && (
@@ -49,8 +50,8 @@ const DepartmentDetail: React.FC = () => {
             )}
           </Stack>
         )}
-      </Paper>
-    </Box>
+      </SectionCard>
+    </PageContainer>
   );
 };
 

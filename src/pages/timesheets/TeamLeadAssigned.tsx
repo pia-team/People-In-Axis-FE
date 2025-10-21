@@ -1,9 +1,14 @@
 import React from 'react';
-import { Box, Typography, Paper, Stack, Button } from '@mui/material';
+import { Box, Typography, Stack, Button, TextField } from '@mui/material';
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import { useQuery, useMutation, keepPreviousData } from '@tanstack/react-query';
 import { timeSheetService } from '@/services/timesheetService';
 import type { TimeSheetRow } from '@/types';
+import PageContainer from '@/components/ui/PageContainer';
+import SectionCard from '@/components/ui/SectionCard';
+import { standardDataGridSx } from '@/components/ui/dataGridStyles';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import EmptyState from '@/components/ui/EmptyState';
 
 const TeamLeadAssigned: React.FC = () => {
   const [paginationModel, setPaginationModel] = React.useState<{ page: number; pageSize: number }>({ page: 0, pageSize: 10 });
@@ -29,6 +34,10 @@ const TeamLeadAssigned: React.FC = () => {
   const rows: TimeSheetRow[] = data?.content ?? [];
   const rowCount = data?.totalElements ?? 0;
 
+  const [rejectOpen, setRejectOpen] = React.useState(false);
+  const [rejectRowId, setRejectRowId] = React.useState<number | null>(null);
+  const [rejectReason, setRejectReason] = React.useState('');
+
   const columns = React.useMemo<GridColDef<TimeSheetRow>[]>(
     () => [
       { field: 'id', headerName: 'Row ID', width: 100 },
@@ -48,7 +57,11 @@ const TeamLeadAssigned: React.FC = () => {
               size="small"
               variant="contained"
               onClick={() => approveRowMutation.mutate({ timesheetId: params.row.timesheetId, rowId: params.row.id })}
-              disabled={approveRowMutation.isPending}
+              disabled={
+                approveRowMutation.isPending ||
+                ['TEAM_LEAD_APPROVE', 'TEAM_LEAD_REJECT', 'COMPLETED', 'ADMIN_REJECTED'].includes(String(params.row.status)) ||
+                !params.row.assignedToEmployeeId
+              }
             >
               Approve
             </Button>
@@ -56,11 +69,12 @@ const TeamLeadAssigned: React.FC = () => {
               size="small"
               variant="outlined"
               color="error"
-              onClick={() => {
-                const reason = window.prompt('Reject reason?') || '';
-                if (reason.trim()) rejectRowMutation.mutate({ timesheetId: params.row.timesheetId, rowId: params.row.id, reason });
-              }}
-              disabled={rejectRowMutation.isPending}
+              onClick={() => { setRejectRowId(params.row.id); setRejectReason(''); setRejectOpen(true); }}
+              disabled={
+                rejectRowMutation.isPending ||
+                ['TEAM_LEAD_APPROVE', 'TEAM_LEAD_REJECT', 'COMPLETED', 'ADMIN_REJECTED'].includes(String(params.row.status)) ||
+                !params.row.assignedToEmployeeId
+              }
             >
               Reject
             </Button>
@@ -75,16 +89,17 @@ const TeamLeadAssigned: React.FC = () => {
     setPaginationModel({ page: model.page, pageSize: model.pageSize });
   };
 
+  const NoAssignedOverlay = React.useCallback(() => (
+    <EmptyState
+      title="No assigned rows"
+      description="There are no timesheet rows assigned to you."
+    />
+  ), [refetch]);
+
   return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        TeamLead Assigned Rows
-      </Typography>
-      <Paper sx={{ p: 2, mt: 2 }}>
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-          <Button variant="outlined" onClick={() => refetch()}>Refresh</Button>
-        </Stack>
-        <div style={{ height: 600, width: '100%' }}>
+    <PageContainer title="TeamLead Assigned Rows" actions={<Button variant="outlined" onClick={() => refetch()}>Refresh</Button>}>
+      <SectionCard>
+        <Box sx={{ height: 600, width: '100%' }}>
           <DataGrid
             rows={rows}
             columns={columns}
@@ -96,15 +111,49 @@ const TeamLeadAssigned: React.FC = () => {
             paginationModel={{ page: paginationModel.page, pageSize: paginationModel.pageSize }}
             onPaginationModelChange={handlePaginationChange}
             disableRowSelectionOnClick
+            sx={standardDataGridSx}
+            slots={{ noRowsOverlay: NoAssignedOverlay }}
           />
-        </div>
+        </Box>
         {isError && (
           <Typography variant="body2" color="error" sx={{ mt: 2 }}>
             Failed to load assigned rows.
           </Typography>
         )}
-      </Paper>
-    </Box>
+      </SectionCard>
+      <ConfirmDialog
+        open={rejectOpen}
+        title="Reject Row"
+        description="Please provide a reason for rejection."
+        confirmLabel="Reject"
+        confirmColor="error"
+        loading={rejectRowMutation.isPending}
+        confirmDisabled={rejectReason.trim().length === 0}
+        onClose={() => setRejectOpen(false)}
+        onConfirm={() => {
+          if (rejectRowId && rejectReason.trim()) {
+            // timesheetId is available in rows list; use the selected row from rows state
+            const tsId = rows.find(r => r.id === rejectRowId)?.timesheetId;
+            if (tsId) {
+              rejectRowMutation.mutate({ timesheetId: tsId, rowId: rejectRowId, reason: rejectReason.trim() });
+              setRejectOpen(false);
+            }
+          }
+        }}
+      >
+        <TextField
+          autoFocus
+          fullWidth
+          label="Reason"
+          multiline
+          minRows={2}
+          value={rejectReason}
+          error={rejectReason.trim().length === 0}
+          helperText={rejectReason.trim().length === 0 ? 'Reason is required' : ''}
+          onChange={(e) => setRejectReason(e.target.value)}
+        />
+      </ConfirmDialog>
+    </PageContainer>
   );
 };
 

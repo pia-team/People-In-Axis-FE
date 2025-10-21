@@ -1,9 +1,11 @@
 import React from 'react';
-import { Box, Typography, Paper, Stack, Divider, Button } from '@mui/material';
+import { Typography, Stack, Divider, Button } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { projectService } from '@/services/projectService';
 import { Project } from '@/types';
+import PageContainer from '@/components/ui/PageContainer';
+import SectionCard from '@/components/ui/SectionCard';
 
 const ProjectDetail: React.FC = () => {
   const { id } = useParams();
@@ -18,17 +20,16 @@ const ProjectDetail: React.FC = () => {
   const project = data as Project | undefined;
 
   return (
-    <Box>
-      <Stack direction="row" justifyContent="space-between" alignItems="center">
-        <Typography variant="h4" component="h1" gutterBottom>
-          Project Detail
-        </Typography>
+    <PageContainer
+      title="Project Detail"
+      actions={
         <Stack direction="row" spacing={1}>
           <Button variant="outlined" onClick={() => navigate('/projects')}>Back</Button>
           <Button variant="contained" onClick={() => navigate(`/projects/${id}/edit`)}>Edit</Button>
         </Stack>
-      </Stack>
-      <Paper sx={{ p: 3, mt: 2 }}>
+      }
+    >
+      <SectionCard>
         {isLoading && <Typography>Loading...</Typography>}
         {isError && <Typography color="error">Failed to load project.</Typography>}
         {project && (
@@ -55,8 +56,8 @@ const ProjectDetail: React.FC = () => {
             )}
           </Stack>
         )}
-      </Paper>
-    </Box>
+      </SectionCard>
+    </PageContainer>
   );
 };
 

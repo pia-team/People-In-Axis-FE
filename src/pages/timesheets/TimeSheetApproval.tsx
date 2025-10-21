@@ -1,10 +1,15 @@
 import React from 'react';
-import { Box, Typography, Paper, Stack, Button } from '@mui/material';
+import { Box, Typography, Stack, Button, TextField } from '@mui/material';
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import { useQuery, useMutation, keepPreviousData } from '@tanstack/react-query';
 import { timeSheetService } from '@/services/timesheetService';
 import { TimeSheet } from '@/types';
 import { useNavigate } from 'react-router-dom';
+import PageContainer from '@/components/ui/PageContainer';
+import SectionCard from '@/components/ui/SectionCard';
+import { standardDataGridSx } from '@/components/ui/dataGridStyles';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import EmptyState from '@/components/ui/EmptyState';
 
 const TimeSheetApproval: React.FC = () => {
   const [paginationModel, setPaginationModel] = React.useState<{ page: number; pageSize: number }>(
@@ -36,6 +41,10 @@ const TimeSheetApproval: React.FC = () => {
 
   const rows: TimeSheet[] = data?.content ?? [];
   const rowCount = data?.totalElements ?? 0;
+
+  const [rejectOpen, setRejectOpen] = React.useState(false);
+  const [rejectId, setRejectId] = React.useState<number | null>(null);
+  const [rejectReason, setRejectReason] = React.useState('');
 
   const columns = React.useMemo<GridColDef<TimeSheet>[]>(
     () => [
@@ -71,10 +80,7 @@ const TimeSheetApproval: React.FC = () => {
               size="small"
               variant="outlined"
               color="error"
-              onClick={() => {
-                const reason = window.prompt('Reject reason?') || '';
-                if (reason.trim()) rejectMutation.mutate({ id: params.row.id, reason });
-              }}
+              onClick={() => { setRejectId(params.row.id); setRejectReason(''); setRejectOpen(true); }}
               disabled={rejectMutation.isPending}
             >
               Reject
@@ -90,16 +96,20 @@ const TimeSheetApproval: React.FC = () => {
     setPaginationModel({ page: model.page, pageSize: model.pageSize });
   };
 
+  const NoPendingOverlay = React.useCallback(() => (
+    <EmptyState
+      title="No pending timesheets"
+      description="There are no timesheets awaiting your approval."
+    />
+  ), [refetch]);
+
   return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        TimeSheet Approval {typeof pendingCount === 'number' ? `(Pending: ${pendingCount})` : ''}
-      </Typography>
-      <Paper sx={{ p: 2, mt: 2 }}>
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-          <Button variant="outlined" onClick={() => refetch()}>Refresh</Button>
-        </Stack>
-        <div style={{ height: 600, width: '100%' }}>
+    <PageContainer
+      title={`TimeSheet Approval${typeof pendingCount === 'number' ? ` (Pending: ${pendingCount})` : ''}`}
+      actions={<Button variant="outlined" onClick={() => refetch()}>Refresh</Button>}
+    >
+      <SectionCard>
+        <Box sx={{ height: 600, width: '100%' }}>
           <DataGrid
             rows={rows}
             columns={columns}
@@ -111,15 +121,45 @@ const TimeSheetApproval: React.FC = () => {
             paginationModel={{ page: paginationModel.page, pageSize: paginationModel.pageSize }}
             onPaginationModelChange={handlePaginationChange}
             disableRowSelectionOnClick
+            sx={standardDataGridSx}
+            slots={{ noRowsOverlay: NoPendingOverlay }}
           />
-        </div>
+        </Box>
         {isError && (
           <Typography variant="body2" color="error" sx={{ mt: 2 }}>
             Failed to load pending timesheets.
           </Typography>
         )}
-      </Paper>
-    </Box>
+      </SectionCard>
+      <ConfirmDialog
+        open={rejectOpen}
+        title="Reject Timesheet"
+        description="Please provide a reason for rejection."
+        confirmLabel="Reject"
+        confirmColor="error"
+        loading={rejectMutation.isPending}
+        confirmDisabled={rejectReason.trim().length === 0}
+        onClose={() => setRejectOpen(false)}
+        onConfirm={() => {
+          if (rejectId && rejectReason.trim()) {
+            rejectMutation.mutate({ id: rejectId, reason: rejectReason.trim() });
+            setRejectOpen(false);
+          }
+        }}
+      >
+        <TextField
+          autoFocus
+          fullWidth
+          label="Reason"
+          multiline
+          minRows={2}
+          value={rejectReason}
+          error={rejectReason.trim().length === 0}
+          helperText={rejectReason.trim().length === 0 ? 'Reason is required' : ''}
+          onChange={(e) => setRejectReason(e.target.value)}
+        />
+      </ConfirmDialog>
+    </PageContainer>
   );
 };
 

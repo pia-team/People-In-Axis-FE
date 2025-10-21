@@ -1,9 +1,12 @@
 import React from 'react';
-import { Box, Typography, Paper, Button, Stack } from '@mui/material';
+import { Box, Typography, Button } from '@mui/material';
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { expenseService } from '@/services/expenseService';
 import { Expense, PaginatedResponse } from '@/types';
+import PageContainer from '@/components/ui/PageContainer';
+import SectionCard from '@/components/ui/SectionCard';
+import { standardDataGridSx, NoRowsOverlay } from '@/components/ui/dataGridStyles';
 
 const MyExpenses: React.FC = () => {
   const [paginationModel, setPaginationModel] = React.useState<{ page: number; pageSize: number }>(
@@ -37,15 +40,9 @@ const MyExpenses: React.FC = () => {
   };
 
   return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        My Expenses
-      </Typography>
-      <Paper sx={{ p: 2, mt: 2 }}>
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-          <Button variant="outlined" onClick={() => refetch()}>Refresh</Button>
-        </Stack>
-        <div style={{ height: 600, width: '100%' }}>
+    <PageContainer title="My Expenses" actions={<Button variant="outlined" onClick={() => refetch()}>Refresh</Button>}>
+      <SectionCard>
+        <Box sx={{ height: 600, width: '100%' }}>
           <DataGrid
             rows={rows}
             columns={columns}
@@ -57,15 +54,17 @@ const MyExpenses: React.FC = () => {
             paginationModel={{ page: paginationModel.page, pageSize: paginationModel.pageSize }}
             onPaginationModelChange={handlePaginationChange}
             disableRowSelectionOnClick
+            sx={standardDataGridSx}
+            slots={{ noRowsOverlay: NoRowsOverlay }}
           />
-        </div>
+        </Box>
         {isError && (
           <Typography variant="body2" color="error" sx={{ mt: 2 }}>
             Failed to load your expenses.
           </Typography>
         )}
-      </Paper>
-    </Box>
+      </SectionCard>
+    </PageContainer>
   );
 };
 

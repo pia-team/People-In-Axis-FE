@@ -1,8 +1,10 @@
 import React from 'react';
-import { Box, Typography, Paper, Stack, Divider, Button } from '@mui/material';
+import { Typography, Stack, Divider, Button } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { employeeService } from '@/services/employeeService';
+import PageContainer from '@/components/ui/PageContainer';
+import SectionCard from '@/components/ui/SectionCard';
 
 const EmployeeDetail: React.FC = () => {
   const { id } = useParams();
@@ -15,17 +17,16 @@ const EmployeeDetail: React.FC = () => {
   });
 
   return (
-    <Box>
-      <Stack direction="row" justifyContent="space-between" alignItems="center">
-        <Typography variant="h4" component="h1" gutterBottom>
-          Employee Detail
-        </Typography>
+    <PageContainer
+      title="Employee Detail"
+      actions={
         <Stack direction="row" spacing={1}>
           <Button variant="outlined" onClick={() => navigate('/employees')}>Back</Button>
           <Button variant="contained" onClick={() => navigate(`/employees/${id}/edit`)}>Edit</Button>
         </Stack>
-      </Stack>
-      <Paper sx={{ p: 3, mt: 2 }}>
+      }
+    >
+      <SectionCard>
         {isLoading && (
           <Typography variant="body1">Loading...</Typography>
         )}
@@ -46,8 +47,8 @@ const EmployeeDetail: React.FC = () => {
             <Typography>End Date: {data.endDate || '-'}</Typography>
           </Stack>
         )}
-      </Paper>
-    </Box>
+      </SectionCard>
+    </PageContainer>
   );
 };
 

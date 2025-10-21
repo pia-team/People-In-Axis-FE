@@ -19,6 +19,7 @@ import {
   MenuItem,
   Badge,
   Collapse,
+  Container,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -36,14 +37,17 @@ import {
   AccountCircle,
   Logout,
   Person,
+  Brightness4,
+  Brightness7,
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { toggleSidebar } from '@/store/slices/uiSlice';
 import { useKeycloak } from '@/hooks/useKeycloak';
 import { useQuery } from '@tanstack/react-query';
 import { timeSheetService } from '@/services/timesheetService';
+import { useThemeMode } from '@/providers/ThemeModeProvider';
 
 const drawerWidth = 280;
 
@@ -125,6 +129,7 @@ const menuItems: MenuItemType[] = [
 
 const MainLayout: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
   const { sidebarOpen } = useSelector((state: RootState) => state.ui);
   const { tokenParsed, logout, hasAnyRole } = useKeycloak();
@@ -187,6 +192,16 @@ const MainLayout: React.FC = () => {
     return hasAnyRole(item.roles);
   };
 
+  const isItemSelected = (item: MenuItemType): boolean => {
+    if (item.path) {
+      return location.pathname.startsWith(item.path);
+    }
+    if (item.children && item.children.length > 0) {
+      return item.children.some((c) => c.path && location.pathname.startsWith(c.path));
+    }
+    return false;
+  };
+
   const renderMenuItem = (item: MenuItemType, level: number = 0) => {
     if (!canViewMenuItem(item)) {
       return null;
@@ -199,6 +214,7 @@ const MainLayout: React.FC = () => {
       <React.Fragment key={item.title}>
         <ListItem disablePadding sx={{ pl: level * 2 }}>
           <ListItemButton
+            selected={isItemSelected(item)}
             onClick={() => {
               if (hasChildren) {
                 toggleExpand(item.title);
@@ -250,6 +266,8 @@ const MainLayout: React.FC = () => {
     </div>
   );
 
+  const { mode, toggle } = useThemeMode();
+
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
@@ -274,13 +292,14 @@ const MainLayout: React.FC = () => {
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             {/* Dynamic page title can go here */}
           </Typography>
-          
+          <IconButton size="large" color="inherit" onClick={toggle} sx={{ mr: 1 }} aria-label="Toggle theme">
+            {mode === 'light' ? <Brightness4 /> : <Brightness7 />}
+          </IconButton>
           <IconButton size="large" color="inherit">
             <Badge badgeContent={4} color="error">
               <Notifications />
             </Badge>
           </IconButton>
-          
           <IconButton
             size="large"
             edge="end"
@@ -336,14 +355,17 @@ const MainLayout: React.FC = () => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
+          py: 3,
           width: { sm: `calc(100% - ${sidebarOpen ? drawerWidth : 0}px)` },
           ml: { sm: sidebarOpen ? 0 : 0 },
           transition: 'all 0.3s',
           mt: 8,
+          backgroundColor: 'background.default',
         }}
       >
-        <Outlet />
+        <Container maxWidth="xl">
+          <Outlet />
+        </Container>
       </Box>
     </Box>
   );

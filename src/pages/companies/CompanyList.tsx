@@ -1,10 +1,14 @@
 import React from 'react';
-import { Box, Typography, Paper, Stack, TextField, Button } from '@mui/material';
+import { Typography, Stack, TextField, Button } from '@mui/material';
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { companyService } from '@/services/companyService';
 import { Company, PaginatedResponse } from '@/types';
+import PageContainer from '@/components/ui/PageContainer';
+import SectionCard from '@/components/ui/SectionCard';
+import { standardDataGridSx } from '@/components/ui/dataGridStyles';
+import EmptyState from '@/components/ui/EmptyState';
 
 const CompanyList: React.FC = () => {
   const navigate = useNavigate();
@@ -40,41 +44,56 @@ const CompanyList: React.FC = () => {
     setPaginationModel({ page: model.page, pageSize: model.pageSize });
   };
 
+  const NoCompaniesOverlay = React.useCallback(() => (
+    <EmptyState
+      title="No companies"
+      description="There are no companies to display."
+    />
+  ), [refetch]);
+
   return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Companies
-      </Typography>
-      <Paper sx={{ p: 2, mt: 2 }}>
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-          <TextField size="small" label="Search" value={search} onChange={(e) => setSearch(e.target.value)} />
-          <Button variant="contained" onClick={() => refetch()}>Search</Button>
-          <Box flexGrow={1} />
+    <PageContainer
+      title="Companies"
+      actions={
+        <Stack direction="row" spacing={1}>
           <Button variant="outlined" onClick={() => refetch()}>Refresh</Button>
           <Button variant="contained" onClick={() => navigate('/companies/new')}>New</Button>
         </Stack>
-        <div style={{ height: 600, width: '100%' }}>
-          <DataGrid
-            rows={rows}
-            columns={columns}
-            getRowId={(row) => row.id}
-            loading={isLoading}
-            paginationMode="server"
-            rowCount={rowCount}
-            pageSizeOptions={[5, 10, 25, 50]}
-            paginationModel={{ page: paginationModel.page, pageSize: paginationModel.pageSize }}
-            onPaginationModelChange={handlePaginationChange}
-            onRowClick={(params) => navigate(`/companies/${params.id}`)}
-            disableRowSelectionOnClick
-          />
-        </div>
-        {isError && (
-          <Typography variant="body2" color="error" sx={{ mt: 2 }}>
-            Failed to load companies.
-          </Typography>
-        )}
-      </Paper>
-    </Box>
+      }
+    >
+      <Stack spacing={2}>
+        <SectionCard>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }}>
+            <TextField size="small" label="Search" value={search} onChange={(e) => setSearch(e.target.value)} sx={{ minWidth: { xs: '100%', sm: 260 } }} />
+            <Button variant="contained" onClick={() => refetch()}>Search</Button>
+          </Stack>
+        </SectionCard>
+        <SectionCard>
+          <div style={{ height: 600, width: '100%' }}>
+            <DataGrid
+              rows={rows}
+              columns={columns}
+              getRowId={(row) => row.id}
+              loading={isLoading}
+              paginationMode="server"
+              rowCount={rowCount}
+              pageSizeOptions={[5, 10, 25, 50]}
+              paginationModel={{ page: paginationModel.page, pageSize: paginationModel.pageSize }}
+              onPaginationModelChange={handlePaginationChange}
+              onRowClick={(params) => navigate(`/companies/${params.id}`)}
+              disableRowSelectionOnClick
+              sx={standardDataGridSx}
+              slots={{ noRowsOverlay: NoCompaniesOverlay }}
+            />
+          </div>
+          {isError && (
+            <Typography variant="body2" color="error" sx={{ mt: 2 }}>
+              Failed to load companies.
+            </Typography>
+          )}
+        </SectionCard>
+      </Stack>
+    </PageContainer>
   );
 };
 

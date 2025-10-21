@@ -1,10 +1,13 @@
 import React from 'react';
-import { Box, Typography, Paper, Stack, Divider, Button, TextField, Table, TableHead, TableRow, TableCell, TableBody, Dialog, DialogTitle, DialogContent, List, ListItem, ListItemText } from '@mui/material';
+import { Typography, Stack, Divider, Button, TextField, Table, TableHead, TableRow, TableCell, TableBody, Dialog, DialogTitle, DialogContent, List, ListItem, ListItemText } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { timeSheetService } from '@/services/timesheetService';
 import type { TimeSheetRow } from '@/types';
 import { useKeycloak } from '@/hooks/useKeycloak';
+import PageContainer from '@/components/ui/PageContainer';
+import SectionCard from '@/components/ui/SectionCard';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 const TimeSheetDetail: React.FC = () => {
   const { id } = useParams();
@@ -86,32 +89,37 @@ const TimeSheetDetail: React.FC = () => {
   const [newHours, setNewHours] = React.useState('');
   const [newTask, setNewTask] = React.useState('');
 
+  // Dialog states
+  const [cancelOpen, setCancelOpen] = React.useState(false);
+  const [cancelReason, setCancelReason] = React.useState('');
+  const [companyRejectOpen, setCompanyRejectOpen] = React.useState(false);
+  const [companyRejectNote, setCompanyRejectNote] = React.useState('');
+  const [assignOpen, setAssignOpen] = React.useState(false);
+  const [assignRowId, setAssignRowId] = React.useState<number | null>(null);
+  const [assignEmployeeId, setAssignEmployeeId] = React.useState('');
+  const [rowRejectOpen, setRowRejectOpen] = React.useState(false);
+  const [rowRejectRowId, setRowRejectRowId] = React.useState<number | null>(null);
+  const [rowRejectReason, setRowRejectReason] = React.useState('');
+
   return (
-    <Box>
-      <Stack direction="row" justifyContent="space-between" alignItems="center">
-        <Typography variant="h4" component="h1" gutterBottom>
-          TimeSheet Detail
-        </Typography>
+    <PageContainer
+      title="TimeSheet Detail"
+      actions={
         <Stack direction="row" spacing={1}>
           <Button variant="outlined" onClick={() => navigate('/timesheets')}>Back</Button>
           <Button variant="text" onClick={() => setHistoryOpen(true)}>History</Button>
           <Button
             variant="contained"
             onClick={() => submitMutation.mutate()}
-            disabled={
-              !data || !['DRAFT', 'REVISION_REQUESTED'].includes(String(data.status)) || submitMutation.isPending
-            }
+            disabled={!data || !['DRAFT', 'REVISION_REQUESTED'].includes(String(data?.status)) || submitMutation.isPending}
           >
             Submit
           </Button>
           <Button
             variant="outlined"
             color="error"
-            onClick={() => {
-              const reason = window.prompt('Cancel reason?') || '';
-              if (reason.trim()) cancelMutation.mutate(reason);
-            }}
-            disabled={!data || String(data.baseStatus) !== 'CREATED' || cancelMutation.isPending}
+            onClick={() => { setCancelReason(''); setCancelOpen(true); }}
+            disabled={!data || String(data?.baseStatus) !== 'CREATED' || cancelMutation.isPending}
           >
             Cancel
           </Button>
@@ -119,10 +127,7 @@ const TimeSheetDetail: React.FC = () => {
             <Button
               variant="outlined"
               color="error"
-              onClick={() => {
-                const note = window.prompt('Company reject note?') || '';
-                companyRejectMutation.mutate(note);
-              }}
+              onClick={() => { setCompanyRejectNote(''); setCompanyRejectOpen(true); }}
               disabled={companyRejectMutation.isPending}
             >
               Company Reject
@@ -138,8 +143,9 @@ const TimeSheetDetail: React.FC = () => {
             </Button>
           )}
         </Stack>
-      </Stack>
-      <Paper sx={{ p: 3, mt: 2 }}>
+      }
+    >
+      <SectionCard>
         {isLoading && (
           <Typography variant="body1">Loading...</Typography>
         )}
@@ -224,16 +230,40 @@ const TimeSheetDetail: React.FC = () => {
                       {String(data.baseStatus) === 'CREATED' && (
                         <Button size="small" color="error" onClick={() => deleteRowMutation.mutate(r.id)}>Delete</Button>
                       )}
-                      <Button size="small" onClick={() => {
-                        const assignee = window.prompt('Assign to employeeId?');
-                        const idNum = assignee ? Number(assignee) : NaN;
-                        if (!isNaN(idNum)) assignRowMutation.mutate({ rowId: r.id, assigneeEmployeeId: idNum });
-                      }}>Assign</Button>
-                      <Button size="small" onClick={() => approveRowMutation.mutate({ rowId: r.id })}>Approve</Button>
-                      <Button size="small" color="error" onClick={() => {
-                        const reason = window.prompt('Reject reason?') || '';
-                        if (reason.trim()) rejectRowMutation.mutate({ rowId: r.id, reason });
-                      }}>Reject</Button>
+                      <Button
+                        size="small"
+                        onClick={() => { setAssignRowId(r.id); setAssignEmployeeId(''); setAssignOpen(true); }}
+                        disabled={
+                          String(data.baseStatus) !== 'CREATED' ||
+                          assignRowMutation.isPending ||
+                          !!r.assignedToEmployeeId
+                        }
+                      >
+                        Assign
+                      </Button>
+                      <Button
+                        size="small"
+                        onClick={() => approveRowMutation.mutate({ rowId: r.id })}
+                        disabled={
+                          String(data.baseStatus) !== 'CREATED' ||
+                          approveRowMutation.isPending ||
+                          ['TEAM_LEAD_APPROVE', 'TEAM_LEAD_REJECT', 'COMPLETED', 'ADMIN_REJECTED'].includes(String(r.status))
+                        }
+                      >
+                        Approve
+                      </Button>
+                      <Button
+                        size="small"
+                        color="error"
+                        onClick={() => { setRowRejectRowId(r.id); setRowRejectReason(''); setRowRejectOpen(true); }}
+                        disabled={
+                          String(data.baseStatus) !== 'CREATED' ||
+                          rejectRowMutation.isPending ||
+                          ['TEAM_LEAD_APPROVE', 'TEAM_LEAD_REJECT', 'COMPLETED', 'ADMIN_REJECTED'].includes(String(r.status))
+                        }
+                      >
+                        Reject
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -241,7 +271,118 @@ const TimeSheetDetail: React.FC = () => {
             </Table>
           </Stack>
         )}
-      </Paper>
+      </SectionCard>
+
+      <ConfirmDialog
+        open={cancelOpen}
+        title="Cancel Timesheet"
+        description="Please provide a reason for cancellation."
+        confirmLabel="Cancel"
+        confirmColor="error"
+        loading={cancelMutation.isPending}
+        confirmDisabled={cancelReason.trim().length === 0}
+        onClose={() => setCancelOpen(false)}
+        onConfirm={() => {
+          if (cancelReason.trim()) {
+            cancelMutation.mutate(cancelReason.trim());
+            setCancelOpen(false);
+          }
+        }}
+      >
+        <TextField
+          autoFocus
+          fullWidth
+          label="Reason"
+          multiline
+          minRows={2}
+          value={cancelReason}
+          error={cancelReason.trim().length === 0}
+          helperText={cancelReason.trim().length === 0 ? 'Reason is required' : ''}
+          onChange={(e) => setCancelReason(e.target.value)}
+        />
+      </ConfirmDialog>
+
+      <ConfirmDialog
+        open={companyRejectOpen}
+        title="Company Reject"
+        description="Optionally provide a company reject note."
+        confirmLabel="Reject"
+        confirmColor="error"
+        loading={companyRejectMutation.isPending}
+        onClose={() => setCompanyRejectOpen(false)}
+        onConfirm={() => {
+          companyRejectMutation.mutate(companyRejectNote.trim());
+          setCompanyRejectOpen(false);
+        }}
+      >
+        <TextField
+          autoFocus
+          fullWidth
+          label="Note (optional)"
+          multiline
+          minRows={2}
+          value={companyRejectNote}
+          onChange={(e) => setCompanyRejectNote(e.target.value)}
+        />
+      </ConfirmDialog>
+
+      <ConfirmDialog
+        open={assignOpen}
+        title="Assign Row"
+        description="Provide an employee ID to assign."
+        confirmLabel="Assign"
+        confirmColor="primary"
+        loading={assignRowMutation.isPending}
+        confirmDisabled={assignEmployeeId.trim() === '' || Number.isNaN(Number(assignEmployeeId))}
+        onClose={() => setAssignOpen(false)}
+        onConfirm={() => {
+          const idNum = Number(assignEmployeeId);
+          if (assignRowId && !isNaN(idNum)) {
+            assignRowMutation.mutate({ rowId: assignRowId, assigneeEmployeeId: idNum });
+            setAssignOpen(false);
+          }
+        }}
+      >
+        <TextField
+          autoFocus
+          fullWidth
+          type="number"
+          label="Employee ID"
+          value={assignEmployeeId}
+          error={assignEmployeeId.trim() === '' || Number.isNaN(Number(assignEmployeeId))}
+          helperText={(assignEmployeeId.trim() === '' || Number.isNaN(Number(assignEmployeeId))) ? 'Valid employee ID is required' : ''}
+          onChange={(e) => setAssignEmployeeId(e.target.value)}
+        />
+      </ConfirmDialog>
+
+      <ConfirmDialog
+        open={rowRejectOpen}
+        title="Reject Row"
+        description="Please provide a reason for rejection."
+        confirmLabel="Reject"
+        confirmColor="error"
+        loading={rejectRowMutation.isPending}
+        confirmDisabled={rowRejectReason.trim().length === 0}
+        onClose={() => setRowRejectOpen(false)}
+        onConfirm={() => {
+          if (rowRejectRowId && rowRejectReason.trim()) {
+            rejectRowMutation.mutate({ rowId: rowRejectRowId, reason: rowRejectReason.trim() });
+            setRowRejectOpen(false);
+          }
+        }}
+      >
+        <TextField
+          autoFocus
+          fullWidth
+          label="Reason"
+          multiline
+          minRows={2}
+          value={rowRejectReason}
+          error={rowRejectReason.trim().length === 0}
+          helperText={rowRejectReason.trim().length === 0 ? 'Reason is required' : ''}
+          onChange={(e) => setRowRejectReason(e.target.value)}
+        />
+      </ConfirmDialog>
 
       <Dialog open={historyOpen} onClose={() => setHistoryOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle>TimeSheet History</DialogTitle>
@@ -263,7 +404,7 @@ const TimeSheetDetail: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 
