@@ -85,6 +85,7 @@ const menuItems: MenuItemType[] = [
       { title: 'Assigned Rows', path: '/timesheets/assigned', icon: <Assignment />, roles: ['TEAM_MANAGER'] },
       { title: 'Approval', path: '/timesheets/approval', icon: <Assignment />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES'] },
       { title: 'Admin Approval', path: '/timesheets/admin-approval', icon: <Assignment />, roles: ['ADMIN'] },
+      { title: 'Import Timesheets', path: '/timesheets/import', icon: <Assignment />, roles: ['HUMAN_RESOURCES', 'COMPANY_MANAGER'] },
     ],
   },
   {

@@ -133,6 +133,11 @@ export const timeSheetService = {
     return response.data;
   },
 
+  cloneTimesheet: async (id: number) => {
+    const response = await apiClient.post<TimeSheet>(`${ENDPOINT}/${id}/clone`);
+    return response.data;
+  },
+
   exportExcel: async (params?: { page?: number; size?: number }) => {
     const response = await apiClient.get<Blob>(`${ENDPOINT}/export`, {
       params,

@@ -76,6 +76,11 @@ const TimeSheetDetail: React.FC = () => {
     onSuccess: () => refetchRows(),
   });
 
+  const cloneMutation = useMutation({
+    mutationFn: () => timeSheetService.cloneTimesheet(Number(id)),
+    onSuccess: (newTs) => navigate(`/timesheets/${newTs.id}`),
+  });
+
   // Quick add form
   const [newWorkDate, setNewWorkDate] = React.useState('');
   const [newHours, setNewHours] = React.useState('');
@@ -121,6 +126,15 @@ const TimeSheetDetail: React.FC = () => {
               disabled={companyRejectMutation.isPending}
             >
               Company Reject
+            </Button>
+          )}
+          {data && String(data.baseStatus) === 'ADMIN_REJECTED' && (
+            <Button
+              variant="outlined"
+              onClick={() => cloneMutation.mutate()}
+              disabled={cloneMutation.isPending}
+            >
+              Clone
             </Button>
           )}
         </Stack>
