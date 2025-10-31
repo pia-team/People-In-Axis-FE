@@ -1,0 +1,1399 @@
+openapi: 3.0.3
+info:
+  title: CV Sharing and Application API
+  description: API specification for CV sharing and application management system
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Development server
+  - url: https://api.peopleinaxis.com/api/v1
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+paths:
+  # Position Management
+  /positions:
+    get:
+      summary: List positions
+      tags: [Positions]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [DRAFT, ACTIVE, PASSIVE, CLOSED, ARCHIVED]
+        - name: department
+          in: query
+          schema:
+            type: string
+        - name: location
+          in: query
+          schema:
+            type: string
+        - name: q
+          in: query
+          description: Search query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of positions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PositionPage'
+    
+    post:
+      summary: Create position
+      tags: [Positions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePositionRequest'
+      responses:
+        '201':
+          description: Position created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Position'
+
+  /positions/{id}:
+    get:
+      summary: Get position details
+      tags: [Positions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Position details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Position'
+    
+    patch:
+      summary: Update position
+      tags: [Positions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePositionRequest'
+      responses:
+        '200':
+          description: Position updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Position'
+
+  /positions/{id}/duplicate:
+    post:
+      summary: Duplicate position
+      tags: [Positions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201':
+          description: Position duplicated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Position'
+
+  # Application Management
+  /applications:
+    get:
+      summary: List applications
+      tags: [Applications]
+      parameters:
+        - name: positionId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [NEW, IN_REVIEW, FORWARDED, MEETING_SCHEDULED, ACCEPTED, REJECTED, WITHDRAWN, ARCHIVED]
+        - name: assignee
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of applications
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationPage'
+    
+    post:
+      summary: Submit application
+      tags: [Applications]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateApplicationRequest'
+      responses:
+        '201':
+          description: Application submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+
+  /applications/{id}:
+    get:
+      summary: Get application details
+      tags: [Applications]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Application details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationDetail'
+    
+    patch:
+      summary: Update application
+      tags: [Applications]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateApplicationRequest'
+      responses:
+        '200':
+          description: Application updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+
+  /applications/{id}/forward:
+    post:
+      summary: Forward application
+      tags: [Applications]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForwardApplicationRequest'
+      responses:
+        '200':
+          description: Application forwarded
+
+  /applications/{id}/comments:
+    post:
+      summary: Add comment
+      tags: [Applications]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCommentRequest'
+      responses:
+        '201':
+          description: Comment added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+
+  /applications/{id}/ratings:
+    post:
+      summary: Add rating
+      tags: [Applications]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRatingRequest'
+      responses:
+        '201':
+          description: Rating added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rating'
+
+  /applications/{id}/meetings:
+    post:
+      summary: Schedule meeting
+      tags: [Applications]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMeetingRequest'
+      responses:
+        '201':
+          description: Meeting scheduled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Meeting'
+
+  /applications/{id}/status:
+    post:
+      summary: Update application status
+      tags: [Applications]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStatusRequest'
+      responses:
+        '200':
+          description: Status updated
+
+  # Pool CV Management
+  /pool-cvs:
+    get:
+      summary: List pool CVs
+      tags: [Pool CVs]
+      parameters:
+        - name: active
+          in: query
+          schema:
+            type: boolean
+        - name: q
+          in: query
+          schema:
+            type: string
+        - name: skills
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: languages
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: tags
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of pool CVs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PoolCVPage'
+    
+    post:
+      summary: Create pool CV
+      tags: [Pool CVs]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePoolCVRequest'
+      responses:
+        '201':
+          description: Pool CV created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PoolCV'
+
+  /pool-cvs/{id}:
+    get:
+      summary: Get pool CV details
+      tags: [Pool CVs]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Pool CV details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PoolCVDetail'
+    
+    patch:
+      summary: Update pool CV
+      tags: [Pool CVs]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePoolCVRequest'
+      responses:
+        '200':
+          description: Pool CV updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PoolCV'
+
+  /pool-cvs/{id}/files:
+    post:
+      summary: Upload file to pool CV
+      tags: [Pool CVs]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: File uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileInfo'
+
+  # File Management
+  /files/upload-url:
+    post:
+      summary: Get signed upload URL
+      tags: [Files]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadUrlRequest'
+      responses:
+        '200':
+          description: Signed URL generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadUrlResponse'
+
+  /files/{id}:
+    get:
+      summary: Download file
+      tags: [Files]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: File download URL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DownloadUrlResponse'
+
+  # Notifications
+  /notifications:
+    get:
+      summary: List notifications
+      tags: [Notifications]
+      parameters:
+        - name: unread
+          in: query
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPage'
+
+  # Audit Logs
+  /logs:
+    get:
+      summary: List audit logs
+      tags: [Audit]
+      parameters:
+        - name: entityType
+          in: query
+          schema:
+            type: string
+        - name: entityId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: userId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of audit logs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLogPage'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Position Schemas
+    Position:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        title:
+          type: string
+        department:
+          type: string
+        location:
+          type: string
+        workType:
+          type: string
+          enum: [ONSITE, REMOTE, HYBRID]
+        minExperience:
+          type: integer
+        educationLevel:
+          type: string
+        description:
+          type: string
+        requirements:
+          type: string
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/Skill'
+        languages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Language'
+        visibility:
+          type: string
+          enum: [PUBLIC, INTERNAL]
+        applicationDeadline:
+          type: string
+          format: date-time
+        salaryRangeMin:
+          type: number
+        salaryRangeMax:
+          type: number
+        status:
+          type: string
+          enum: [DRAFT, ACTIVE, PASSIVE, CLOSED, ARCHIVED]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreatePositionRequest:
+      type: object
+      required:
+        - name
+        - title
+        - status
+      properties:
+        name:
+          type: string
+        title:
+          type: string
+        department:
+          type: string
+        location:
+          type: string
+        workType:
+          type: string
+          enum: [ONSITE, REMOTE, HYBRID]
+        minExperience:
+          type: integer
+        educationLevel:
+          type: string
+        description:
+          type: string
+        requirements:
+          type: string
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillInput'
+        languages:
+          type: array
+          items:
+            $ref: '#/components/schemas/LanguageInput'
+        visibility:
+          type: string
+          enum: [PUBLIC, INTERNAL]
+        applicationDeadline:
+          type: string
+          format: date-time
+        salaryRangeMin:
+          type: number
+        salaryRangeMax:
+          type: number
+
+    UpdatePositionRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        title:
+          type: string
+        department:
+          type: string
+        location:
+          type: string
+        workType:
+          type: string
+          enum: [ONSITE, REMOTE, HYBRID]
+        minExperience:
+          type: integer
+        educationLevel:
+          type: string
+        description:
+          type: string
+        requirements:
+          type: string
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillInput'
+        languages:
+          type: array
+          items:
+            $ref: '#/components/schemas/LanguageInput'
+        visibility:
+          type: string
+          enum: [PUBLIC, INTERNAL]
+        applicationDeadline:
+          type: string
+          format: date-time
+        salaryRangeMin:
+          type: number
+        salaryRangeMax:
+          type: number
+        status:
+          type: string
+          enum: [DRAFT, ACTIVE, PASSIVE, CLOSED, ARCHIVED]
+
+    # Application Schemas
+    Application:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        positionId:
+          type: string
+          format: uuid
+        positionTitle:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        experienceYears:
+          type: integer
+        expectedSalary:
+          type: number
+        availableStartDate:
+          type: string
+          format: date
+        noticePeriodDays:
+          type: integer
+        status:
+          type: string
+          enum: [NEW, IN_REVIEW, FORWARDED, MEETING_SCHEDULED, ACCEPTED, REJECTED, WITHDRAWN, ARCHIVED]
+        appliedAt:
+          type: string
+          format: date-time
+
+    ApplicationDetail:
+      allOf:
+        - $ref: '#/components/schemas/Application'
+        - type: object
+          properties:
+            tckn:
+              type: string
+              description: Masked TCKN
+            birthDate:
+              type: string
+              format: date
+            address:
+              type: string
+            coverLetter:
+              type: string
+            files:
+              type: array
+              items:
+                $ref: '#/components/schemas/FileInfo'
+            comments:
+              type: array
+              items:
+                $ref: '#/components/schemas/Comment'
+            ratings:
+              type: array
+              items:
+                $ref: '#/components/schemas/Rating'
+            forwardings:
+              type: array
+              items:
+                $ref: '#/components/schemas/Forwarding'
+            meetings:
+              type: array
+              items:
+                $ref: '#/components/schemas/Meeting'
+
+    CreateApplicationRequest:
+      type: object
+      required:
+        - positionId
+        - firstName
+        - lastName
+        - email
+        - phone
+        - kvkkConsent
+      properties:
+        positionId:
+          type: string
+          format: uuid
+        poolCvId:
+          type: string
+          format: uuid
+        firstName:
+          type: string
+        lastName:
+          type: string
+        tckn:
+          type: string
+        birthDate:
+          type: string
+          format: date
+        email:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+        experienceYears:
+          type: integer
+        expectedSalary:
+          type: number
+        availableStartDate:
+          type: string
+          format: date
+        noticePeriodDays:
+          type: integer
+        coverLetter:
+          type: string
+        kvkkConsent:
+          type: boolean
+
+    UpdateApplicationRequest:
+      type: object
+      properties:
+        expectedSalary:
+          type: number
+        availableStartDate:
+          type: string
+          format: date
+        noticePeriodDays:
+          type: integer
+        coverLetter:
+          type: string
+
+    ForwardApplicationRequest:
+      type: object
+      required:
+        - recipients
+      properties:
+        recipients:
+          type: array
+          items:
+            type: string
+            format: uuid
+        message:
+          type: string
+
+    CreateCommentRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+        isInternal:
+          type: boolean
+          default: true
+
+    CreateRatingRequest:
+      type: object
+      required:
+        - score
+      properties:
+        score:
+          type: integer
+          minimum: 1
+          maximum: 5
+
+    CreateMeetingRequest:
+      type: object
+      required:
+        - title
+        - startTime
+        - durationMinutes
+        - participants
+      properties:
+        title:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        durationMinutes:
+          type: integer
+        provider:
+          type: string
+          enum: [TEAMS, ZOOM, MEET, OTHER]
+        meetingLink:
+          type: string
+        location:
+          type: string
+        description:
+          type: string
+        participants:
+          type: array
+          items:
+            type: object
+            properties:
+              email:
+                type: string
+              name:
+                type: string
+              isRequired:
+                type: boolean
+
+    UpdateStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [IN_REVIEW, MEETING_SCHEDULED, ACCEPTED, REJECTED, ARCHIVED]
+        reason:
+          type: string
+
+    # Pool CV Schemas
+    PoolCV:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        experienceYears:
+          type: integer
+        currentPosition:
+          type: string
+        currentCompany:
+          type: string
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/Skill'
+        languages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Language'
+        tags:
+          type: array
+          items:
+            type: string
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    PoolCVDetail:
+      allOf:
+        - $ref: '#/components/schemas/PoolCV'
+        - type: object
+          properties:
+            tckn:
+              type: string
+              description: Masked TCKN
+            birthDate:
+              type: string
+              format: date
+            address:
+              type: string
+            files:
+              type: array
+              items:
+                $ref: '#/components/schemas/FileInfo'
+
+    CreatePoolCVRequest:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - email
+        - kvkkConsent
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        tckn:
+          type: string
+        birthDate:
+          type: string
+          format: date
+        email:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+        experienceYears:
+          type: integer
+        currentPosition:
+          type: string
+        currentCompany:
+          type: string
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillInput'
+        languages:
+          type: array
+          items:
+            $ref: '#/components/schemas/LanguageInput'
+        tags:
+          type: array
+          items:
+            type: string
+        kvkkConsent:
+          type: boolean
+
+    UpdatePoolCVRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+        experienceYears:
+          type: integer
+        currentPosition:
+          type: string
+        currentCompany:
+          type: string
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillInput'
+        languages:
+          type: array
+          items:
+            $ref: '#/components/schemas/LanguageInput'
+        tags:
+          type: array
+          items:
+            type: string
+        isActive:
+          type: boolean
+
+    # Common Schemas
+    Skill:
+      type: object
+      properties:
+        name:
+          type: string
+        isRequired:
+          type: boolean
+        proficiencyLevel:
+          type: string
+        yearsOfExperience:
+          type: integer
+
+    SkillInput:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        isRequired:
+          type: boolean
+        proficiencyLevel:
+          type: string
+        yearsOfExperience:
+          type: integer
+
+    Language:
+      type: object
+      properties:
+        code:
+          type: string
+        proficiencyLevel:
+          type: string
+          enum: [A1, A2, B1, B2, C1, C2, NATIVE]
+
+    LanguageInput:
+      type: object
+      required:
+        - code
+        - proficiencyLevel
+      properties:
+        code:
+          type: string
+        proficiencyLevel:
+          type: string
+          enum: [A1, A2, B1, B2, C1, C2, NATIVE]
+
+    Comment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        userName:
+          type: string
+        content:
+          type: string
+        isInternal:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    Rating:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        userName:
+          type: string
+        score:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    Forwarding:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        forwardedBy:
+          type: string
+          format: uuid
+        forwardedByName:
+          type: string
+        forwardedTo:
+          type: string
+          format: uuid
+        forwardedToName:
+          type: string
+        message:
+          type: string
+        forwardedAt:
+          type: string
+          format: date-time
+
+    Meeting:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        durationMinutes:
+          type: integer
+        provider:
+          type: string
+          enum: [TEAMS, ZOOM, MEET, OTHER]
+        meetingLink:
+          type: string
+        location:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [SCHEDULED, COMPLETED, CANCELLED]
+        participants:
+          type: array
+          items:
+            type: object
+            properties:
+              email:
+                type: string
+              name:
+                type: string
+              isRequired:
+                type: boolean
+              responseStatus:
+                type: string
+                enum: [PENDING, ACCEPTED, DECLINED, TENTATIVE]
+
+    FileInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        fileName:
+          type: string
+        fileSize:
+          type: integer
+        fileType:
+          type: string
+        mimeType:
+          type: string
+        uploadedAt:
+          type: string
+          format: date-time
+
+    UploadUrlRequest:
+      type: object
+      required:
+        - fileName
+        - fileType
+      properties:
+        fileName:
+          type: string
+        fileType:
+          type: string
+
+    UploadUrlResponse:
+      type: object
+      properties:
+        uploadUrl:
+          type: string
+        fileId:
+          type: string
+          format: uuid
+        expiresAt:
+          type: string
+          format: date-time
+
+    DownloadUrlResponse:
+      type: object
+      properties:
+        downloadUrl:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+
+    # Pagination Schemas
+    PageInfo:
+      type: object
+      properties:
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
+
+    PositionPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Position'
+        pageInfo:
+          $ref: '#/components/schemas/PageInfo'
+
+    ApplicationPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Application'
+        pageInfo:
+          $ref: '#/components/schemas/PageInfo'
+
+    PoolCVPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/PoolCV'
+        pageInfo:
+          $ref: '#/components/schemas/PageInfo'
+
+    NotificationPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              type:
+                type: string
+              subject:
+                type: string
+              content:
+                type: string
+              isRead:
+                type: boolean
+              createdAt:
+                type: string
+                format: date-time
+        pageInfo:
+          $ref: '#/components/schemas/PageInfo'
+
+    AuditLogPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              actorId:
+                type: string
+                format: uuid
+              actorName:
+                type: string
+              action:
+                type: string
+              entityType:
+                type: string
+              entityId:
+                type: string
+                format: uuid
+              description:
+                type: string
+              createdAt:
+                type: string
+                format: date-time
+        pageInfo:
+          $ref: '#/components/schemas/PageInfo'
+
+    # Error Schemas
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object

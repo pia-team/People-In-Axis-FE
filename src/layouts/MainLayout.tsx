@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import {
   Box,
@@ -39,6 +39,26 @@ import {
   Person,
   Brightness4,
   Brightness7,
+  AccessTime,
+  ListAlt,
+  AssignmentInd,
+  AssignmentTurnedIn,
+  AdminPanelSettings,
+  UploadFile,
+  ReceiptLong,
+  FactCheck,
+  WorkOutline,
+  Group,
+  GroupAdd,
+  Inventory2,
+  Folder,
+  BarChart,
+  QueryStats,
+  InsertChartOutlined,
+  History,
+  BusinessCenter,
+  RequestQuote,
+  ManageAccounts,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -48,6 +68,7 @@ import { useKeycloak } from '@/hooks/useKeycloak';
 import { useQuery } from '@tanstack/react-query';
 import { timeSheetService } from '@/services/timesheetService';
 import { useThemeMode } from '@/providers/ThemeModeProvider';
+import { alpha } from '@mui/material/styles';
 
 const drawerWidth = 280;
 
@@ -70,7 +91,7 @@ const menuItems: MenuItemType[] = [
     icon: <People />,
     roles: ['HUMAN_RESOURCES', 'ADMIN'],
     children: [
-      { title: 'All Employees', path: '/employees', icon: <People /> },
+      { title: 'All Employees', path: '/employees', icon: <Group /> },
       { title: 'My Profile', path: '/profile', icon: <Person /> },
     ],
   },
@@ -82,37 +103,47 @@ const menuItems: MenuItemType[] = [
   },
   {
     title: 'Time Management',
-    icon: <Assignment />,
+    icon: <AccessTime />,
     children: [
-      { title: 'My Timesheets', path: '/timesheets/my', icon: <Assignment /> },
-      { title: 'All Timesheets', path: '/timesheets', icon: <Assignment />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES'] },
-      { title: 'Assigned Rows', path: '/timesheets/assigned', icon: <Assignment />, roles: ['TEAM_MANAGER'] },
-      { title: 'Approval', path: '/timesheets/approval', icon: <Assignment />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES'] },
-      { title: 'Admin Approval', path: '/timesheets/admin-approval', icon: <Assignment />, roles: ['ADMIN'] },
-      { title: 'Import Timesheets', path: '/timesheets/import', icon: <Assignment />, roles: ['HUMAN_RESOURCES', 'COMPANY_MANAGER'] },
+      { title: 'My Timesheets', path: '/timesheets/my', icon: <ListAlt /> },
+      { title: 'All Timesheets', path: '/timesheets', icon: <AssignmentInd />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES'] },
+      { title: 'Assigned Rows', path: '/timesheets/assigned', icon: <AssignmentTurnedIn />, roles: ['TEAM_MANAGER'] },
+      { title: 'Approval', path: '/timesheets/approval', icon: <FactCheck />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES'] },
+      { title: 'Admin Approval', path: '/timesheets/admin-approval', icon: <AdminPanelSettings />, roles: ['ADMIN'] },
+      { title: 'Import Timesheets', path: '/timesheets/import', icon: <UploadFile />, roles: ['HUMAN_RESOURCES', 'COMPANY_MANAGER'] },
     ],
   },
   {
     title: 'Expenses',
-    icon: <Receipt />,
+    icon: <ReceiptLong />,
     children: [
       { title: 'My Expenses', path: '/expenses/my', icon: <Receipt /> },
-      { title: 'All Expenses', path: '/expenses', icon: <Receipt />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES', 'FINANCE'] },
-      { title: 'Approval', path: '/expenses/approval', icon: <Receipt />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES', 'FINANCE'] },
+      { title: 'All Expenses', path: '/expenses', icon: <RequestQuote />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES', 'FINANCE'] },
+      { title: 'Approval', path: '/expenses/approval', icon: <FactCheck />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES', 'FINANCE'] },
     ],
   },
   {
     title: 'Projects',
     path: '/projects',
-    icon: <Work />,
+    icon: <Folder />,
+  },
+  {
+    title: 'CV Sharing',
+    icon: <WorkOutline />,
+    children: [
+      { title: 'Positions', path: '/positions', icon: <BusinessCenter />, roles: ['HUMAN_RESOURCES', 'COMPANY_MANAGER'] },
+      { title: 'Applications', path: '/applications', icon: <GroupAdd /> },
+      { title: 'Pool CVs', path: '/pool-cvs', icon: <Inventory2 /> },
+    ],
   },
   {
     title: 'Reports',
-    icon: <Assessment />,
+    icon: <BarChart />,
     roles: ['HUMAN_RESOURCES', 'ADMIN', 'COMPANY_MANAGER'],
     children: [
-      { title: 'Timesheet Report', path: '/reports/timesheet', icon: <Assessment /> },
-      { title: 'Expense Report', path: '/reports/expense', icon: <Assessment /> },
+      { title: 'Timesheet Report', path: '/reports/timesheet', icon: <QueryStats /> },
+      { title: 'Expense Report', path: '/reports/expense', icon: <InsertChartOutlined /> },
+      { title: 'Audit Logs', path: '/reports/logs', icon: <History /> },
     ],
   },
   {
@@ -120,7 +151,7 @@ const menuItems: MenuItemType[] = [
     icon: <Settings />,
     roles: ['ADMIN', 'SYSTEM_ADMIN'],
     children: [
-      { title: 'Users', path: '/admin/users', icon: <People /> },
+      { title: 'Users', path: '/admin/users', icon: <ManageAccounts /> },
       { title: 'Roles', path: '/admin/roles', icon: <Settings /> },
       { title: 'Settings', path: '/admin/settings', icon: <Settings /> },
     ],
@@ -209,6 +240,7 @@ const MainLayout: React.FC = () => {
 
     const hasChildren = item.children && item.children.length > 0;
     const isExpanded = expandedItems.includes(item.title);
+    const isCvGroup = item.title === 'CV Sharing' && level === 0;
 
     return (
       <React.Fragment key={item.title}>
@@ -222,6 +254,15 @@ const MainLayout: React.FC = () => {
                 navigate(item.path);
               }
             }}
+            sx={
+              isCvGroup
+                ? {
+                    bgcolor: (theme) => alpha(theme.palette.warning.main, 0.18),
+                    borderRadius: 1,
+                    borderLeft: (theme) => `4px solid ${theme.palette.warning.main}`,
+                  }
+                : undefined
+            }
           >
             <ListItemIcon>{item.icon}</ListItemIcon>
             <ListItemText
@@ -243,7 +284,11 @@ const MainLayout: React.FC = () => {
         </ListItem>
         {hasChildren && (
           <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
+            <List
+              component="div"
+              disablePadding
+              sx={isCvGroup ? { bgcolor: (theme) => alpha(theme.palette.warning.main, 0.10) } : undefined}
+            >
               {item.children!.map((child) => renderMenuItem(child, level + 1))}
             </List>
           </Collapse>
@@ -251,6 +296,16 @@ const MainLayout: React.FC = () => {
       </React.Fragment>
     );
   };
+
+  const menuItemsOrdered = useMemo(() => {
+    const arr = [...menuItems];
+    const idx = arr.findIndex((m) => m.title === 'CV Sharing');
+    if (idx >= 0) {
+      const [cv] = arr.splice(idx, 1);
+      arr.push(cv);
+    }
+    return arr;
+  }, []);
 
   const drawerContent = (
     <div>
@@ -261,7 +316,7 @@ const MainLayout: React.FC = () => {
       </Toolbar>
       <Divider />
       <List>
-        {menuItems.map((item) => renderMenuItem(item))}
+        {menuItemsOrdered.map((item) => renderMenuItem(item))}
       </List>
     </div>
   );

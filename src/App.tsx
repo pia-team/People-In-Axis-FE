@@ -50,10 +50,25 @@ const ProjectList = lazy(() => import('@/pages/projects/ProjectList'));
 const ProjectDetail = lazy(() => import('@/pages/projects/ProjectDetail'));
 const ProjectForm = lazy(() => import('@/pages/projects/ProjectForm'));
 
+// CV Sharing pages
+const PositionList = lazy(() => import('@/pages/cv-sharing/positions/PositionList'));
+const PositionDetail = lazy(() => import('@/pages/cv-sharing/positions/PositionDetail'));
+const PositionForm = lazy(() => import('@/pages/cv-sharing/positions/PositionForm'));
+const ApplicationList = lazy(() => import('@/pages/cv-sharing/applications/ApplicationList'));
+const ApplicationDetail = lazy(() => import('@/pages/cv-sharing/applications/ApplicationDetail'));
+const ApplicationForm = lazy(() => import('@/pages/cv-sharing/applications/ApplicationForm'));
+const ForwardDialog = lazy(() => import('@/pages/cv-sharing/applications/ForwardDialog'));
+const ApplicationReview = lazy(() => import('@/pages/cv-sharing/applications/ApplicationReview'));
+const MeetingScheduler = lazy(() => import('@/pages/cv-sharing/applications/MeetingScheduler'));
+const PoolCVList = lazy(() => import('@/pages/cv-sharing/pool-cvs/PoolCVList'));
+const PoolCVDetail = lazy(() => import('@/pages/cv-sharing/pool-cvs/PoolCVDetail'));
+const PoolCVForm = lazy(() => import('@/pages/cv-sharing/pool-cvs/PoolCVForm'));
+
 // Reports pages
 const Reports = lazy(() => import('@/pages/reports/Reports'));
 const TimeSheetReport = lazy(() => import('@/pages/reports/TimeSheetReport'));
 const ExpenseReport = lazy(() => import('@/pages/reports/ExpenseReport'));
+const AuditLogs = lazy(() => import('@/pages/reports/Logs'));
 
 // Admin pages
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
@@ -191,11 +206,56 @@ const App: React.FC = () => {
               <Route index element={<ExpenseApproval />} />
             </Route>
 
-            {/* Reports */}
-            <Route path="/reports">
+            {/* Reports (protected) */}
+            <Route
+              path="/reports"
+              element={<PrivateRoute roles={["HUMAN_RESOURCES", "ADMIN", "COMPANY_MANAGER"]} />}
+            >
               <Route index element={<Reports />} />
               <Route path="timesheet" element={<TimeSheetReport />} />
               <Route path="expense" element={<ExpenseReport />} />
+              <Route path="logs" element={<AuditLogs />} />
+            </Route>
+
+            {/* CV Sharing - Positions (HR) */}
+            <Route
+              path="/positions"
+              element={<PrivateRoute roles={["HUMAN_RESOURCES", "COMPANY_MANAGER"]} />}
+            >
+              <Route index element={<PositionList />} />
+              <Route path="new" element={<PositionForm />} />
+              <Route path=":id" element={<PositionDetail />} />
+              <Route path=":id/edit" element={<PositionForm />} />
+            </Route>
+
+            {/* CV Sharing - Applications */}
+            <Route path="/applications">
+              <Route index element={<ApplicationList />} />
+              <Route path="new/:positionId" element={<ApplicationForm />} />
+              <Route path=":id" element={<ApplicationDetail />} />
+              <Route path=":id/review" element={<ApplicationReview />} />
+              <Route path=":id/forward" element={<ForwardDialog />} />
+              <Route path=":id/meetings" element={<MeetingScheduler />} />
+            </Route>
+
+            {/* CV Sharing - Pool CVs */}
+            <Route path="/pool-cvs">
+              <Route index element={<PoolCVList />} />
+              <Route path=":id" element={<PoolCVDetail />} />
+            </Route>
+
+            {/* CV Sharing - Pool CVs (restricted create/edit) */}
+            <Route
+              path="/pool-cvs/new"
+              element={<PrivateRoute roles={["COMPANY_MANAGER", "ADMIN"]} />}
+            >
+              <Route index element={<PoolCVForm />} />
+            </Route>
+            <Route
+              path="/pool-cvs/:id/edit"
+              element={<PrivateRoute roles={["COMPANY_MANAGER", "ADMIN"]} />}
+            >
+              <Route index element={<PoolCVForm />} />
             </Route>
 
             {/* Admin */}
