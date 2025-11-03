@@ -3,7 +3,7 @@ import React from 'react';
 import { Box, Typography, Grid, Paper, Stack, Button, Skeleton, Table, TableBody, TableCell, TableHead, TableRow, Divider } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { dashboardService } from '@/services/dashboardService';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useKeycloak } from '@/hooks/useKeycloak';
 import { ResponsiveContainer, PieChart, Pie, Cell, Legend, Tooltip as RTooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
@@ -14,6 +14,7 @@ import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import PlaylistAddCheckOutlinedIcon from '@mui/icons-material/PlaylistAddCheckOutlined';
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const { hasRole, hasAnyRole } = useKeycloak();
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard', 'metrics'],
@@ -54,7 +55,7 @@ const Dashboard: React.FC = () => {
     = ({ title, value: v, loading, to, icon }) => (
       <CardBase
         title={title}
-        action={to ? <Button size="small" component={Link} to={to}>View</Button> : undefined}
+        action={to ? <Button size="small" onClick={() => navigate(to)}>View</Button> : undefined}
       >
         <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 0.5 }}>
           {icon}
@@ -188,7 +189,11 @@ const Dashboard: React.FC = () => {
               </TableHead>
               <TableBody>
                 {(data?.recentTimesheets ?? []).map((r) => (
-                  <TableRow key={r.id} hover component={Link as any} to={`/timesheets/${r.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <TableRow 
+                    key={r.id} 
+                    hover 
+                    onClick={() => navigate(`/timesheets/${r.id}`)} 
+                    sx={{ cursor: 'pointer' }}>
                     <TableCell>{r.id}</TableCell>
                     <TableCell>{r.employeeName}</TableCell>
                     <TableCell>{r.projectName}</TableCell>
@@ -215,7 +220,11 @@ const Dashboard: React.FC = () => {
               </TableHead>
               <TableBody>
                 {(data?.recentExpenses ?? []).map((r) => (
-                  <TableRow key={r.id} hover component={Link as any} to={`/expenses/${r.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <TableRow 
+                    key={r.id} 
+                    hover 
+                    onClick={() => navigate(`/expenses/${r.id}`)} 
+                    sx={{ cursor: 'pointer' }}>
                     <TableCell>{r.id}</TableCell>
                     <TableCell>{r.employeeName}</TableCell>
                     <TableCell>{(r.amount ?? 0).toLocaleString()} {r.currency}</TableCell>

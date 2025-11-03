@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Paper,
   Typography,
   Button,
   TextField,
@@ -13,11 +12,13 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Tooltip,
+  Stack,
+  Badge,
   Card,
   CardContent,
   CardActions,
   Grid,
-  Tooltip,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -25,8 +26,7 @@ import {
   List,
   ListItem,
   ListItemText,
-  Divider,
-  Badge
+  Divider
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -41,13 +41,15 @@ import {
   School as SchoolIcon,
   AttachFile as FileIcon,
   CheckCircle as ActiveIcon,
-  Cancel as InactiveIcon
+  Cancel as InactiveIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { poolCVService } from '@/services/cv-sharing';
 import { PoolCV } from '@/types/cv-sharing';
 import { useKeycloak } from '@/hooks/useKeycloak';
+import PageContainer from '@/components/ui/PageContainer';
+import SectionCard from '@/components/ui/SectionCard';
 
 interface MatchDialogData {
   open: boolean;
@@ -101,9 +103,6 @@ const PoolCVList: React.FC = () => {
     }
   };
 
-  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
-  };
 
   const filteredPoolCVs = poolCVs.filter(cv =>
     cv.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -157,39 +156,40 @@ const PoolCVList: React.FC = () => {
     return 'success';
   };
 
-  return (
-    <Box sx={{ p: 3 }}>
-      <Paper sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h4">
-            Talent Pool
-          </Typography>
-          {canEdit && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => navigate('/pool-cvs/new')}
-            >
-              Add CV to Pool
-            </Button>
-          )}
-        </Box>
 
-        <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-          <TextField
-            size="small"
-            placeholder="Search by name, email, position..."
-            value={searchTerm}
-            onChange={handleSearch}
-            sx={{ flexGrow: 1 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              )
-            }}
-          />
+  return (
+    <PageContainer
+      title="Pool CVs"
+      actions={
+        <Stack direction="row" spacing={1}>
+          <Button variant="outlined" onClick={() => loadPoolCVs()}>Refresh</Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/cv-sharing/pool-cvs/new')}
+          >
+            Add Pool CV
+          </Button>
+        </Stack>
+      }
+    >
+      <Stack spacing={2}>
+        <SectionCard>
+          <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+            <TextField
+              size="small"
+              placeholder="Search pool CVs..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              sx={{ flexGrow: 1 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                )
+              }}
+            />
           <FormControl size="small" sx={{ minWidth: 150 }}>
             <InputLabel>Experience</InputLabel>
             <Select
@@ -216,36 +216,37 @@ const PoolCVList: React.FC = () => {
               <MenuItem value="inactive">Inactive</MenuItem>
             </Select>
           </FormControl>
-        </Box>
-
-        <Grid container spacing={3}>
-          {filteredPoolCVs.map((cv) => (
-            <Grid item xs={12} md={6} lg={4} key={cv.id}>
-              <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <Avatar sx={{ width: 56, height: 56, mr: 2 }}>
-                      {cv.firstName[0]}{cv.lastName[0]}
-                    </Avatar>
-                    <Box sx={{ flexGrow: 1 }}>
-                      <Typography variant="h6">
-                        {cv.firstName} {cv.lastName}
-                      </Typography>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Chip
-                          size="small"
-                          icon={cv.isActive ? <ActiveIcon /> : <InactiveIcon />}
-                          label={cv.isActive ? 'Active' : 'Inactive'}
-                          color={cv.isActive ? 'success' : 'default'}
-                        />
-                        {(cv.fileCount ?? 0) > 0 && (
-                          <Badge badgeContent={cv.fileCount} color="primary">
-                            <FileIcon fontSize="small" />
-                          </Badge>
-                        )}
+          </Stack>
+        </SectionCard>
+        <SectionCard>
+          <Grid container spacing={3}>
+            {filteredPoolCVs.map((cv) => (
+              <Grid item xs={12} md={6} lg={4} key={cv.id}>
+                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <CardContent sx={{ flexGrow: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <Avatar sx={{ width: 56, height: 56, mr: 2 }}>
+                        {cv.firstName[0]}{cv.lastName[0]}
+                      </Avatar>
+                      <Box sx={{ flexGrow: 1 }}>
+                        <Typography variant="h6">
+                          {cv.firstName} {cv.lastName}
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Chip
+                            size="small"
+                            icon={cv.isActive ? <ActiveIcon /> : <InactiveIcon />}
+                            label={cv.isActive ? 'Active' : 'Inactive'}
+                            color={cv.isActive ? 'success' : 'default'}
+                          />
+                          {(cv.fileCount ?? 0) > 0 && (
+                            <Badge badgeContent={cv.fileCount} color="primary">
+                              <FileIcon fontSize="small" />
+                            </Badge>
+                          )}
+                        </Box>
                       </Box>
                     </Box>
-                  </Box>
 
                   <List dense>
                     <ListItem disableGutters>
@@ -355,6 +356,8 @@ const PoolCVList: React.FC = () => {
             </Typography>
           </Box>
         )}
+        </SectionCard>
+      </Stack>
 
         {/* Delete Confirmation Dialog */}
         <Dialog
@@ -412,8 +415,7 @@ const PoolCVList: React.FC = () => {
             </Button>
           </DialogActions>
         </Dialog>
-      </Paper>
-    </Box>
+    </PageContainer>
   );
 };
 

@@ -26,10 +26,7 @@ import {
   Dashboard,
   People,
   Business,
-  Assignment,
   Receipt,
-  Work,
-  Assessment,
   Settings,
   ExpandLess,
   ExpandMore,
@@ -47,7 +44,6 @@ import {
   UploadFile,
   ReceiptLong,
   FactCheck,
-  WorkOutline,
   Group,
   GroupAdd,
   Inventory2,
@@ -59,6 +55,7 @@ import {
   BusinessCenter,
   RequestQuote,
   ManageAccounts,
+  Share,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -78,6 +75,7 @@ interface MenuItemType {
   icon: React.ReactElement;
   children?: MenuItemType[];
   roles?: string[];
+  isModule?: boolean;
 }
 
 const menuItems: MenuItemType[] = [
@@ -129,11 +127,12 @@ const menuItems: MenuItemType[] = [
   },
   {
     title: 'CV Sharing',
-    icon: <WorkOutline />,
+    icon: <Share />,
+    isModule: true,
     children: [
-      { title: 'Positions', path: '/positions', icon: <BusinessCenter />, roles: ['HUMAN_RESOURCES', 'COMPANY_MANAGER'] },
-      { title: 'Applications', path: '/applications', icon: <GroupAdd /> },
-      { title: 'Pool CVs', path: '/pool-cvs', icon: <Inventory2 /> },
+      { title: 'Positions', path: '/cv-sharing/positions', icon: <BusinessCenter />, roles: ['HUMAN_RESOURCES', 'COMPANY_MANAGER'] },
+      { title: 'Applications', path: '/cv-sharing/applications', icon: <GroupAdd /> },
+      { title: 'Pool CVs', path: '/cv-sharing/pool-cvs', icon: <Inventory2 /> },
     ],
   },
   {
@@ -240,7 +239,7 @@ const MainLayout: React.FC = () => {
 
     const hasChildren = item.children && item.children.length > 0;
     const isExpanded = expandedItems.includes(item.title);
-    const isCvGroup = item.title === 'CV Sharing' && level === 0;
+    const isModule = item.isModule && level === 0;
 
     return (
       <React.Fragment key={item.title}>
@@ -255,16 +254,40 @@ const MainLayout: React.FC = () => {
               }
             }}
             sx={
-              isCvGroup
+              isModule
                 ? {
-                    bgcolor: (theme) => alpha(theme.palette.warning.main, 0.18),
+                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
                     borderRadius: 1,
-                    borderLeft: (theme) => `4px solid ${theme.palette.warning.main}`,
+                    borderLeft: (theme) => `4px solid ${theme.palette.primary.main}`,
+                    my: 0.5,
+                    '&:hover': {
+                      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.12),
+                    },
+                    '&.Mui-selected': {
+                      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.16),
+                      borderLeft: (theme) => `4px solid ${theme.palette.primary.dark}`,
+                    },
                   }
                 : undefined
             }
           >
-            <ListItemIcon>{item.icon}</ListItemIcon>
+            <ListItemIcon sx={isModule ? { color: 'primary.main' } : undefined}>
+              {isModule ? (
+                <Badge badgeContent="MODULE" color="primary" sx={{ 
+                  '& .MuiBadge-badge': { 
+                    fontSize: '0.6rem', 
+                    height: 16,
+                    minWidth: 16,
+                    right: -8,
+                    top: -8
+                  } 
+                }}>
+                  {item.icon}
+                </Badge>
+              ) : (
+                item.icon
+              )}
+            </ListItemIcon>
             <ListItemText
               primary={(() => {
                 if (item.title === 'Approval' && typeof managerPendingCount === 'number' && managerPendingCount > 0) {
@@ -287,7 +310,11 @@ const MainLayout: React.FC = () => {
             <List
               component="div"
               disablePadding
-              sx={isCvGroup ? { bgcolor: (theme) => alpha(theme.palette.warning.main, 0.10) } : undefined}
+              sx={isModule ? { 
+                bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
+                borderLeft: (theme) => `2px solid ${theme.palette.primary.main}`,
+                ml: 2
+              } : undefined}
             >
               {item.children!.map((child) => renderMenuItem(child, level + 1))}
             </List>
@@ -298,27 +325,38 @@ const MainLayout: React.FC = () => {
   };
 
   const menuItemsOrdered = useMemo(() => {
-    const arr = [...menuItems];
-    const idx = arr.findIndex((m) => m.title === 'CV Sharing');
-    if (idx >= 0) {
-      const [cv] = arr.splice(idx, 1);
-      arr.push(cv);
-    }
-    return arr;
+    const regularItems = menuItems.filter(item => !item.isModule);
+    const moduleItems = menuItems.filter(item => item.isModule);
+    return { regular: regularItems, modules: moduleItems };
   }, []);
 
   const drawerContent = (
-    <div>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Toolbar>
         <Typography variant="h6" noWrap component="div">
           People In Axis
         </Typography>
       </Toolbar>
       <Divider />
-      <List>
-        {menuItemsOrdered.map((item) => renderMenuItem(item))}
-      </List>
-    </div>
+      <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+        <List>
+          {menuItemsOrdered.regular.map((item) => renderMenuItem(item))}
+        </List>
+        {menuItemsOrdered.modules.length > 0 && (
+          <>
+            <Divider sx={{ my: 2, mx: 2 }} />
+            <Box sx={{ px: 2, pb: 1 }}>
+              <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 600 }}>
+                Modules
+              </Typography>
+            </Box>
+            <List>
+              {menuItemsOrdered.modules.map((item) => renderMenuItem(item))}
+            </List>
+          </>
+        )}
+      </Box>
+    </Box>
   );
 
   const { mode, toggle } = useThemeMode();

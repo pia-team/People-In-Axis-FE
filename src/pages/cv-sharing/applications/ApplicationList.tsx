@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
-  Paper,
   Typography,
   Button,
   Chip,
@@ -20,21 +19,27 @@ import {
   Select,
   Avatar,
   Tooltip,
-  Badge
+  Badge,
+  Stack
 } from '@mui/material';
-import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridRenderCellParams, GridPaginationModel } from '@mui/x-data-grid';
 import {
   Search as SearchIcon,
   Visibility as ViewIcon,
   Comment as CommentIcon,
   Star as StarIcon,
   Forward as ForwardIcon,
-  MoreVert as MoreIcon
+  MoreVert as MoreIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { applicationService } from '@/services/cv-sharing';
 import { Application, ApplicationStatus } from '@/types/cv-sharing';
+import PageContainer from '@/components/ui/PageContainer';
+import SectionCard from '@/components/ui/SectionCard';
+import { standardDataGridSx } from '@/components/ui/dataGridStyles';
+import EmptyState from '@/components/ui/EmptyState';
 
 interface CommentDialogData {
   open: boolean;
@@ -51,10 +56,11 @@ interface RatingDialogData {
 const ApplicationList: React.FC = () => {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [paginationModel, setPaginationModel] = React.useState<GridPaginationModel>(
+    { page: 0, pageSize: 10 }
+  );
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<ApplicationStatus | 'ALL'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<ApplicationStatus | ''>('');
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [commentDialog, setCommentDialog] = useState<CommentDialogData>({
@@ -68,33 +74,27 @@ const ApplicationList: React.FC = () => {
     score: 0
   });
 
-  useEffect(() => {
-    loadApplications();
-  }, [statusFilter]);
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ['applications', paginationModel.page, paginationModel.pageSize, statusFilter, searchTerm],
+    queryFn: async () => applicationService.getApplications({
+      page: paginationModel.page,
+      size: paginationModel.pageSize,
+      status: statusFilter || undefined,
+      q: searchTerm || undefined
+    }),
+    placeholderData: keepPreviousData,
+  });
 
-  const loadApplications = async () => {
-    try {
-      setLoading(true);
-      const params = statusFilter !== 'ALL' ? { status: statusFilter } : {};
-      const data = await applicationService.getApplications(params);
-      setApplications(data.content || []);
-    } catch (error) {
-      enqueueSnackbar('Failed to load applications', { variant: 'error' });
-    } finally {
-      setLoading(false);
-    }
+  const rows = data?.content ?? [];
+  const rowCount = data?.pageInfo?.totalElements ?? 0;
+
+  const handlePaginationChange = (model: GridPaginationModel) => {
+    setPaginationModel({ page: model.page, pageSize: model.pageSize });
   };
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
   };
-
-  const filteredApplications = applications.filter(app =>
-    app.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    app.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    app.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    app.positionTitle?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, application: Application) => {
     setAnchorEl(event.currentTarget);
@@ -110,7 +110,7 @@ const ApplicationList: React.FC = () => {
     try {
       await applicationService.updateApplicationStatus(applicationId, { status: newStatus });
       enqueueSnackbar('Status updated successfully', { variant: 'success' });
-      loadApplications();
+      refetch();
     } catch (error) {
       enqueueSnackbar('Failed to update status', { variant: 'error' });
     }
@@ -126,7 +126,7 @@ const ApplicationList: React.FC = () => {
       });
       enqueueSnackbar('Comment added successfully', { variant: 'success' });
       setCommentDialog({ open: false, applicationId: null, comment: '' });
-      loadApplications();
+      refetch();
     } catch (error) {
       enqueueSnackbar('Failed to add comment', { variant: 'error' });
     }
@@ -139,7 +139,7 @@ const ApplicationList: React.FC = () => {
       await applicationService.addRating(ratingDialog.applicationId, { score: ratingDialog.score });
       enqueueSnackbar('Rating added successfully', { variant: 'success' });
       setRatingDialog({ open: false, applicationId: null, score: 0 });
-      loadApplications();
+      refetch();
     } catch (error) {
       enqueueSnackbar('Failed to add rating', { variant: 'error' });
     }
@@ -163,7 +163,8 @@ const ApplicationList: React.FC = () => {
     {
       field: 'applicant',
       headerName: 'Applicant',
-      width: 250,
+      flex: 1.5,
+      minWidth: 250,
       renderCell: (params: GridRenderCellParams) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Avatar sx={{ width: 32, height: 32 }}>
@@ -183,7 +184,8 @@ const ApplicationList: React.FC = () => {
     {
       field: 'positionTitle',
       headerName: 'Position',
-      width: 200,
+      flex: 1,
+      minWidth: 150,
       renderCell: (params: GridRenderCellParams) => (
         <Typography variant="body2">
           {params.row.positionTitle || '-'}
@@ -193,7 +195,7 @@ const ApplicationList: React.FC = () => {
     {
       field: 'appliedAt',
       headerName: 'Applied Date',
-      width: 120,
+      width: 130,
       renderCell: (params: GridRenderCellParams) => (
         <Typography variant="body2">
           {new Date(params.row.appliedAt).toLocaleDateString()}
@@ -203,7 +205,7 @@ const ApplicationList: React.FC = () => {
     {
       field: 'status',
       headerName: 'Status',
-      width: 150,
+      width: 140,
       renderCell: (params: GridRenderCellParams) => (
         <Chip
           label={params.row.status.replace('_', ' ')}
@@ -215,7 +217,7 @@ const ApplicationList: React.FC = () => {
     {
       field: 'rating',
       headerName: 'Rating',
-      width: 120,
+      width: 140,
       renderCell: (params: GridRenderCellParams) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           {params.row.averageRating ? (
@@ -236,7 +238,9 @@ const ApplicationList: React.FC = () => {
     {
       field: 'comments',
       headerName: 'Comments',
-      width: 100,
+      width: 110,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: (params: GridRenderCellParams) => (
         <Badge badgeContent={params.row.commentCount} color="primary">
           <CommentIcon fontSize="small" />
@@ -246,14 +250,17 @@ const ApplicationList: React.FC = () => {
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 150,
+      width: 160,
       sortable: false,
       renderCell: (params: GridRenderCellParams) => (
         <Box>
           <Tooltip title="View">
             <IconButton
               size="small"
-              onClick={() => navigate(`/applications/${params.row.id}`)}
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/cv-sharing/applications/${params.row.id}`);
+              }}
             >
               <ViewIcon fontSize="small" />
             </IconButton>
@@ -261,11 +268,14 @@ const ApplicationList: React.FC = () => {
           <Tooltip title="Add Comment">
             <IconButton
               size="small"
-              onClick={() => setCommentDialog({
-                open: true,
-                applicationId: params.row.id,
-                comment: ''
-              })}
+              onClick={(e) => {
+                e.stopPropagation();
+                setCommentDialog({
+                  open: true,
+                  applicationId: params.row.id,
+                  comment: ''
+                });
+              }}
             >
               <CommentIcon fontSize="small" />
             </IconButton>
@@ -273,18 +283,24 @@ const ApplicationList: React.FC = () => {
           <Tooltip title="Add Rating">
             <IconButton
               size="small"
-              onClick={() => setRatingDialog({
-                open: true,
-                applicationId: params.row.id,
-                score: 0
-              })}
+              onClick={(e) => {
+                e.stopPropagation();
+                setRatingDialog({
+                  open: true,
+                  applicationId: params.row.id,
+                  score: 0
+                });
+              }}
             >
               <StarIcon fontSize="small" />
             </IconButton>
           </Tooltip>
           <IconButton
             size="small"
-            onClick={(e) => handleMenuOpen(e, params.row)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleMenuOpen(e, params.row);
+            }}
           >
             <MoreIcon fontSize="small" />
           </IconButton>
@@ -293,19 +309,30 @@ const ApplicationList: React.FC = () => {
     }
   ];
 
+  const NoApplicationsOverlay = React.useCallback(() => (
+    <EmptyState
+      title="No applications"
+      description="There are no applications to display."
+    />
+  ), []);
+
   return (
-    <Box sx={{ p: 3 }}>
-      <Paper sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h4">
-            Applications
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 2 }}>
+    <PageContainer
+      title="Applications"
+      actions={
+        <Stack direction="row" spacing={1}>
+          <Button variant="outlined" onClick={() => refetch()}>Refresh</Button>
+        </Stack>
+      }
+    >
+      <Stack spacing={2}>
+        <SectionCard>
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
             <TextField
-              size="small"
               placeholder="Search applications..."
               value={searchTerm}
               onChange={handleSearch}
+              sx={{ flex: { xs: '1 1 100%', md: '1 1 auto' } }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -314,14 +341,14 @@ const ApplicationList: React.FC = () => {
                 )
               }}
             />
-            <FormControl size="small" sx={{ minWidth: 150 }}>
+            <FormControl sx={{ minWidth: { xs: '100%', sm: 250 } }}>
               <InputLabel>Status</InputLabel>
               <Select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as ApplicationStatus | 'ALL')}
+                onChange={(e) => setStatusFilter(e.target.value as ApplicationStatus | '')}
                 label="Status"
               >
-                <MenuItem value="ALL">All Status</MenuItem>
+                <MenuItem value="">All Status</MenuItem>
                 <MenuItem value={ApplicationStatus.NEW}>New</MenuItem>
                 <MenuItem value={ApplicationStatus.IN_REVIEW}>In Review</MenuItem>
                 <MenuItem value={ApplicationStatus.FORWARDED}>Forwarded</MenuItem>
@@ -331,26 +358,59 @@ const ApplicationList: React.FC = () => {
               </Select>
             </FormControl>
           </Box>
-        </Box>
+        </SectionCard>
 
-        <DataGrid
-          rows={filteredApplications}
-          columns={columns}
-          initialState={{
-            pagination: {
-              paginationModel: { pageSize: 10 }
-            }
-          }}
-          pageSizeOptions={[10, 25, 50]}
-          loading={loading}
-          autoHeight
-          disableRowSelectionOnClick
-          sx={{
-            '& .MuiDataGrid-cell:focus': {
-              outline: 'none'
-            }
-          }}
-        />
+        <SectionCard>
+          <Box sx={{ width: '100%' }}>
+            <DataGrid
+              rows={rows}
+              columns={columns}
+              getRowId={(row) => row.id}
+              loading={isLoading}
+              paginationMode="server"
+              rowCount={rowCount}
+              pageSizeOptions={[5, 10, 25, 50]}
+              paginationModel={paginationModel}
+              onPaginationModelChange={handlePaginationChange}
+              onCellClick={(params) => {
+                // Don't navigate if clicking on actions column
+                if (params.field !== 'actions') {
+                  navigate(`/cv-sharing/applications/${params.id}`);
+                }
+              }}
+              disableRowSelectionOnClick
+              autoHeight
+              sx={{
+                border: 'none',
+                '& .MuiDataGrid-cell': {
+                  py: 1.5,
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
+                },
+                '& .MuiDataGrid-columnHeaders': {
+                  backgroundColor: 'background.default',
+                  borderBottom: 2,
+                  borderColor: 'divider',
+                },
+                '& .MuiDataGrid-row:hover': {
+                  cursor: 'pointer',
+                  backgroundColor: 'action.hover',
+                },
+                '& .MuiDataGrid-footerContainer': {
+                  borderTop: '2px solid',
+                  borderColor: 'divider',
+                },
+              }}
+              slots={{ noRowsOverlay: NoApplicationsOverlay }}
+            />
+          </Box>
+        </SectionCard>
+        {isError && (
+          <Typography variant="body2" color="error" sx={{ mt: -1 }}>
+            Failed to load applications.
+          </Typography>
+        )}
+      </Stack>
 
         {/* Action Menu */}
         <Menu
@@ -448,8 +508,7 @@ const ApplicationList: React.FC = () => {
             </Button>
           </DialogActions>
         </Dialog>
-      </Paper>
-    </Box>
+    </PageContainer>
   );
 };
 

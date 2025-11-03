@@ -2,32 +2,38 @@ import React, { useState } from 'react';
 import {
   Box,
   Button,
-  Card,
-  CardContent,
-  Typography,
-  IconButton,
   Chip,
+  IconButton,
   TextField,
+  Typography,
+  Stack,
   MenuItem,
-  Grid,
-  Tooltip,
-  Paper
+  Select,
+  FormControl,
+  InputLabel,
+  InputAdornment,
+  Tooltip
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Visibility as ViewIcon,
-  Archive as ArchiveIcon,
-  ContentCopy as DuplicateIcon,
   Search as SearchIcon,
-  FilterList as FilterIcon
+  FilterList as FilterIcon,
+  ContentCopy as DuplicateIcon,
+  Archive as ArchiveIcon
 } from '@mui/icons-material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import { positionService } from '@/services/cv-sharing';
+import { positionService } from '@/services/cv-sharing/positionService';
 import { Position, PositionStatus, WorkType } from '@/types/cv-sharing';
+import { format } from 'date-fns';
+import PageContainer from '@/components/ui/PageContainer';
+import SectionCard from '@/components/ui/SectionCard';
+import { standardDataGridSx } from '@/components/ui/dataGridStyles';
+import EmptyState from '@/components/ui/EmptyState';
 
 const PositionList: React.FC = () => {
   const navigate = useNavigate();
@@ -39,7 +45,7 @@ const PositionList: React.FC = () => {
   const [departmentFilter, setDepartmentFilter] = useState('');
 
   // Fetch positions
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['positions', page, pageSize, searchQuery, statusFilter, departmentFilter],
     queryFn: () => positionService.getPositions({
       page,
@@ -148,7 +154,7 @@ const PositionList: React.FC = () => {
       width: 120,
       valueFormatter: (params) => {
         if (!params.value) return '-';
-        return new Date(params.value).toLocaleDateString();
+        return format(new Date(params.value), 'dd/MM/yyyy');
       }
     },
     {
@@ -163,7 +169,10 @@ const PositionList: React.FC = () => {
             <Tooltip title="View">
               <IconButton
                 size="small"
-                onClick={() => navigate(`/positions/${position.id}`)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/cv-sharing/positions/${position.id}`);
+                }}
               >
                 <ViewIcon fontSize="small" />
               </IconButton>
@@ -171,7 +180,10 @@ const PositionList: React.FC = () => {
             <Tooltip title="Edit">
               <IconButton
                 size="small"
-                onClick={() => navigate(`/positions/${position.id}/edit`)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/cv-sharing/positions/${position.id}/edit`);
+                }}
               >
                 <EditIcon fontSize="small" />
               </IconButton>
@@ -179,7 +191,10 @@ const PositionList: React.FC = () => {
             <Tooltip title="Duplicate">
               <IconButton
                 size="small"
-                onClick={() => handleDuplicate(position.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDuplicate(position.id);
+                }}
               >
                 <DuplicateIcon fontSize="small" />
               </IconButton>
@@ -187,7 +202,10 @@ const PositionList: React.FC = () => {
             <Tooltip title="Archive">
               <IconButton
                 size="small"
-                onClick={() => handleArchive(position.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleArchive(position.id);
+                }}
                 disabled={position.status === PositionStatus.ARCHIVED}
               >
                 <ArchiveIcon fontSize="small" />
@@ -199,97 +217,133 @@ const PositionList: React.FC = () => {
     }
   ];
 
-  return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h4" component="h1">
-          Positions
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => navigate('/positions/new')}
-        >
-          Create Position
-        </Button>
-      </Box>
+  const NoPositionsOverlay = React.useCallback(() => (
+    <EmptyState
+      title="No positions"
+      description="There are no positions to display."
+    />
+  ), []);
 
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={4}>
+  return (
+    <PageContainer
+      title="Positions"
+      actions={
+        <Stack direction="row" spacing={1}>
+          <Button variant="outlined" onClick={() => refetch()}>Refresh</Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/cv-sharing/positions/new')}
+          >
+            Create Position
+          </Button>
+        </Stack>
+      }
+    >
+      <Stack spacing={2}>
+        <SectionCard>
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
             <TextField
-              fullWidth
               variant="outlined"
               placeholder="Search positions..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              sx={{ flex: { xs: '1 1 100%', md: '1 1 auto' } }}
               InputProps={{
-                startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                )
               }}
             />
-          </Grid>
-          <Grid item xs={12} md={3}>
+            <FormControl sx={{ minWidth: { xs: '100%', sm: 180 } }}>
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={statusFilter}
+                label="Status"
+                onChange={(e) => setStatusFilter(e.target.value as PositionStatus | '')}
+              >
+                <MenuItem value="">All</MenuItem>
+                <MenuItem value={PositionStatus.DRAFT}>Draft</MenuItem>
+                <MenuItem value={PositionStatus.ACTIVE}>Active</MenuItem>
+                <MenuItem value={PositionStatus.PASSIVE}>Passive</MenuItem>
+                <MenuItem value={PositionStatus.CLOSED}>Closed</MenuItem>
+                <MenuItem value={PositionStatus.ARCHIVED}>Archived</MenuItem>
+              </Select>
+            </FormControl>
             <TextField
-              fullWidth
-              select
-              label="Status"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as PositionStatus | '')}
-            >
-              <MenuItem value="">All</MenuItem>
-              <MenuItem value={PositionStatus.DRAFT}>Draft</MenuItem>
-              <MenuItem value={PositionStatus.ACTIVE}>Active</MenuItem>
-              <MenuItem value={PositionStatus.PASSIVE}>Passive</MenuItem>
-              <MenuItem value={PositionStatus.CLOSED}>Closed</MenuItem>
-              <MenuItem value={PositionStatus.ARCHIVED}>Archived</MenuItem>
-            </TextField>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <TextField
-              fullWidth
               label="Department"
               value={departmentFilter}
               onChange={(e) => setDepartmentFilter(e.target.value)}
+              sx={{ minWidth: { xs: '100%', sm: 200 } }}
             />
-          </Grid>
-          <Grid item xs={12} md={2}>
             <Button
-              fullWidth
               variant="outlined"
               startIcon={<FilterIcon />}
               onClick={() => refetch()}
+              sx={{ minWidth: { xs: '100%', sm: 'auto' } }}
             >
               Apply Filters
             </Button>
-          </Grid>
-        </Grid>
-      </Paper>
+          </Box>
+        </SectionCard>
 
-      <Card>
-        <CardContent sx={{ p: 0 }}>
-          <DataGrid
-            rows={data?.content || []}
-            columns={columns}
-            loading={isLoading}
-            paginationMode="server"
-            rowCount={data?.pageInfo.totalElements || 0}
-            paginationModel={{ page, pageSize }}
-            onPaginationModelChange={(model) => {
-              setPage(model.page);
-              setPageSize(model.pageSize);
-            }}
-            pageSizeOptions={[10, 25, 50]}
-            disableRowSelectionOnClick
-            autoHeight
-            sx={{
-              '& .MuiDataGrid-root': {
-                border: 'none'
-              }
-            }}
-          />
-        </CardContent>
-      </Card>
-    </Box>
+        <SectionCard>
+          <Box sx={{ width: '100%' }}>
+            <DataGrid
+              rows={data?.content || []}
+              columns={columns}
+              getRowId={(row) => row.id}
+              loading={isLoading}
+              paginationMode="server"
+              rowCount={data?.pageInfo?.totalElements || 0}
+              pageSizeOptions={[5, 10, 25, 50]}
+              paginationModel={{ page, pageSize }}
+              onPaginationModelChange={(model) => {
+                setPage(model.page);
+                setPageSize(model.pageSize);
+              }}
+              onCellClick={(params) => {
+                // Don't navigate if clicking on actions column
+                if (params.field !== 'actions') {
+                  navigate(`/cv-sharing/positions/${params.id}`);
+                }
+              }}
+              disableRowSelectionOnClick
+              autoHeight
+              sx={{
+                border: 'none',
+                '& .MuiDataGrid-cell': {
+                  py: 1.5,
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
+                },
+                '& .MuiDataGrid-columnHeaders': {
+                  backgroundColor: 'background.default',
+                  borderBottom: 2,
+                  borderColor: 'divider',
+                },
+                '& .MuiDataGrid-row:hover': {
+                  cursor: 'pointer',
+                  backgroundColor: 'action.hover',
+                },
+                '& .MuiDataGrid-footerContainer': {
+                  borderTop: '2px solid',
+                  borderColor: 'divider',
+                },
+              }}
+              slots={{ noRowsOverlay: NoPositionsOverlay }}
+            />
+          </Box>
+        </SectionCard>
+        {isError && (
+          <Typography variant="body2" color="error" sx={{ mt: -1 }}>
+            Failed to load positions.
+          </Typography>
+        )}
+      </Stack>
+    </PageContainer>
   );
 };
 

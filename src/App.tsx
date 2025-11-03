@@ -219,7 +219,7 @@ const App: React.FC = () => {
 
             {/* CV Sharing - Positions (HR) */}
             <Route
-              path="/positions"
+              path="/cv-sharing/positions"
               element={<PrivateRoute roles={["HUMAN_RESOURCES", "COMPANY_MANAGER"]} />}
             >
               <Route index element={<PositionList />} />
@@ -229,7 +229,7 @@ const App: React.FC = () => {
             </Route>
 
             {/* CV Sharing - Applications */}
-            <Route path="/applications">
+            <Route path="/cv-sharing/applications">
               <Route index element={<ApplicationList />} />
               <Route path="new/:positionId" element={<ApplicationForm />} />
               <Route path=":id" element={<ApplicationDetail />} />
@@ -239,23 +239,11 @@ const App: React.FC = () => {
             </Route>
 
             {/* CV Sharing - Pool CVs */}
-            <Route path="/pool-cvs">
+            <Route path="/cv-sharing/pool-cvs">
               <Route index element={<PoolCVList />} />
               <Route path=":id" element={<PoolCVDetail />} />
-            </Route>
-
-            {/* CV Sharing - Pool CVs (restricted create/edit) */}
-            <Route
-              path="/pool-cvs/new"
-              element={<PrivateRoute roles={["COMPANY_MANAGER", "ADMIN"]} />}
-            >
-              <Route index element={<PoolCVForm />} />
-            </Route>
-            <Route
-              path="/pool-cvs/:id/edit"
-              element={<PrivateRoute roles={["COMPANY_MANAGER", "ADMIN"]} />}
-            >
-              <Route index element={<PoolCVForm />} />
+              <Route path="new" element={<PoolCVForm />} />
+              <Route path=":id/edit" element={<PoolCVForm />} />
             </Route>
 
             {/* Admin */}
