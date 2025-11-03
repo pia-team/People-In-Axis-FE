@@ -46,7 +46,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { poolCVService } from '@/services/cv-sharing';
-import { PoolCV } from '@/types/cv-sharing';
+import { PoolCV, FileInfo } from '@/types/cv-sharing';
 import { useKeycloak } from '@/hooks/useKeycloak';
 import PageContainer from '@/components/ui/PageContainer';
 import SectionCard from '@/components/ui/SectionCard';
@@ -146,6 +146,29 @@ const PoolCVList: React.FC = () => {
       });
     } catch (error) {
       enqueueSnackbar('Failed to match positions', { variant: 'error' });
+    }
+  };
+
+  const handleDownload = async (cvId: string) => {
+    try {
+      const detail = await poolCVService.getPoolCVById(cvId);
+      const files = (detail as any).files as FileInfo[] | undefined;
+      if (!files || files.length === 0) {
+        enqueueSnackbar('No files found for this CV', { variant: 'info' });
+        return;
+      }
+      const first = files[0];
+      const blob = await poolCVService.downloadFile(cvId, first.id);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = first.fileName || 'cv-file';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      enqueueSnackbar('Failed to download CV', { variant: 'error' });
     }
   };
 
@@ -290,7 +313,7 @@ const PoolCVList: React.FC = () => {
                     <Tooltip title="View Details">
                       <IconButton
                         size="small"
-                        onClick={() => navigate(`/pool-cvs/${cv.id}`)}
+                        onClick={() => navigate(`/cv-sharing/pool-cvs/${cv.id}`)}
                       >
                         <ViewIcon />
                       </IconButton>
@@ -299,14 +322,14 @@ const PoolCVList: React.FC = () => {
                       <Tooltip title="Edit">
                         <IconButton
                           size="small"
-                          onClick={() => navigate(`/pool-cvs/${cv.id}/edit`)}
+                          onClick={() => navigate(`/cv-sharing/pool-cvs/${cv.id}/edit`)}
                         >
                           <EditIcon />
                         </IconButton>
                       </Tooltip>
                     )}
                     <Tooltip title="Download CV">
-                      <IconButton size="small" onClick={() => navigate(`/pool-cvs/${cv.id}`)}>
+                      <IconButton size="small" onClick={() => handleDownload(cv.id)}>
                         <DownloadIcon />
                       </IconButton>
                     </Tooltip>
@@ -398,7 +421,7 @@ const PoolCVList: React.FC = () => {
                     />
                     <Button
                       size="small"
-                      onClick={() => navigate(`/positions/${position.id}`)}
+                      onClick={() => navigate(`/cv-sharing/positions/${position.id}`)}
                     >
                       View
                     </Button>

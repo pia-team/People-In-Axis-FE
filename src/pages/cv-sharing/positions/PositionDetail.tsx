@@ -9,10 +9,7 @@ import {
   Grid,
   Divider,
   Stack,
-  Card,
-  CardContent,
   IconButton,
-  Tooltip,
   Alert,
   Tab,
   Tabs,
@@ -20,8 +17,7 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Avatar,
-  Badge
+  Avatar
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -290,11 +286,11 @@ const PositionDetail: React.FC = () => {
                     <strong>Deadline:</strong> {position.applicationDeadline ? format(new Date(position.applicationDeadline), 'dd/MM/yyyy') : 'No deadline'}
                   </Typography>
                 </Box>
-                {position.salaryMin && position.salaryMax && (
+                {position.salaryRangeMin && position.salaryRangeMax && (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <SalaryIcon color="action" />
                     <Typography variant="body2">
-                      <strong>Salary:</strong> ${position.salaryMin.toLocaleString()} - ${position.salaryMax.toLocaleString()}
+                      <strong>Salary:</strong> ${position.salaryRangeMin.toLocaleString()} - ${position.salaryRangeMax.toLocaleString()}
                     </Typography>
                   </Box>
                 )}
@@ -316,7 +312,7 @@ const PositionDetail: React.FC = () => {
         <TabPanel value={tabValue} index={0}>
           <Grid container spacing={3}>
             {/* Required Skills */}
-            {position.requiredSkills && position.requiredSkills.length > 0 && (
+            {position.skills && position.skills.length > 0 && (
               <Grid item xs={12} md={6}>
                 <SectionCard>
                   <Typography variant="h6" gutterBottom>
@@ -325,23 +321,25 @@ const PositionDetail: React.FC = () => {
                   </Typography>
                   <Divider sx={{ my: 2 }} />
                   <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                    {position.requiredSkills.map((skill, index) => (
-                      <Chip
-                        key={index}
-                        label={skill.name}
-                        variant="outlined"
-                        color="primary"
-                        size="small"
-                        icon={skill.level ? <Badge badgeContent={skill.level} color="primary" /> : undefined}
-                      />
-                    ))}
+                    {position.skills.map((skill, index) => {
+                      const label = `${skill.name}${skill.proficiencyLevel ? ` (${skill.proficiencyLevel})` : ''}`;
+                      return (
+                        <Chip
+                          key={index}
+                          label={label}
+                          variant="outlined"
+                          color="primary"
+                          size="small"
+                        />
+                      );
+                    })}
                   </Stack>
                 </SectionCard>
               </Grid>
             )}
 
             {/* Required Languages */}
-            {position.requiredLanguages && position.requiredLanguages.length > 0 && (
+            {position.languages && position.languages.length > 0 && (
               <Grid item xs={12} md={6}>
                 <SectionCard>
                   <Typography variant="h6" gutterBottom>
@@ -350,14 +348,14 @@ const PositionDetail: React.FC = () => {
                   </Typography>
                   <Divider sx={{ my: 2 }} />
                   <List dense>
-                    {position.requiredLanguages.map((lang, index) => (
+                    {position.languages.map((lang, index) => (
                       <ListItem key={index}>
                         <ListItemIcon>
                           <CheckIcon color="success" />
                         </ListItemIcon>
                         <ListItemText
-                          primary={lang.name}
-                          secondary={`Level: ${lang.level}`}
+                          primary={lang.code}
+                          secondary={`Level: ${lang.proficiencyLevel}`}
                         />
                       </ListItem>
                     ))}
@@ -378,17 +376,12 @@ const PositionDetail: React.FC = () => {
                   <Typography variant="body1">
                     {position.educationLevel}
                   </Typography>
-                  {position.educationField && (
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                      Field: {position.educationField}
-                    </Typography>
-                  )}
                 </SectionCard>
               </Grid>
             )}
 
             {/* Experience */}
-            {position.experienceYears !== undefined && (
+            {position.minExperience !== undefined && (
               <Grid item xs={12} md={6}>
                 <SectionCard>
                   <Typography variant="h6" gutterBottom>
@@ -397,7 +390,7 @@ const PositionDetail: React.FC = () => {
                   </Typography>
                   <Divider sx={{ my: 2 }} />
                   <Typography variant="h4" color="primary">
-                    {position.experienceYears}+ years
+                    {position.minExperience}+ years
                   </Typography>
                 </SectionCard>
               </Grid>

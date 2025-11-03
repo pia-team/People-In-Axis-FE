@@ -48,6 +48,13 @@ class PositionService {
   }
 
   /**
+   * Delete position (only allowed for drafts on backend)
+   */
+  async deletePosition(id: string): Promise<void> {
+    await axios.delete(`${this.baseUrl}/${id}`);
+  }
+
+  /**
    * Duplicate position from existing or template
    */
   async duplicatePosition(id: string): Promise<Position> {

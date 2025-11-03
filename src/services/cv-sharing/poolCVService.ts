@@ -8,7 +8,8 @@ import {
   PoolCVFilter,
   PagedResponse,
   FileInfo,
-  ApiResponse
+  ApiResponse,
+  Position
 } from '@/types/cv-sharing';
 
 class PoolCVService {
@@ -59,7 +60,10 @@ class PoolCVService {
    * Activate/Deactivate pool CV
    */
   async togglePoolCVStatus(id: string, isActive: boolean): Promise<PoolCV> {
-    return this.updatePoolCV(id, { isActive });
+    const response = await axios.patch<PoolCV>(`${this.baseUrl}/${id}/status`, null, {
+      params: { active: isActive }
+    });
+    return response.data;
   }
 
   /**
@@ -277,11 +281,11 @@ class PoolCVService {
   /**
    * Match positions for a specific Pool CV
    */
-  async matchPositionsForPoolCV(poolCvId: string, limit = 10): Promise<any[]> {
-    const response = await axios.get<any[]>(`${this.baseUrl}/${poolCvId}/match-positions`, {
-      params: { limit }
+  async matchPositionsForPoolCV(poolCvId: string, page = 0, size = 10): Promise<Position[]> {
+    const response = await axios.get<PagedResponse<Position>>(`${this.baseUrl}/${poolCvId}/match-positions`, {
+      params: { page, size }
     });
-    return response.data;
+    return response.data.content;
   }
 }
 

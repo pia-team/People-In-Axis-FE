@@ -32,6 +32,16 @@ class ApplicationService {
   }
 
   /**
+   * Get applications by position (first page by default)
+   */
+  async getApplicationsByPosition(positionId: string, page = 0, size = 10): Promise<Application[]> {
+    const response = await axios.get<PagedResponse<Application>>(this.baseUrl, {
+      params: { positionId, page, size }
+    });
+    return response.data.content;
+  }
+
+  /**
    * Get application details by ID
    */
   async getApplicationById(id: string): Promise<ApplicationDetail> {
