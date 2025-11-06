@@ -11,7 +11,9 @@ import {
   FormControl,
   InputLabel,
   Select,
-  Divider
+  Divider,
+  Alert,
+  Tooltip
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -24,6 +26,7 @@ import { useSnackbar } from 'notistack';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { positionService } from '@/services/cv-sharing';
 import { WorkType, LanguageProficiency } from '@/types/cv-sharing';
+import { useKeycloak } from '@/providers/KeycloakProvider';
 
 interface PositionFormData {
   name: string;
@@ -48,6 +51,8 @@ const PositionForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
+  const { hasRole } = useKeycloak();
+  const isHR = hasRole('HUMAN_RESOURCES');
   const [loading, setLoading] = useState(false);
   const [skills, setSkills] = useState<string[]>([]);
   const [newSkill, setNewSkill] = useState('');
@@ -133,6 +138,10 @@ const PositionForm: React.FC = () => {
   });
 
   const onSubmit = (data: PositionFormData) => {
+    if (!isHR) {
+      enqueueSnackbar('Yalnızca İnsan Kaynakları kaydedebilir', { variant: 'warning' });
+      return;
+    }
     const positionData = {
       ...data,
       skills: skills.map((skillName) => ({ skillName, isRequired: true })),
@@ -159,8 +168,14 @@ const PositionForm: React.FC = () => {
         <Typography variant="h4" gutterBottom>
           {id ? 'Edit Position' : 'Create New Position'}
         </Typography>
+        {!isHR && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Bu ekran yalnızca görüntüleme içindir. Pozisyon {id ? 'düzenlemek' : 'oluşturmak'} için İnsan Kaynakları rolü gerekir.
+          </Alert>
+        )}
 
         <form onSubmit={handleSubmit(onSubmit)}>
+          <fieldset disabled={!isHR || isSaving || loading} style={{ border: 0, padding: 0, margin: 0 }}>
           <Grid container spacing={3}>
             {/* Basic Information */}
             <Grid item xs={12}>
@@ -432,22 +447,27 @@ const PositionForm: React.FC = () => {
                 <Button
                   variant="outlined"
                   startIcon={<CancelIcon />}
-                  onClick={() => navigate('/positions')}
+                  onClick={() => navigate('/cv-sharing/positions')}
                   disabled={isSaving || loading}
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  startIcon={<SaveIcon />}
-                  disabled={isSaving || loading}
-                >
-                  {id ? 'Update' : 'Create'} Position
-                </Button>
+                <Tooltip title={isHR ? '' : 'Yalnızca İnsan Kaynakları kaydedebilir'}>
+                  <span>
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      startIcon={<SaveIcon />}
+                      disabled={!isHR || isSaving || loading}
+                    >
+                      {id ? 'Update' : 'Create'} Position
+                    </Button>
+                  </span>
+                </Tooltip>
               </Box>
             </Grid>
           </Grid>
+          </fieldset>
         </form>
       </Paper>
     </Box>

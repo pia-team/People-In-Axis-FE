@@ -17,7 +17,8 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Avatar
+  Avatar,
+  Tooltip
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -39,13 +40,14 @@ import {
   Share as ShareIcon
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { positionService, applicationService } from '@/services/cv-sharing';
-import { Position, PositionStatus, WorkType } from '@/types/cv-sharing';
+import { PositionStatus, WorkType } from '@/types/cv-sharing';
 import { format } from 'date-fns';
 import PageContainer from '@/components/ui/PageContainer';
 import SectionCard from '@/components/ui/SectionCard';
+import { useKeycloak } from '@/providers/KeycloakProvider';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -55,6 +57,7 @@ interface TabPanelProps {
 
 function TabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
+
   return (
     <div
       role="tabpanel"
@@ -73,6 +76,11 @@ const PositionDetail: React.FC = () => {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const [tabValue, setTabValue] = useState(0);
+  const queryClient = useQueryClient();
+  const { hasRole } = useKeycloak();
+  const isHR = hasRole('HUMAN_RESOURCES');
+  const [isArchiving, setIsArchiving] = useState(false);
+  const [isActivating, setIsActivating] = useState(false);
 
   const { data: position, isLoading } = useQuery({
     queryKey: ['position', id],
@@ -86,8 +94,27 @@ const PositionDetail: React.FC = () => {
     enabled: !!id
   });
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
+  };
+
+  // Prefer backend-provided total count; fallback to loaded applications length
+  const applicationsCount = position?.applicationCount ?? (applications?.length ?? 0);
+
+  const handleActivate = async () => {
+    try {
+      setIsActivating(true);
+      const updated = await positionService.updatePositionStatus(id!, PositionStatus.ACTIVE);
+      // Update detail cache for instant UI reflection
+      queryClient.setQueryData(['position', id], updated);
+      enqueueSnackbar('Position activated successfully', { variant: 'success' });
+      // Sync lists
+      queryClient.invalidateQueries({ queryKey: ['positions'] });
+    } catch (error) {
+      enqueueSnackbar('Failed to activate position', { variant: 'error' });
+    } finally {
+      setIsActivating(false);
+    }
   };
 
   const handleEdit = () => {
@@ -118,10 +145,17 @@ const PositionDetail: React.FC = () => {
 
   const handleArchive = async () => {
     try {
-      await positionService.updatePositionStatus(id!, PositionStatus.ARCHIVED);
+      setIsArchiving(true);
+      const updated = await positionService.updatePositionStatus(id!, PositionStatus.ARCHIVED);
+      // Update the detail cache immediately for instant UI feedback
+      queryClient.setQueryData(['position', id], updated);
       enqueueSnackbar('Position archived successfully', { variant: 'success' });
+      // Keep list views in sync
+      queryClient.invalidateQueries({ queryKey: ['positions'] });
     } catch (error) {
       enqueueSnackbar('Failed to archive position', { variant: 'error' });
+    } finally {
+      setIsArchiving(false);
     }
   };
 
@@ -174,11 +208,6 @@ const PositionDetail: React.FC = () => {
   return (
     <PageContainer
       title={position.title}
-      breadcrumbs={[
-        { label: 'CV Sharing', path: '/cv-sharing' },
-        { label: 'Positions', path: '/cv-sharing/positions' },
-        { label: position.title }
-      ]}
       actions={
         <Stack direction="row" spacing={1}>
           <Button
@@ -198,36 +227,70 @@ const PositionDetail: React.FC = () => {
           >
             Share
           </Button>
-          <Button
-            variant="outlined"
-            startIcon={<CopyIcon />}
-            onClick={handleDuplicate}
-          >
-            Duplicate
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<ArchiveIcon />}
-            onClick={handleArchive}
-            disabled={position.status === PositionStatus.ARCHIVED}
-          >
-            Archive
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<EditIcon />}
-            onClick={handleEdit}
-          >
-            Edit
-          </Button>
-          <Button
-            variant="outlined"
-            color="error"
-            startIcon={<DeleteIcon />}
-            onClick={handleDelete}
-          >
-            Delete
-          </Button>
+          <Tooltip title={isHR ? 'Duplicate' : 'Yalnızca İnsan Kaynakları kopyalayabilir'}>
+            <span>
+              <Button
+                variant="outlined"
+                startIcon={<CopyIcon />}
+                onClick={handleDuplicate}
+                disabled={!isHR}
+              >
+                Duplicate
+              </Button>
+            </span>
+          </Tooltip>
+          {position.status === PositionStatus.ARCHIVED ? (
+            <Tooltip title={isHR ? 'Activate' : 'Yalnızca İnsan Kaynakları aktive edebilir'}>
+              <span>
+                <Button
+                  variant="outlined"
+                  startIcon={<CheckIcon />}
+                  onClick={handleActivate}
+                  disabled={!isHR || isActivating}
+                >
+                  Activate
+                </Button>
+              </span>
+            </Tooltip>
+          ) : (
+            <Tooltip title={isHR ? 'Archive' : 'Yalnızca İnsan Kaynakları arşivleyebilir'}>
+              <span>
+                <Button
+                  variant="outlined"
+                  startIcon={<ArchiveIcon />}
+                  onClick={handleArchive}
+                  disabled={!isHR || isArchiving}
+                >
+                  Archive
+                </Button>
+              </span>
+            </Tooltip>
+          )}
+          <Tooltip title={isHR ? 'Edit' : 'Yalnızca İnsan Kaynakları düzenleyebilir'}>
+            <span>
+              <Button
+                variant="outlined"
+                startIcon={<EditIcon />}
+                onClick={handleEdit}
+                disabled={!isHR}
+              >
+                Edit
+              </Button>
+            </span>
+          </Tooltip>
+          <Tooltip title={isHR ? 'Delete' : 'Yalnızca İnsan Kaynakları silebilir'}>
+            <span>
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<DeleteIcon />}
+                onClick={handleDelete}
+                disabled={!isHR}
+              >
+                Delete
+              </Button>
+            </span>
+          </Tooltip>
         </Stack>
       }
     >
@@ -249,12 +312,12 @@ const PositionDetail: React.FC = () => {
                     />
                     <Chip
                       label={position.workType}
-                      color={getWorkTypeColor(position.workType)}
+                      color={getWorkTypeColor(position.workType as WorkType)}
                       size="small"
                       icon={<WorkIcon />}
                     />
                     <Chip
-                      label={`${position.applicationCount || 0} Applications`}
+                      label={`${applicationsCount} Applications`}
                       color="info"
                       size="small"
                       icon={<ApplicantsIcon />}
@@ -286,11 +349,17 @@ const PositionDetail: React.FC = () => {
                     <strong>Deadline:</strong> {position.applicationDeadline ? format(new Date(position.applicationDeadline), 'dd/MM/yyyy') : 'No deadline'}
                   </Typography>
                 </Box>
-                {position.salaryRangeMin && position.salaryRangeMax && (
+                {(position.salaryRangeMin != null || position.salaryRangeMax != null) && (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <SalaryIcon color="action" />
                     <Typography variant="body2">
-                      <strong>Salary:</strong> ${position.salaryRangeMin.toLocaleString()} - ${position.salaryRangeMax.toLocaleString()}
+                      <strong>Salary:</strong> {
+                        position.salaryRangeMin != null && position.salaryRangeMax != null
+                          ? `$${position.salaryRangeMin.toLocaleString()} - $${position.salaryRangeMax.toLocaleString()}`
+                          : position.salaryRangeMin != null
+                            ? `$${position.salaryRangeMin.toLocaleString()} +`
+                            : `up to $${position.salaryRangeMax!.toLocaleString()}`
+                      }
                     </Typography>
                   </Box>
                 )}
@@ -311,6 +380,20 @@ const PositionDetail: React.FC = () => {
         {/* Tab Panels */}
         <TabPanel value={tabValue} index={0}>
           <Grid container spacing={3}>
+            {/* Textual Requirements */}
+            {position.requirements && (
+              <Grid item xs={12}>
+                <SectionCard>
+                  <Typography variant="h6" gutterBottom>
+                    Requirements
+                  </Typography>
+                  <Divider sx={{ my: 2 }} />
+                  <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>
+                    {position.requirements}
+                  </Typography>
+                </SectionCard>
+              </Grid>
+            )}
             {/* Required Skills */}
             {position.skills && position.skills.length > 0 && (
               <Grid item xs={12} md={6}>
@@ -401,7 +484,7 @@ const PositionDetail: React.FC = () => {
         <TabPanel value={tabValue} index={1}>
           <SectionCard>
             <Typography variant="h6" gutterBottom>
-              Applications ({applications?.length || 0})
+              Applications ({applicationsCount})
             </Typography>
             <Divider sx={{ my: 2 }} />
             {applications && applications.length > 0 ? (
@@ -479,10 +562,34 @@ const PositionDetail: React.FC = () => {
               </Grid>
               <Grid item xs={12} md={6}>
                 <Typography variant="body2" color="text.secondary">
+                  Internal Name
+                </Typography>
+                <Typography variant="body1">
+                  {position.name || 'N/A'}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Typography variant="body2" color="text.secondary">
                   Created By
                 </Typography>
                 <Typography variant="body1">
                   {position.createdBy || 'System'}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Typography variant="body2" color="text.secondary">
+                  Created By ID
+                </Typography>
+                <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
+                  {position.createdById || 'N/A'}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Typography variant="body2" color="text.secondary">
+                  Visibility
+                </Typography>
+                <Typography variant="body1">
+                  {position.visibility || 'N/A'}
                 </Typography>
               </Grid>
               <Grid item xs={12} md={6}>

@@ -13,6 +13,21 @@ import {
 class PositionService {
   private baseUrl = apiPath('positions');
 
+  private normalizePosition = (raw: any) => {
+    if (!raw) return raw;
+    const normalized = {
+      ...raw,
+      createdBy: raw.createdByName ?? raw.createdBy,
+      skills: Array.isArray(raw.skills)
+        ? raw.skills.map((s: any) => ({ id: s.id, name: s.skillName ?? s.name, isRequired: s.isRequired }))
+        : raw.skills,
+      languages: Array.isArray(raw.languages)
+        ? raw.languages.map((l: any) => ({ id: l.id, code: l.languageCode ?? l.code, proficiencyLevel: l.proficiencyLevel }))
+        : raw.languages,
+    } as any;
+    return normalized;
+  };
+
   /**
    * Get paginated list of positions
    */
@@ -20,7 +35,11 @@ class PositionService {
     const response = await axios.get<PagedResponse<Position>>(this.baseUrl, {
       params: filter
     });
-    return response.data;
+    const data: any = response.data;
+    return {
+      ...data,
+      content: Array.isArray(data.content) ? data.content.map(this.normalizePosition) : data.content
+    } as PagedResponse<Position>;
   }
 
   /**
@@ -28,7 +47,7 @@ class PositionService {
    */
   async getPositionById(id: string): Promise<Position> {
     const response = await axios.get<Position>(`${this.baseUrl}/${id}`);
-    return response.data;
+    return this.normalizePosition(response.data) as Position;
   }
 
   /**
@@ -36,7 +55,7 @@ class PositionService {
    */
   async createPosition(data: CreatePositionRequest): Promise<Position> {
     const response = await axios.post<Position>(this.baseUrl, data);
-    return response.data;
+    return this.normalizePosition(response.data) as Position;
   }
 
   /**
@@ -44,7 +63,7 @@ class PositionService {
    */
   async updatePosition(id: string, data: UpdatePositionRequest): Promise<Position> {
     const response = await axios.patch<Position>(`${this.baseUrl}/${id}`, data);
-    return response.data;
+    return this.normalizePosition(response.data) as Position;
   }
 
   /**
@@ -59,7 +78,7 @@ class PositionService {
    */
   async duplicatePosition(id: string): Promise<Position> {
     const response = await axios.post<Position>(`${this.baseUrl}/${id}/duplicate`);
-    return response.data;
+    return this.normalizePosition(response.data) as Position;
   }
 
   /**

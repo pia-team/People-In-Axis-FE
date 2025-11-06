@@ -103,6 +103,7 @@ export interface Position {
   createdAt: string;
   updatedAt: string;
   createdBy?: string;
+  createdById?: string;
   applicationCount?: number;
 }
 

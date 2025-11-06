@@ -34,10 +34,13 @@ import PageContainer from '@/components/ui/PageContainer';
 import SectionCard from '@/components/ui/SectionCard';
 import { standardDataGridSx } from '@/components/ui/dataGridStyles';
 import EmptyState from '@/components/ui/EmptyState';
+import { useKeycloak } from '@/providers/KeycloakProvider';
 
 const PositionList: React.FC = () => {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const { hasRole } = useKeycloak();
+  const isHR = hasRole('HUMAN_RESOURCES');
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
@@ -62,7 +65,7 @@ const PositionList: React.FC = () => {
     try {
       const newPosition = await positionService.duplicatePosition(id);
       enqueueSnackbar('Position duplicated successfully', { variant: 'success' });
-      navigate(`/positions/${newPosition.id}/edit`);
+      navigate(`/cv-sharing/positions/${newPosition.id}/edit`);
     } catch (error) {
       enqueueSnackbar('Failed to duplicate position', { variant: 'error' });
     }
@@ -96,35 +99,42 @@ const PositionList: React.FC = () => {
   };
 
   const columns: GridColDef[] = [
+    { field: 'title', headerName: 'Position Title', flex: 1, minWidth: 200 },
+    { field: 'name', headerName: 'Internal Name', width: 180 },
     {
-      field: 'title',
-      headerName: 'Position Title',
-      flex: 1,
-      minWidth: 200
+      field: 'requirements',
+      headerName: 'Requirements',
+      flex: 1.2,
+      minWidth: 220,
+      renderCell: (params: GridRenderCellParams) => (
+        <Typography noWrap sx={{ maxWidth: '100%' }}>{params.value || '-'}</Typography>
+      )
     },
-    {
-      field: 'department',
-      headerName: 'Department',
-      width: 150
-    },
-    {
-      field: 'location',
-      headerName: 'Location',
-      width: 150
-    },
+    { field: 'department', headerName: 'Department', width: 150 },
+    { field: 'location', headerName: 'Location', width: 150 },
     {
       field: 'workType',
       headerName: 'Work Type',
       width: 120,
       renderCell: (params: GridRenderCellParams) => {
         const workType = params.value as WorkType;
-        return (
-          <Chip
-            label={workType}
-            size="small"
-            variant="outlined"
-          />
-        );
+        return <Chip label={workType} size="small" variant="outlined" />;
+      }
+    },
+    { field: 'minExperience', headerName: 'Min Exp (yrs)', width: 120, valueFormatter: (p) => p.value ?? '-' },
+    { field: 'educationLevel', headerName: 'Education', width: 140, valueFormatter: (p) => p.value ?? '-' },
+    { field: 'visibility', headerName: 'Visibility', width: 120 },
+    {
+      field: 'salaryRange',
+      headerName: 'Salary Range',
+      width: 160,
+      valueGetter: (params) => {
+        const min = params.row.salaryRangeMin;
+        const max = params.row.salaryRangeMax;
+        if (min == null && max == null) return '-';
+        if (min != null && max != null) return `${min} - ${max}`;
+        if (min != null) return `${min} +`;
+        return `up to ${max}`;
       }
     },
     {
@@ -133,29 +143,28 @@ const PositionList: React.FC = () => {
       width: 120,
       renderCell: (params: GridRenderCellParams) => {
         const status = params.value as PositionStatus;
-        return (
-          <Chip
-            label={status}
-            color={getStatusColor(status)}
-            size="small"
-          />
-        );
+        return <Chip label={status} color={getStatusColor(status)} size="small" />;
       }
     },
-    {
-      field: 'applicationCount',
-      headerName: 'Applications',
-      width: 100,
-      align: 'center'
-    },
+    { field: 'applicationCount', headerName: 'Applications', width: 110, align: 'center' },
     {
       field: 'applicationDeadline',
       headerName: 'Deadline',
       width: 120,
-      valueFormatter: (params) => {
-        if (!params.value) return '-';
-        return format(new Date(params.value), 'dd/MM/yyyy');
-      }
+      valueFormatter: (params) => (params.value ? format(new Date(params.value), 'dd/MM/yyyy') : '-')
+    },
+    { field: 'createdBy', headerName: 'Created By', width: 160, valueFormatter: (p) => p.value || 'System' },
+    {
+      field: 'createdAt',
+      headerName: 'Created At',
+      width: 140,
+      valueFormatter: (params) => (params.value ? format(new Date(params.value), 'dd/MM/yyyy HH:mm') : '-')
+    },
+    {
+      field: 'updatedAt',
+      headerName: 'Updated At',
+      width: 140,
+      valueFormatter: (params) => (params.value ? format(new Date(params.value), 'dd/MM/yyyy HH:mm') : '-')
     },
     {
       field: 'actions',
@@ -177,39 +186,47 @@ const PositionList: React.FC = () => {
                 <ViewIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Edit">
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/cv-sharing/positions/${position.id}/edit`);
-                }}
-              >
-                <EditIcon fontSize="small" />
-              </IconButton>
+            <Tooltip title={isHR ? 'Edit' : 'Yalnızca İnsan Kaynakları düzenleyebilir'}>
+              <span>
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/cv-sharing/positions/${position.id}/edit`);
+                  }}
+                  disabled={!isHR}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </span>
             </Tooltip>
-            <Tooltip title="Duplicate">
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDuplicate(position.id);
-                }}
-              >
-                <DuplicateIcon fontSize="small" />
-              </IconButton>
+            <Tooltip title={isHR ? 'Duplicate' : 'Yalnızca İnsan Kaynakları kopyalayabilir'}>
+              <span>
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDuplicate(position.id);
+                  }}
+                  disabled={!isHR}
+                >
+                  <DuplicateIcon fontSize="small" />
+                </IconButton>
+              </span>
             </Tooltip>
-            <Tooltip title="Archive">
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleArchive(position.id);
-                }}
-                disabled={position.status === PositionStatus.ARCHIVED}
-              >
-                <ArchiveIcon fontSize="small" />
-              </IconButton>
+            <Tooltip title={isHR ? 'Archive' : 'Yalnızca İnsan Kaynakları arşivleyebilir'}>
+              <span>
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleArchive(position.id);
+                  }}
+                  disabled={!isHR || position.status === PositionStatus.ARCHIVED}
+                >
+                  <ArchiveIcon fontSize="small" />
+                </IconButton>
+              </span>
             </Tooltip>
           </Box>
         );
@@ -230,13 +247,18 @@ const PositionList: React.FC = () => {
       actions={
         <Stack direction="row" spacing={1}>
           <Button variant="outlined" onClick={() => refetch()}>Refresh</Button>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => navigate('/cv-sharing/positions/new')}
-          >
-            Create Position
-          </Button>
+          <Tooltip title={isHR ? '' : 'Yalnızca İnsan Kaynakları pozisyon oluşturabilir'}>
+            <span>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => navigate('/cv-sharing/positions/new')}
+                disabled={!isHR}
+              >
+                Create Position
+              </Button>
+            </span>
+          </Tooltip>
         </Stack>
       }
     >
