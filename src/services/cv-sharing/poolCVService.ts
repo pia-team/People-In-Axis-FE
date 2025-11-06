@@ -8,9 +8,9 @@ import {
   PoolCVFilter,
   PagedResponse,
   FileInfo,
-  ApiResponse,
-  Position
+  ApiResponse
 } from '@/types/cv-sharing';
+import { MatchedPosition } from '@/types/cv-sharing/matched-position';
 
 class PoolCVService {
   private baseUrl = apiPath('pool-cvs');
@@ -281,8 +281,8 @@ class PoolCVService {
   /**
    * Match positions for a specific Pool CV
    */
-  async matchPositionsForPoolCV(poolCvId: string, page = 0, size = 10): Promise<Position[]> {
-    const response = await axios.get<PagedResponse<Position>>(`${this.baseUrl}/${poolCvId}/match-positions`, {
+  async matchPositionsForPoolCV(poolCvId: string, page = 0, size = 10): Promise<MatchedPosition[]> {
+    const response = await axios.get<PagedResponse<MatchedPosition>>(`${this.baseUrl}/${poolCvId}/match-positions`, {
       params: { page, size }
     });
     return response.data.content;

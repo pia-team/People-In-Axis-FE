@@ -10,7 +10,9 @@ import {
   Chip,
   IconButton,
   FormControlLabel,
-  Checkbox
+  Checkbox,
+  FormControl,
+  FormHelperText
 } from '@mui/material';
 import { Add as AddIcon, Delete as DeleteIcon, Save as SaveIcon, Cancel as CancelIcon } from '@mui/icons-material';
 import { useForm, Controller } from 'react-hook-form';
@@ -83,7 +85,7 @@ const PoolCVForm: React.FC = () => {
       setLanguages((data.languages || []).map(l => ({ code: l.code, proficiencyLevel: l.proficiencyLevel })));
     } catch (e) {
       enqueueSnackbar('Failed to load CV', { variant: 'error' });
-      navigate('/pool-cvs');
+      navigate('/cv-sharing/pool-cvs');
     } finally {
       setLoading(false);
     }
@@ -91,12 +93,24 @@ const PoolCVForm: React.FC = () => {
 
   const onSubmit = async (data: FormData) => {
     try {
+      if (loading) return;
       setLoading(true);
       const payload: CreatePoolCVRequest = {
         ...data,
+        tckn: data.tckn?.trim() ? data.tckn.trim() : undefined,
+        birthDate: data.birthDate?.trim() ? data.birthDate.trim() : undefined,
+        email: data.email?.trim(),
+        phone: data.phone?.trim() ? data.phone.trim() : undefined,
+        address: data.address?.trim() ? data.address.trim() : undefined,
+        experienceYears:
+          (data as any).experienceYears === '' || (data as any).experienceYears === undefined || (data as any).experienceYears === null
+            ? undefined
+            : Number((data as any).experienceYears),
+        currentPosition: data.currentPosition?.trim() ? data.currentPosition.trim() : undefined,
+        currentCompany: data.currentCompany?.trim() ? data.currentCompany.trim() : undefined,
         skills: skills.map(s => ({ name: s.name, yearsOfExperience: s.yearsOfExperience })),
         languages: languages.map(l => ({ code: l.code, proficiencyLevel: l.proficiencyLevel })),
-      };
+      } as any;
 
       let poolCvId = id;
       if (id) {
@@ -115,9 +129,37 @@ const PoolCVForm: React.FC = () => {
       }
 
       enqueueSnackbar(`CV ${id ? 'updated' : 'created'} successfully`, { variant: 'success' });
-      navigate('/pool-cvs');
+      const targetId = poolCvId || id;
+      if (targetId) {
+        navigate(`/cv-sharing/pool-cvs/${targetId}`);
+      } else {
+        navigate('/cv-sharing/pool-cvs');
+      }
     } catch (e: any) {
-      enqueueSnackbar(e.message || 'Failed to save CV', { variant: 'error' });
+      const status = e?.response?.status;
+      const headers = e?.response?.headers || {};
+      const ideReject = headers['x-idempotency-reject'] === 'true' || headers['X-Idempotency-Reject'] === 'true';
+      if (status === 409 && ideReject) {
+        enqueueSnackbar('Already submitted recently. Using the previous result.', { variant: 'info' });
+        try {
+          const my = await poolCVService.getMyPoolCVs(0, 20);
+          const found = (my?.content || []).find((p: any) => p?.email === data.email);
+          if (found?.id) {
+            navigate(`/cv-sharing/pool-cvs/${found.id}`);
+          } else {
+            navigate('/cv-sharing/pool-cvs');
+          }
+        } catch (_) {
+          navigate('/cv-sharing/pool-cvs');
+        }
+      } else {
+        const resp = e?.response?.data;
+        let msg = resp?.message || e.message || 'Failed to save CV';
+        if (resp?.errors && Array.isArray(resp.errors) && resp.errors.length > 0) {
+          msg = resp.errors.map((er: any) => er?.message || `${er?.field ?? 'field'} is invalid`).join(', ');
+        }
+        enqueueSnackbar(msg, { variant: 'error' });
+      }
     } finally {
       setLoading(false);
     }
@@ -365,7 +407,12 @@ const PoolCVForm: React.FC = () => {
                   control={control}
                   rules={{ required: 'KVKK consent is required' }}
                   render={({ field }) => (
-                    <FormControlLabel control={<Checkbox {...field} checked={field.value} />} label="I consent to the processing of my personal data (KVKK)" />
+                    <FormControl error={!!errors.kvkkConsent}>
+                      <FormControlLabel control={<Checkbox {...field} checked={!!field.value} />} label="I consent to the processing of my personal data (KVKK)" />
+                      {errors.kvkkConsent && (
+                        <FormHelperText>{errors.kvkkConsent.message as any}</FormHelperText>
+                      )}
+                    </FormControl>
                   )}
                 />
               )}
@@ -383,7 +430,7 @@ const PoolCVForm: React.FC = () => {
             {/* Actions */}
             <Grid item xs={12}>
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                <Button variant="outlined" startIcon={<CancelIcon />} onClick={() => navigate('/pool-cvs')} disabled={loading}>Cancel</Button>
+                <Button variant="outlined" startIcon={<CancelIcon />} onClick={() => navigate('/cv-sharing/pool-cvs')} disabled={loading}>Cancel</Button>
                 <Button type="submit" variant="contained" startIcon={<SaveIcon />} disabled={loading}>
                   {id ? 'Save Changes' : 'Create CV'}
                 </Button>
