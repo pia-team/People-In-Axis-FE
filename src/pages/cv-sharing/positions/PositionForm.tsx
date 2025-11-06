@@ -21,6 +21,7 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { useSnackbar } from 'notistack';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { positionService } from '@/services/cv-sharing';
 import { WorkType, LanguageProficiency } from '@/types/cv-sharing';
 
@@ -46,6 +47,7 @@ const PositionForm: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { enqueueSnackbar } = useSnackbar();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [skills, setSkills] = useState<string[]>([]);
   const [newSkill, setNewSkill] = useState('');
@@ -103,7 +105,7 @@ const PositionForm: React.FC = () => {
         skills: [],
         languages: []
       });
-      setSkills((position.skills || []).map((s: any) => s.name));
+      setSkills((position.skills || []).map((s: any) => s.skillName));
       setLanguages((position.languages || []).map((l: any) => ({ code: l.code, level: l.proficiencyLevel })));
     } catch (error) {
       enqueueSnackbar('Failed to load position', { variant: 'error' });
@@ -112,28 +114,31 @@ const PositionForm: React.FC = () => {
     }
   };
 
-  const onSubmit = async (data: PositionFormData) => {
-    try {
-      setLoading(true);
-      const positionData = {
-        ...data,
-        skills: skills.map((name) => ({ name })),
-        languages: languages.map((l) => ({ code: l.code, proficiencyLevel: l.level as LanguageProficiency }))
-      };
-
+  const { mutate: savePosition, isPending: isSaving } = useMutation({
+    mutationFn: (positionData: any) => 
+      id 
+        ? positionService.updatePosition(id, positionData) 
+        : positionService.createPosition(positionData),
+    onSuccess: (data: any) => {
+      enqueueSnackbar(`Position ${id ? 'updated' : 'created'} successfully`, { variant: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['positions'] });
       if (id) {
-        await positionService.updatePosition(id, positionData);
-        enqueueSnackbar('Position updated successfully', { variant: 'success' });
-      } else {
-        await positionService.createPosition(positionData);
-        enqueueSnackbar('Position created successfully', { variant: 'success' });
+        queryClient.invalidateQueries({ queryKey: ['position', id] });
       }
-      navigate('/positions');
-    } catch (error) {
+      navigate(`/cv-sharing/positions/${data.id}`);
+    },
+    onError: () => {
       enqueueSnackbar('Failed to save position', { variant: 'error' });
-    } finally {
-      setLoading(false);
     }
+  });
+
+  const onSubmit = (data: PositionFormData) => {
+    const positionData = {
+      ...data,
+      skills: skills.map((skillName) => ({ skillName, isRequired: true })),
+      languages: languages.map((l) => ({ languageCode: l.code, proficiencyLevel: l.level as LanguageProficiency }))
+    };
+    savePosition(positionData);
   };
 
   const addSkill = () => {
@@ -428,7 +433,7 @@ const PositionForm: React.FC = () => {
                   variant="outlined"
                   startIcon={<CancelIcon />}
                   onClick={() => navigate('/positions')}
-                  disabled={loading}
+                  disabled={isSaving || loading}
                 >
                   Cancel
                 </Button>
@@ -436,7 +441,7 @@ const PositionForm: React.FC = () => {
                   type="submit"
                   variant="contained"
                   startIcon={<SaveIcon />}
-                  disabled={loading}
+                  disabled={isSaving || loading}
                 >
                   {id ? 'Update' : 'Create'} Position
                 </Button>
