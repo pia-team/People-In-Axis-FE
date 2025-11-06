@@ -43,7 +43,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { applicationService } from '@/services/cv-sharing';
 import { ApplicationDetail as ApplicationDetailType, ApplicationStatus, CreateMeetingRequest, MeetingProvider } from '@/types/cv-sharing';
-import { maskTCKN } from '@/utils/tckn';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const statusOptions: ApplicationStatus[] = [
   ApplicationStatus.NEW,
@@ -81,13 +81,25 @@ const ApplicationDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [detail, setDetail] = useState<ApplicationDetailType | null>(null);
+  const queryClient = useQueryClient();
+  const { data: detail, isLoading, isError } = useQuery<
+    ApplicationDetailType,
+    Error,
+    ApplicationDetailType,
+    [string, string | undefined]
+  >({
+    queryKey: ['application', id],
+    queryFn: () => applicationService.getApplicationById(id!),
+    enabled: !!id
+  });
   const [newStatus, setNewStatus] = useState<ApplicationStatus | ''>('');
   const [commentText, setCommentText] = useState('');
   const [ratingScore, setRatingScore] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [commentSaving, setCommentSaving] = useState(false);
+  const [ratingSaving, setRatingSaving] = useState(false);
+  const [meetingSaving, setMeetingSaving] = useState(false);
   const [filesToUpload, setFilesToUpload] = useState<File[]>([]);
   const [meetingOpen, setMeetingOpen] = useState(false);
   const [meeting, setMeeting] = useState<Partial<CreateMeetingRequest>>({
@@ -100,25 +112,15 @@ const ApplicationDetail: React.FC = () => {
   });
 
   useEffect(() => {
-    if (id) {
-      loadDetail();
+    if (detail) setNewStatus(detail.status);
+  }, [detail?.id]);
+  useEffect(() => {
+    if (isError) {
+      enqueueSnackbar('Failed to load application', { variant: 'error' });
+      navigate('/cv-sharing/applications');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
-
-  const loadDetail = async () => {
-    try {
-      setLoading(true);
-      const data = await applicationService.getApplicationById(id!);
-      setDetail(data);
-      setNewStatus(data.status);
-    } catch (error) {
-      enqueueSnackbar('Failed to load application', { variant: 'error' });
-      navigate('/applications');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [isError]);
 
   const handleStatusChange = async () => {
     if (!detail || !newStatus) return;
@@ -126,7 +128,7 @@ const ApplicationDetail: React.FC = () => {
       setSaving(true);
       await applicationService.updateApplicationStatus(detail.id, { status: newStatus });
       enqueueSnackbar('Status updated', { variant: 'success' });
-      await loadDetail();
+      await queryClient.invalidateQueries({ queryKey: ['application', id] });
     } catch (error) {
       enqueueSnackbar('Failed to update status', { variant: 'error' });
     } finally {
@@ -137,24 +139,32 @@ const ApplicationDetail: React.FC = () => {
   const handleAddComment = async () => {
     if (!detail || !commentText.trim()) return;
     try {
+      if (commentSaving) return;
+      setCommentSaving(true);
       await applicationService.addComment(detail.id, { content: commentText, isInternal: true });
       setCommentText('');
       enqueueSnackbar('Comment added', { variant: 'success' });
-      await loadDetail();
+      await queryClient.invalidateQueries({ queryKey: ['application', id] });
     } catch (error) {
       enqueueSnackbar('Failed to add comment', { variant: 'error' });
+    } finally {
+      setCommentSaving(false);
     }
   };
 
   const handleAddRating = async () => {
     if (!detail || !ratingScore) return;
     try {
+      if (ratingSaving) return;
+      setRatingSaving(true);
       await applicationService.addRating(detail.id, { score: ratingScore });
       setRatingScore(null);
       enqueueSnackbar('Rating added', { variant: 'success' });
-      await loadDetail();
+      await queryClient.invalidateQueries({ queryKey: ['application', id] });
     } catch (error) {
       enqueueSnackbar('Failed to add rating', { variant: 'error' });
+    } finally {
+      setRatingSaving(false);
     }
   };
 
@@ -176,7 +186,7 @@ const ApplicationDetail: React.FC = () => {
       await applicationService.uploadFiles(detail.id, filesToUpload);
       setFilesToUpload([]);
       enqueueSnackbar('Files uploaded', { variant: 'success' });
-      await loadDetail();
+      await queryClient.invalidateQueries({ queryKey: ['application', id] });
     } catch (error) {
       enqueueSnackbar('Failed to upload files', { variant: 'error' });
     } finally {
@@ -207,17 +217,21 @@ const ApplicationDetail: React.FC = () => {
   const handleScheduleMeeting = async () => {
     if (!detail || !meeting.title || !meeting.startTime || !meeting.durationMinutes) return;
     try {
+      if (meetingSaving) return;
+      setMeetingSaving(true);
       await applicationService.scheduleMeeting(detail.id, meeting as CreateMeetingRequest);
       enqueueSnackbar('Meeting scheduled', { variant: 'success' });
       setMeeting({ title: '', startTime: '', durationMinutes: 30, participants: [] });
       closeMeetingDialog();
-      await loadDetail();
+      await queryClient.invalidateQueries({ queryKey: ['application', id] });
     } catch (error) {
       enqueueSnackbar('Failed to schedule meeting', { variant: 'error' });
+    } finally {
+      setMeetingSaving(false);
     }
   };
 
-  if (loading || !detail) {
+  if (isLoading || !detail) {
     return (
       <Box sx={{ p: 3 }}>
         <LinearProgress />
@@ -265,7 +279,7 @@ const ApplicationDetail: React.FC = () => {
               {detail.tckn && (
                 <ListItem>
                   <ListItemIcon><IdIcon /></ListItemIcon>
-                  <ListItemText primary={`TCKN: ${maskTCKN(detail.tckn)}`} />
+                  <ListItemText primary={`TCKN: ${detail.tckn}`} />
                 </ListItem>
               )}
               {detail.availableStartDate && (
@@ -361,7 +375,7 @@ const ApplicationDetail: React.FC = () => {
             <Divider sx={{ mb: 2 }} />
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Rating value={ratingScore || 0} onChange={(_, v) => setRatingScore(v)} />
-              <Button size="small" variant="outlined" startIcon={<StarIcon />} onClick={handleAddRating} disabled={!ratingScore}>Rate</Button>
+              <Button size="small" variant="outlined" startIcon={<StarIcon />} onClick={handleAddRating} disabled={!ratingScore || ratingSaving}>Rate</Button>
             </Box>
             {detail.ratings && detail.ratings.length > 0 && (
               <List>
@@ -378,7 +392,7 @@ const ApplicationDetail: React.FC = () => {
             <Divider sx={{ mb: 2 }} />
             <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
               <TextField fullWidth size="small" placeholder="Add a comment..." value={commentText} onChange={(e) => setCommentText(e.target.value)} />
-              <Button variant="outlined" startIcon={<CommentIcon />} onClick={handleAddComment}>
+              <Button variant="outlined" startIcon={<CommentIcon />} onClick={handleAddComment} disabled={commentSaving || !commentText.trim()}>
                 Add
               </Button>
             </Box>
@@ -455,7 +469,7 @@ const ApplicationDetail: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={closeMeetingDialog}>Cancel</Button>
-          <Button variant="contained" onClick={handleScheduleMeeting}>Schedule</Button>
+          <Button variant="contained" onClick={handleScheduleMeeting} disabled={meetingSaving}>Schedule</Button>
         </DialogActions>
       </Dialog>
     </Box>

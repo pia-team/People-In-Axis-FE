@@ -41,7 +41,8 @@ import { poolCVService } from '@/services/cv-sharing';
 import { PoolCVDetail as PoolCVDetailType } from '@/types/cv-sharing';
 import { useKeycloak } from '@/hooks/useKeycloak';
 import { Fingerprint as IdIcon } from '@mui/icons-material';
-import { maskTCKN } from '@/utils/tckn';
+import { MatchedPosition } from '@/types/cv-sharing/matched-position';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const PoolCVDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -49,40 +50,45 @@ const PoolCVDetail: React.FC = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { hasAnyRole } = useKeycloak();
   const canEdit = hasAnyRole(['COMPANY_MANAGER', 'ADMIN']);
-  const [loading, setLoading] = useState(false);
-  const [detail, setDetail] = useState<PoolCVDetailType | null>(null);
+  const queryClient = useQueryClient();
+  const { data: detail, isLoading, isError } = useQuery<
+    PoolCVDetailType,
+    Error,
+    PoolCVDetailType,
+    [string, string | undefined]
+  >({
+    queryKey: ['poolCV', id],
+    queryFn: () => poolCVService.getPoolCVById(id!),
+    enabled: !!id
+  });
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [matchOpen, setMatchOpen] = useState(false);
-  const [matchedPositions, setMatchedPositions] = useState<any[]>([]);
+  const [matchedPositions, setMatchedPositions] = useState<MatchedPosition[]>([]);
+  const [toggling, setToggling] = useState(false);
+  const [matching, setMatching] = useState(false);
 
   useEffect(() => {
-    if (id) {
-      loadDetail();
-    }
-  }, [id]);
-
-  const loadDetail = async () => {
-    try {
-      setLoading(true);
-      const data = await poolCVService.getPoolCVById(id!);
-      setDetail(data);
-    } catch (e) {
+    // Handle error side-effect
+    if (isError) {
       enqueueSnackbar('Failed to load CV', { variant: 'error' });
-      navigate('/pool-cvs');
-    } finally {
-      setLoading(false);
+      navigate('/cv-sharing/pool-cvs');
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isError]);
 
   const handleToggleActive = async () => {
     if (!detail) return;
     try {
+      if (toggling) return;
+      setToggling(true);
       await poolCVService.togglePoolCVStatus(detail.id, !detail.isActive);
       enqueueSnackbar('Status updated', { variant: 'success' });
-      await loadDetail();
+      await queryClient.invalidateQueries({ queryKey: ['poolCV', id] });
     } catch (e) {
       enqueueSnackbar('Failed to update status', { variant: 'error' });
+    } finally {
+      setToggling(false);
     }
   };
 
@@ -93,7 +99,7 @@ const PoolCVDetail: React.FC = () => {
       await poolCVService.uploadFiles(detail.id, files);
       setFiles([]);
       enqueueSnackbar('Files uploaded', { variant: 'success' });
-      await loadDetail();
+      await queryClient.invalidateQueries({ queryKey: ['poolCV', id] });
     } catch (e) {
       enqueueSnackbar('Failed to upload files', { variant: 'error' });
     } finally {
@@ -123,7 +129,7 @@ const PoolCVDetail: React.FC = () => {
     try {
       await poolCVService.deleteFile(detail.id, fileId);
       enqueueSnackbar('File deleted', { variant: 'success' });
-      await loadDetail();
+      await queryClient.invalidateQueries({ queryKey: ['poolCV', id] });
     } catch (e) {
       enqueueSnackbar('Failed to delete file', { variant: 'error' });
     }
@@ -134,15 +140,19 @@ const PoolCVDetail: React.FC = () => {
   const handleMatchPositions = async () => {
     if (!id) return;
     try {
+      if (matching) return;
+      setMatching(true);
       const positions = await poolCVService.matchPositionsForPoolCV(id);
       setMatchedPositions(positions || []);
       setMatchOpen(true);
     } catch (e) {
       enqueueSnackbar('Failed to fetch matching positions', { variant: 'error' });
+    } finally {
+      setMatching(false);
     }
   };
 
-  if (loading || !detail) {
+  if (isLoading || !detail) {
     return (
       <Box sx={{ p: 3 }}>
         <LinearProgress />
@@ -181,9 +191,9 @@ const PoolCVDetail: React.FC = () => {
                 {canEdit && (
                   <>
                     <Tooltip title={detail.isActive ? 'Deactivate' : 'Activate'}>
-                      <Button variant="outlined" onClick={handleToggleActive} startIcon={detail.isActive ? <InactiveIcon /> : <ActiveIcon />}>Status</Button>
+                      <Button variant="outlined" onClick={handleToggleActive} startIcon={detail.isActive ? <InactiveIcon /> : <ActiveIcon />} disabled={toggling}>Status</Button>
                     </Tooltip>
-                    <Button variant="outlined" startIcon={<EditIcon />} onClick={() => navigate(`/pool-cvs/${detail.id}/edit`)}>Edit</Button>
+                    <Button variant="outlined" startIcon={<EditIcon />} onClick={() => navigate(`/cv-sharing/pool-cvs/${detail.id}/edit`)}>Edit</Button>
                   </>
                 )}
               </Box>
@@ -207,7 +217,7 @@ const PoolCVDetail: React.FC = () => {
               {detail.tckn && (
                 <ListItem>
                   <ListItemIcon><IdIcon /></ListItemIcon>
-                  <ListItemText primary={`TCKN: ${maskTCKN(detail.tckn)}`} />
+                  <ListItemText primary={`TCKN: ${detail.tckn}`} />
                 </ListItem>
               )}
               {detail.currentPosition && (
@@ -278,7 +288,7 @@ const PoolCVDetail: React.FC = () => {
               <PoolCVTags
                 poolCvId={detail.id}
                 tags={detail.tags || []}
-                onChange={(tags) => setDetail(d => d ? { ...d, tags } : d)}
+                onChange={(tags) => queryClient.setQueryData(['poolCV', id], (d: PoolCVDetailType | undefined) => d ? { ...d, tags } : d)}
               />
             ) : (
               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
@@ -290,7 +300,7 @@ const PoolCVDetail: React.FC = () => {
 
             <Typography variant="h6" sx={{ mt: 3 }}>Actions</Typography>
             <Divider sx={{ mb: 2 }} />
-            <Button fullWidth variant="outlined" startIcon={<MatchIcon />} onClick={handleMatchPositions}>Match Positions</Button>
+            <Button fullWidth variant="outlined" startIcon={<MatchIcon />} onClick={handleMatchPositions} disabled={matching}>Match Positions</Button>
           </Grid>
         </Grid>
 
@@ -299,13 +309,16 @@ const PoolCVDetail: React.FC = () => {
           <DialogContent>
             {matchedPositions.length > 0 ? (
               <List>
-                {matchedPositions.map((p: any) => (
-                  <ListItem key={p.id}
+                {matchedPositions.map((matched) => (
+                  <ListItem key={matched.position.id}
                     secondaryAction={
-                      <Button size="small" onClick={() => navigate(`/positions/${p.id}`)}>View</Button>
+                      <Button size="small" onClick={() => navigate(`/cv-sharing/positions/${matched.position.id}`)}>View</Button>
                     }
                   >
-                    <ListItemText primary={p.title} secondary={`${p.department || ''}${p.matchScore ? ` • Match ${p.matchScore}%` : ''}`} />
+                    <ListItemText
+                      primary={matched.position.title}
+                      secondary={`${matched.position.department || ''}${matched.matchScore ? ` • Match ${matched.matchScore}%` : ''}`}
+                    />
                   </ListItem>
                 ))}
               </List>
