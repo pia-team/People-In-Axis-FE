@@ -177,6 +177,7 @@ export interface Application {
 export interface ApplicationDetail extends Application {
   files?: FileInfo[];
   comments?: Comment[];
+  recentComments?: Comment[];
   ratings?: Rating[];
   forwardings?: Forwarding[];
   meetings?: Meeting[];

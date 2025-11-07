@@ -83,9 +83,13 @@ class ApplicationService {
   /**
    * Add comment to application
    */
-  async addComment(applicationId: string, data: CreateCommentRequest): Promise<Comment> {
-    const response = await axios.post<Comment>(`${this.baseUrl}/${applicationId}/comments`, data);
-    return response.data;
+  async addComment(applicationId: string, data: CreateCommentRequest): Promise<void> {
+    await axios.post(`${this.baseUrl}/${applicationId}/comments`, null, {
+      params: {
+        content: data.content,
+        isInternal: data.isInternal ?? true,
+      },
+    });
   }
 
   /**
@@ -99,9 +103,10 @@ class ApplicationService {
   /**
    * Add rating to application
    */
-  async addRating(applicationId: string, data: CreateRatingRequest): Promise<Rating> {
-    const response = await axios.post<Rating>(`${this.baseUrl}/${applicationId}/ratings`, data);
-    return response.data;
+  async addRating(applicationId: string, data: CreateRatingRequest): Promise<void> {
+    await axios.post(`${this.baseUrl}/${applicationId}/ratings`, null, {
+      params: { score: data.score },
+    });
   }
 
   /**
@@ -147,20 +152,22 @@ class ApplicationService {
    * Update application status
    */
   async updateApplicationStatus(id: string, data: UpdateApplicationStatusRequest): Promise<void> {
-    await axios.post(`${this.baseUrl}/${id}/status`, data);
+    await axios.post(`${this.baseUrl}/${id}/status`, null, {
+      params: { status: data.status },
+    });
   }
 
   /**
    * Upload application files
    */
-  async uploadFiles(applicationId: string, files: File[]): Promise<ApiResponse<string[]>> {
+  async uploadFiles(applicationId: string, files: File[]): Promise<any> {
     const formData = new FormData();
     files.forEach(file => {
       formData.append('files', file);
     });
 
-    const response = await axios.post<ApiResponse<string[]>>(
-      `${this.baseUrl}/${applicationId}/files`,
+    const response = await axios.post<any>(
+      `${apiPath('files')}/upload/multiple/application/${applicationId}`,
       formData,
       {
         headers: {
@@ -174,8 +181,8 @@ class ApplicationService {
   /**
    * Download application file
    */
-  async downloadFile(applicationId: string, fileId: string): Promise<Blob> {
-    const response = await axios.get(`${this.baseUrl}/${applicationId}/files/${fileId}`, {
+  async downloadFile(_applicationId: string, fileId: string): Promise<Blob> {
+    const response = await axios.get(`${apiPath('files')}/download/${fileId}`, {
       responseType: 'blob'
     });
     return response.data;

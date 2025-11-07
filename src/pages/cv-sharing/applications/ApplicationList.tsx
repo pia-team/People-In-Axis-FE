@@ -40,6 +40,7 @@ import PageContainer from '@/components/ui/PageContainer';
 import SectionCard from '@/components/ui/SectionCard';
 import { standardDataGridSx } from '@/components/ui/dataGridStyles';
 import EmptyState from '@/components/ui/EmptyState';
+import { useKeycloak } from '@/hooks/useKeycloak';
 
 interface CommentDialogData {
   open: boolean;
@@ -73,6 +74,8 @@ const ApplicationList: React.FC = () => {
     applicationId: null,
     score: 0
   });
+  const { hasRole } = useKeycloak();
+  const isCompanyManager = hasRole('COMPANY_MANAGER');
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['applications', paginationModel.page, paginationModel.pageSize, statusFilter, searchTerm],
@@ -283,6 +286,7 @@ const ApplicationList: React.FC = () => {
           <Tooltip title="Add Rating">
             <IconButton
               size="small"
+              disabled={isCompanyManager}
               onClick={(e) => {
                 e.stopPropagation();
                 setRatingDialog({
@@ -503,7 +507,7 @@ const ApplicationList: React.FC = () => {
             <Button onClick={() => setRatingDialog({ open: false, applicationId: null, score: 0 })}>
               Cancel
             </Button>
-            <Button variant="contained" onClick={handleAddRating} disabled={!ratingDialog.score}>
+            <Button variant="contained" onClick={handleAddRating} disabled={isCompanyManager || !ratingDialog.score}>
               Add Rating
             </Button>
           </DialogActions>

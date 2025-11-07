@@ -44,6 +44,7 @@ import { useSnackbar } from 'notistack';
 import { applicationService } from '@/services/cv-sharing';
 import { ApplicationDetail as ApplicationDetailType, ApplicationStatus, CreateMeetingRequest, MeetingProvider } from '@/types/cv-sharing';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useKeycloak } from '@/hooks/useKeycloak';
 
 const statusOptions: ApplicationStatus[] = [
   ApplicationStatus.NEW,
@@ -81,6 +82,8 @@ const ApplicationDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const { hasRole } = useKeycloak();
+  const isCompanyManager = hasRole('COMPANY_MANAGER');
   const [saving, setSaving] = useState(false);
   const queryClient = useQueryClient();
   const { data: detail, isLoading, isError } = useQuery<
@@ -375,7 +378,7 @@ const ApplicationDetail: React.FC = () => {
             <Divider sx={{ mb: 2 }} />
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Rating value={ratingScore || 0} onChange={(_, v) => setRatingScore(v)} />
-              <Button size="small" variant="outlined" startIcon={<StarIcon />} onClick={handleAddRating} disabled={!ratingScore || ratingSaving}>Rate</Button>
+              <Button size="small" variant="outlined" startIcon={<StarIcon />} onClick={handleAddRating} disabled={isCompanyManager || !ratingScore || ratingSaving}>Rate</Button>
             </Box>
             {detail.ratings && detail.ratings.length > 0 && (
               <List>
@@ -386,6 +389,21 @@ const ApplicationDetail: React.FC = () => {
                   </ListItem>
                 ))}
               </List>
+            )}
+
+            {detail.recentComments && detail.recentComments.length > 0 && (
+              <>
+                <Typography variant="h6" sx={{ mt: 3 }}>Recent Comments</Typography>
+                <Divider sx={{ mb: 2 }} />
+                <List>
+                  {detail.recentComments.map(c => (
+                    <ListItem key={c.id}>
+                      <ListItemIcon><CommentIcon /></ListItemIcon>
+                      <ListItemText primary={c.content} secondary={`${c.userName || c.userId} • ${new Date(c.createdAt).toLocaleString()}`} />
+                    </ListItem>
+                  ))}
+                </List>
+              </>
             )}
 
             <Typography variant="h6" sx={{ mt: 3 }}>Comments</Typography>
