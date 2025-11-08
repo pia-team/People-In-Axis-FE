@@ -97,6 +97,7 @@ const ApplicationList: React.FC = () => {
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
+    if (paginationModel.page !== 0) setPaginationModel(p => ({ ...p, page: 0 }));
   };
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, application: Application) => {
@@ -349,7 +350,10 @@ const ApplicationList: React.FC = () => {
               <InputLabel>Status</InputLabel>
               <Select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as ApplicationStatus | '')}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value as ApplicationStatus | '');
+                  if (paginationModel.page !== 0) setPaginationModel(p => ({ ...p, page: 0 }));
+                }}
                 label="Status"
               >
                 <MenuItem value="">All Status</MenuItem>
@@ -424,7 +428,7 @@ const ApplicationList: React.FC = () => {
         >
           <MenuItem onClick={() => {
             if (selectedApplication) {
-              navigate(`/applications/${selectedApplication.id}/forward`);
+              navigate(`/cv-sharing/applications/${selectedApplication.id}/forward`);
             }
             handleMenuClose();
           }}>

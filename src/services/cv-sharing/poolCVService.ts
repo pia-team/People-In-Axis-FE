@@ -7,7 +7,6 @@ import {
   UpdatePoolCVRequest,
   PoolCVFilter,
   PagedResponse,
-  FileInfo,
   ApiResponse
 } from '@/types/cv-sharing';
 import { MatchedPosition } from '@/types/cv-sharing/matched-position';
@@ -45,7 +44,7 @@ class PoolCVService {
    * Update pool CV
    */
   async updatePoolCV(id: string, data: UpdatePoolCVRequest): Promise<PoolCV> {
-    const response = await axios.patch<PoolCV>(`${this.baseUrl}/${id}`, data);
+    const response = await axios.put<PoolCV>(`${this.baseUrl}/${id}`, data);
     return response.data;
   }
 
@@ -69,14 +68,14 @@ class PoolCVService {
   /**
    * Upload files to pool CV
    */
-  async uploadFiles(poolCvId: string, files: File[]): Promise<FileInfo[]> {
+  async uploadFiles(poolCvId: string, files: File[]): Promise<any> {
     const formData = new FormData();
     files.forEach(file => {
       formData.append('files', file);
     });
 
-    const response = await axios.post<FileInfo[]>(
-      `${this.baseUrl}/${poolCvId}/files`,
+    const response = await axios.post<any>(
+      `${apiPath('files')}/upload/multiple/pool-cv/${poolCvId}`,
       formData,
       {
         headers: {
@@ -90,15 +89,15 @@ class PoolCVService {
   /**
    * Delete file from pool CV
    */
-  async deleteFile(poolCvId: string, fileId: string): Promise<void> {
-    await axios.delete(`${this.baseUrl}/${poolCvId}/files/${fileId}`);
+  async deleteFile(_poolCvId: string, fileId: string): Promise<void> {
+    await axios.delete(`${apiPath('files')}/${fileId}`);
   }
 
   /**
    * Download file from pool CV
    */
-  async downloadFile(poolCvId: string, fileId: string): Promise<Blob> {
-    const response = await axios.get(`${this.baseUrl}/${poolCvId}/files/${fileId}`, {
+  async downloadFile(_poolCvId: string, fileId: string): Promise<Blob> {
+    const response = await axios.get(`${apiPath('files')}/download/${fileId}`, {
       responseType: 'blob'
     });
     return response.data;

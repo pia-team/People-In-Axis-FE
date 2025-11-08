@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -28,6 +28,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { positionService } from '@/services/cv-sharing/positionService';
+import { departmentService } from '@/services/departmentService';
 import { Position, PositionStatus, WorkType } from '@/types/cv-sharing';
 import { format } from 'date-fns';
 import PageContainer from '@/components/ui/PageContainer';
@@ -46,6 +47,27 @@ const PositionList: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<PositionStatus | ''>('');
   const [departmentFilter, setDepartmentFilter] = useState('');
+  const [departments, setDepartments] = useState<{ id: number; name: string }[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await departmentService.getAll({ page: 0, size: 100 });
+        const items = (res as any)?.content || [];
+        if (mounted) setDepartments(items.map((d: any) => ({ id: d.id, name: d.name })));
+      } catch {
+        // fallback to a static list if API not available
+        if (mounted) setDepartments([
+          { id: -1, name: 'HR' },
+          { id: -2, name: 'ENG' },
+          { id: -3, name: 'FINANCE' },
+          { id: -4, name: 'SALES' },
+        ]);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   // Fetch positions
   const { data, isLoading, isError, refetch } = useQuery({
@@ -294,12 +316,19 @@ const PositionList: React.FC = () => {
                 <MenuItem value={PositionStatus.ARCHIVED}>Archived</MenuItem>
               </Select>
             </FormControl>
-            <TextField
-              label="Department"
-              value={departmentFilter}
-              onChange={(e) => setDepartmentFilter(e.target.value)}
-              sx={{ minWidth: { xs: '100%', sm: 200 } }}
-            />
+            <FormControl sx={{ minWidth: { xs: '100%', sm: 200 } }}>
+              <InputLabel>Department</InputLabel>
+              <Select
+                value={departmentFilter}
+                label="Department"
+                onChange={(e) => setDepartmentFilter(e.target.value as string)}
+              >
+                <MenuItem value="">All</MenuItem>
+                {departments.map((d) => (
+                  <MenuItem key={d.id} value={d.name}>{d.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             <Button
               variant="outlined"
               startIcon={<FilterIcon />}

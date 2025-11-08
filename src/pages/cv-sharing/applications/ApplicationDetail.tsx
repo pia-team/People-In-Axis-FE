@@ -31,6 +31,7 @@ import {
   CalendarToday as CalendarIcon,
   AttachFile as FileIcon,
   Download as DownloadIcon,
+  Delete as DeleteIcon,
   Comment as CommentIcon,
   Star as StarIcon,
   Schedule as ScheduleIcon,
@@ -136,6 +137,30 @@ const ApplicationDetail: React.FC = () => {
       enqueueSnackbar('Failed to update status', { variant: 'error' });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleCancelMeeting = async (meetingId: string) => {
+    if (!detail) return;
+    if (!window.confirm('Cancel this meeting?')) return;
+    try {
+      await applicationService.updateMeeting(detail.id, meetingId, { status: 'CANCELLED' as any });
+      enqueueSnackbar('Meeting cancelled', { variant: 'success' });
+      await queryClient.invalidateQueries({ queryKey: ['application', id] });
+    } catch (error) {
+      enqueueSnackbar('Failed to cancel meeting', { variant: 'error' });
+    }
+  };
+
+  const handleDeleteFile = async (fileId: string) => {
+    if (!detail) return;
+    if (!window.confirm('Delete this file?')) return;
+    try {
+      await applicationService.deleteFile(detail.id, fileId);
+      enqueueSnackbar('File deleted', { variant: 'success' });
+      await queryClient.invalidateQueries({ queryKey: ['application', id] });
+    } catch (error) {
+      enqueueSnackbar('Failed to delete file', { variant: 'error' });
     }
   };
 
@@ -322,9 +347,14 @@ const ApplicationDetail: React.FC = () => {
                 {detail.files.map(f => (
                   <ListItem key={f.id}
                     secondaryAction={
-                      <IconButton edge="end" onClick={() => handleDownload(f.id, f.fileName)}>
-                        <DownloadIcon />
-                      </IconButton>
+                      <Box>
+                        <IconButton edge="end" onClick={() => handleDownload(f.id, f.fileName)} aria-label="download">
+                          <DownloadIcon />
+                        </IconButton>
+                        <IconButton edge="end" onClick={() => handleDeleteFile(f.id)} aria-label="delete" sx={{ ml: 1 }}>
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
                     }
                   >
                     <ListItemIcon><FileIcon /></ListItemIcon>
@@ -343,11 +373,17 @@ const ApplicationDetail: React.FC = () => {
             {detail.meetings && detail.meetings.length > 0 && (
               <List>
                 {detail.meetings.map(m => (
-                  <ListItem key={m.id}>
+                  <ListItem key={m.id}
+                    secondaryAction={
+                      <Button size="small" color="warning" onClick={() => handleCancelMeeting(m.id)} disabled={m.status === 'CANCELLED'}>
+                        {m.status === 'CANCELLED' ? 'Cancelled' : 'Cancel Meeting'}
+                      </Button>
+                    }
+                  >
                     <ListItemIcon><CalendarIcon /></ListItemIcon>
                     <ListItemText
                       primary={`${m.title} • ${new Date(m.startTime).toLocaleString()} (${m.durationMinutes}m)`}
-                      secondary={m.location || m.meetingLink}
+                      secondary={m.location || (m as any).meetingLink}
                     />
                   </ListItem>
                 ))}
@@ -358,6 +394,7 @@ const ApplicationDetail: React.FC = () => {
           <Grid item xs={12} md={4}>
             <Typography variant="h6">Status</Typography>
             <Divider sx={{ mb: 2 }} />
+            {/* Status selector */}
             <FormControl fullWidth size="small">
               <InputLabel>Status</InputLabel>
               <Select value={newStatus} label="Status" onChange={(e) => setNewStatus(e.target.value as ApplicationStatus)}>

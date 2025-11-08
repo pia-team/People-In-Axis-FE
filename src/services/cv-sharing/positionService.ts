@@ -85,14 +85,17 @@ class PositionService {
    * Change position status
    */
   async updatePositionStatus(id: string, status: string): Promise<Position> {
-    return this.updatePosition(id, { status: status as any });
+    const response = await axios.post<Position>(`${this.baseUrl}/${id}/status`, null, {
+      params: { status }
+    });
+    return this.normalizePosition(response.data) as Position;
   }
 
   /**
    * Archive position
    */
   async archivePosition(id: string): Promise<void> {
-    await this.updatePositionStatus(id, 'ARCHIVED');
+    await axios.post(`${this.baseUrl}/${id}/archive`);
   }
 
   /**
