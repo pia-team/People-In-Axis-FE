@@ -235,6 +235,15 @@ const PositionDetail: React.FC = () => {
     );
   }
 
+  // Restrict non-HR from viewing non-active positions
+  if (!isHR && position.status !== PositionStatus.ACTIVE) {
+    return (
+      <PageContainer>
+        <Alert severity="warning">You can only view active positions.</Alert>
+      </PageContainer>
+    );
+  }
+
   return (
     <PageContainer
       title={position.title}

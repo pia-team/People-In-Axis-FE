@@ -59,10 +59,17 @@ const PositionList: React.FC = () => {
       page,
       size: pageSize,
       q: searchQuery,
-      status: statusFilter || undefined,
+      status: isHR ? (statusFilter || undefined) : PositionStatus.ACTIVE,
       department: departmentFilter || undefined
     })
   });
+
+  // Ensure non-HR users are locked to ACTIVE status
+  useEffect(() => {
+    if (!isHR && statusFilter !== PositionStatus.ACTIVE) {
+      setStatusFilter(PositionStatus.ACTIVE);
+    }
+  }, [isHR]);
 
   // Recompute department options from loaded rows (after data is defined)
   useEffect(() => {
@@ -332,16 +339,23 @@ const PositionList: React.FC = () => {
             <FormControl sx={{ minWidth: { xs: '100%', sm: 180 } }}>
               <InputLabel>Status</InputLabel>
               <Select
-                value={statusFilter}
+                value={isHR ? (statusFilter as any) : PositionStatus.ACTIVE}
                 label="Status"
                 onChange={(e) => setStatusFilter(e.target.value as PositionStatus | '')}
+                disabled={!isHR}
               >
-                <MenuItem value="">All</MenuItem>
-                <MenuItem value={PositionStatus.DRAFT}>Draft</MenuItem>
-                <MenuItem value={PositionStatus.ACTIVE}>Active</MenuItem>
-                <MenuItem value={PositionStatus.PASSIVE}>Passive</MenuItem>
-                <MenuItem value={PositionStatus.CLOSED}>Closed</MenuItem>
-                <MenuItem value={PositionStatus.ARCHIVED}>Archived</MenuItem>
+                {isHR ? (
+                  [
+                    <MenuItem key="all" value="">All</MenuItem>,
+                    <MenuItem key="draft" value={PositionStatus.DRAFT}>Draft</MenuItem>,
+                    <MenuItem key="active" value={PositionStatus.ACTIVE}>Active</MenuItem>,
+                    <MenuItem key="passive" value={PositionStatus.PASSIVE}>Passive</MenuItem>,
+                    <MenuItem key="closed" value={PositionStatus.CLOSED}>Closed</MenuItem>,
+                    <MenuItem key="archived" value={PositionStatus.ARCHIVED}>Archived</MenuItem>,
+                  ]
+                ) : (
+                  <MenuItem value={PositionStatus.ACTIVE}>Active</MenuItem>
+                )}
               </Select>
             </FormControl>
             <FormControl sx={{ minWidth: { xs: '100%', sm: 200 } }}>
