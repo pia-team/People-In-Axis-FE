@@ -18,7 +18,9 @@ import {
   ListItemIcon,
   ListItemText,
   Avatar,
-  Tooltip
+  Tooltip,
+  Menu,
+  MenuItem
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -37,7 +39,8 @@ import {
   ArrowBack as BackIcon,
   People as ApplicantsIcon,
   Visibility as ViewIcon,
-  Share as ShareIcon
+  Share as ShareIcon,
+  MoreVert as MoreVertIcon
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -81,6 +84,7 @@ const PositionDetail: React.FC = () => {
   const isHR = hasRole('HUMAN_RESOURCES');
   const [isArchiving, setIsArchiving] = useState(false);
   const [isActivating, setIsActivating] = useState(false);
+  const [statusMenuAnchor, setStatusMenuAnchor] = useState<null | HTMLElement>(null);
 
   const { data: position, isLoading } = useQuery({
     queryKey: ['position', id],
@@ -98,6 +102,30 @@ const PositionDetail: React.FC = () => {
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
+  };
+
+  const handleOpenStatusMenu = (e: React.MouseEvent<HTMLElement>) => {
+    setStatusMenuAnchor(e.currentTarget);
+  };
+
+  const handleCloseStatusMenu = () => {
+    setStatusMenuAnchor(null);
+  };
+
+  const handleStatusChange = async (newStatus: PositionStatus) => {
+    if (!id) return;
+    try {
+      const updated = await positionService.updatePositionStatus(id, newStatus);
+      // Update detail cache for instant UI reflection
+      queryClient.setQueryData(['position', id], updated);
+      enqueueSnackbar(`Position status updated to ${newStatus}`, { variant: 'success' });
+      // Sync lists
+      queryClient.invalidateQueries({ queryKey: ['positions'] });
+    } catch (error) {
+      enqueueSnackbar('Failed to update position status', { variant: 'error' });
+    } finally {
+      handleCloseStatusMenu();
+    }
   };
 
   // Prefer backend-provided total count; fallback to loaded matches length
@@ -239,6 +267,17 @@ const PositionDetail: React.FC = () => {
               >
                 Duplicate
               </Button>
+            </span>
+          </Tooltip>
+          <Tooltip title={isHR ? 'Change Status' : 'Yalnızca İnsan Kaynakları durumu değiştirebilir'}>
+            <span>
+              <IconButton
+                size="small"
+                onClick={handleOpenStatusMenu}
+                disabled={!isHR}
+              >
+                <MoreVertIcon />
+              </IconButton>
             </span>
           </Tooltip>
           {position.status === PositionStatus.ARCHIVED ? (
@@ -623,6 +662,20 @@ const PositionDetail: React.FC = () => {
           </SectionCard>
         </TabPanel>
       </Stack>
+      <Menu
+        anchorEl={statusMenuAnchor}
+        open={Boolean(statusMenuAnchor)}
+        onClose={handleCloseStatusMenu}
+        onClick={(e: React.MouseEvent) => e.stopPropagation()}
+      >
+        {Object.values(PositionStatus)
+          .filter((s) => s !== position.status && s !== PositionStatus.ARCHIVED)
+          .map((status) => (
+            <MenuItem key={status} onClick={() => handleStatusChange(status)}>
+              Set as {status}
+            </MenuItem>
+          ))}
+      </Menu>
     </PageContainer>
   );
 };

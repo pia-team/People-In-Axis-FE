@@ -12,7 +12,8 @@ import {
   FormControl,
   InputLabel,
   InputAdornment,
-  Tooltip
+  Tooltip,
+  Menu
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -21,7 +22,8 @@ import {
   Search as SearchIcon,
   FilterList as FilterIcon,
   ContentCopy as DuplicateIcon,
-  Archive as ArchiveIcon
+  Archive as ArchiveIcon,
+  MoreVert as MoreVertIcon
 } from '@mui/icons-material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { useNavigate } from 'react-router-dom';
@@ -47,6 +49,8 @@ const PositionList: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<PositionStatus | ''>('');
   const [departmentFilter, setDepartmentFilter] = useState('');
   const [departments, setDepartments] = useState<string[]>([]);
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
 
   // Fetch positions
   const { data, isLoading, isError, refetch } = useQuery({
@@ -86,6 +90,30 @@ const PositionList: React.FC = () => {
       refetch();
     } catch (error) {
       enqueueSnackbar('Failed to archive position', { variant: 'error' });
+    }
+  };
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, position: Position) => {
+    setMenuAnchorEl(event.currentTarget);
+    setSelectedPosition(position);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
+    setSelectedPosition(null);
+  };
+
+  const handleStatusChange = async (newStatus: PositionStatus) => {
+    if (!selectedPosition) return;
+
+    try {
+      await positionService.updatePositionStatus(selectedPosition.id, newStatus);
+      enqueueSnackbar(`Position status updated to ${newStatus}`, { variant: 'success' });
+      refetch();
+    } catch (error) {
+      enqueueSnackbar('Failed to update position status', { variant: 'error' });
+    } finally {
+      handleMenuClose();
     }
   };
 
@@ -236,6 +264,20 @@ const PositionList: React.FC = () => {
                 </IconButton>
               </span>
             </Tooltip>
+            <Tooltip title={isHR ? 'Change Status' : 'Yalnızca İnsan Kaynakları durumu değiştirebilir'}>
+              <span>
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleMenuOpen(e, position);
+                  }}
+                  disabled={!isHR}
+                >
+                  <MoreVertIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
           </Box>
         );
       }
@@ -380,6 +422,20 @@ const PositionList: React.FC = () => {
           </Typography>
         )}
       </Stack>
+      <Menu
+        anchorEl={menuAnchorEl}
+        open={Boolean(menuAnchorEl)}
+        onClose={handleMenuClose}
+        onClick={(e: React.MouseEvent) => e.stopPropagation()}
+      >
+        {Object.values(PositionStatus)
+          .filter(s => s !== selectedPosition?.status && s !== PositionStatus.ARCHIVED)
+          .map((status) => (
+            <MenuItem key={status} onClick={() => handleStatusChange(status)}>
+              Set as {status}
+            </MenuItem>
+          ))}
+      </Menu>
     </PageContainer>
   );
 };
