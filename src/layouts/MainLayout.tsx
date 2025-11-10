@@ -133,6 +133,7 @@ const menuItems: MenuItemType[] = [
       { title: 'Positions', path: '/cv-sharing/positions', icon: <BusinessCenter />, roles: ['HUMAN_RESOURCES', 'COMPANY_MANAGER'] },
       { title: 'Applications', path: '/cv-sharing/applications', icon: <GroupAdd /> },
       { title: 'Pool CVs', path: '/cv-sharing/pool-cvs', icon: <Inventory2 /> },
+      { title: 'Settings', path: '/cv-sharing/settings/matching', icon: <Settings />, roles: ['HUMAN_RESOURCES', 'COMPANY_MANAGER'] },
     ],
   },
   {

@@ -63,6 +63,7 @@ const MeetingScheduler = lazy(() => import('@/pages/cv-sharing/applications/Meet
 const PoolCVList = lazy(() => import('@/pages/cv-sharing/pool-cvs/PoolCVList'));
 const PoolCVDetail = lazy(() => import('@/pages/cv-sharing/pool-cvs/PoolCVDetail'));
 const PoolCVForm = lazy(() => import('@/pages/cv-sharing/pool-cvs/PoolCVForm'));
+const MatchingSettings = lazy(() => import('@/pages/cv-sharing/settings/MatchingSettings'));
 
 // Reports pages
 const Reports = lazy(() => import('@/pages/reports/Reports'));
@@ -244,6 +245,14 @@ const App: React.FC = () => {
               <Route path=":id" element={<PoolCVDetail />} />
               <Route path="new" element={<PoolCVForm />} />
               <Route path=":id/edit" element={<PoolCVForm />} />
+            </Route>
+
+            {/* CV Sharing - Settings (Matching) */}
+            <Route
+              path="/cv-sharing/settings"
+              element={<PrivateRoute roles={["HUMAN_RESOURCES", "COMPANY_MANAGER", "EMPLOYEE"]} />}
+            >
+              <Route path="matching" element={<MatchingSettings />} />
             </Route>
 
             {/* Admin */}
