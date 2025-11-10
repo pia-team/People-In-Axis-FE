@@ -28,12 +28,11 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { positionService } from '@/services/cv-sharing/positionService';
-import { departmentService } from '@/services/departmentService';
 import { Position, PositionStatus, WorkType } from '@/types/cv-sharing';
 import { format } from 'date-fns';
 import PageContainer from '@/components/ui/PageContainer';
 import SectionCard from '@/components/ui/SectionCard';
-import { standardDataGridSx } from '@/components/ui/dataGridStyles';
+// import { standardDataGridSx } from '@/components/ui/dataGridStyles';
 import EmptyState from '@/components/ui/EmptyState';
 import { useKeycloak } from '@/providers/KeycloakProvider';
 
@@ -47,27 +46,7 @@ const PositionList: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<PositionStatus | ''>('');
   const [departmentFilter, setDepartmentFilter] = useState('');
-  const [departments, setDepartments] = useState<{ id: number; name: string }[]>([]);
-
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const res = await departmentService.getAll({ page: 0, size: 100 });
-        const items = (res as any)?.content || [];
-        if (mounted) setDepartments(items.map((d: any) => ({ id: d.id, name: d.name })));
-      } catch {
-        // fallback to a static list if API not available
-        if (mounted) setDepartments([
-          { id: -1, name: 'HR' },
-          { id: -2, name: 'ENG' },
-          { id: -3, name: 'FINANCE' },
-          { id: -4, name: 'SALES' },
-        ]);
-      }
-    })();
-    return () => { mounted = false; };
-  }, []);
+  const [departments, setDepartments] = useState<string[]>([]);
 
   // Fetch positions
   const { data, isLoading, isError, refetch } = useQuery({
@@ -80,6 +59,13 @@ const PositionList: React.FC = () => {
       department: departmentFilter || undefined
     })
   });
+
+  // Recompute department options from loaded rows (after data is defined)
+  useEffect(() => {
+    const items = (data?.content ?? []) as any[];
+    const unique = Array.from(new Set(items.map((p: any) => p?.department).filter((d: any) => !!d))) as string[];
+    setDepartments(unique);
+  }, [data?.content]);
 
   // status change handled in detail/edit views; not used here
 
@@ -324,8 +310,8 @@ const PositionList: React.FC = () => {
                 onChange={(e) => setDepartmentFilter(e.target.value as string)}
               >
                 <MenuItem value="">All</MenuItem>
-                {departments.map((d) => (
-                  <MenuItem key={d.id} value={d.name}>{d.name}</MenuItem>
+                {departments.map((name) => (
+                  <MenuItem key={name} value={name}>{name}</MenuItem>
                 ))}
               </Select>
             </FormControl>

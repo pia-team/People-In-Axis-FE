@@ -79,6 +79,7 @@ const PoolCVList: React.FC = () => {
     positions: []
   });
   const [matchBusyId, setMatchBusyId] = useState<string | null>(null);
+  const [confirmBusyId, setConfirmBusyId] = useState<string | null>(null);
   const [toggleBusyId, setToggleBusyId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'card' | 'list' | 'compact'>('card');
 
@@ -119,6 +120,22 @@ const PoolCVList: React.FC = () => {
       enqueueSnackbar('Failed to update status', { variant: 'error' });
     } finally {
       setToggleBusyId(null);
+    }
+  };
+
+  const handleConfirmMatch = async (cvId: string, positionId: string, matchScore?: number) => {
+    try {
+      if (confirmBusyId === positionId) return;
+      setConfirmBusyId(positionId);
+      await poolCVService.matchPosition(cvId, positionId, matchScore ? { matchScore } : undefined);
+      enqueueSnackbar('Matched successfully!', { variant: 'success' });
+      // Refresh dialog data
+      const positions = await poolCVService.matchPositionsForPoolCV(cvId);
+      setMatchDialog(md => ({ ...md, positions }));
+    } catch (error) {
+      enqueueSnackbar('Failed to record match', { variant: 'error' });
+    } finally {
+      setConfirmBusyId(null);
     }
   };
 
@@ -618,13 +635,23 @@ const PoolCVList: React.FC = () => {
                         </Typography>
                       </Box>
                       
-                      <Button
-                        size="small"
-                        variant="contained"
-                        onClick={() => navigate(`/cv-sharing/positions/${matched.position.id}`)}
-                      >
-                        View Position
-                      </Button>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => navigate(`/cv-sharing/positions/${matched.position.id}`)}
+                        >
+                          View Position
+                        </Button>
+                        <Button
+                          size="small"
+                          variant="contained"
+                          onClick={() => handleConfirmMatch(matchDialog.poolCVId!, matched.position.id, matched.matchScore)}
+                          disabled={confirmBusyId === matched.position.id}
+                        >
+                          {confirmBusyId === matched.position.id ? 'Matching...' : 'Match'}
+                        </Button>
+                      </Stack>
                     </ListItem>
                   );
                 })}

@@ -286,6 +286,14 @@ class PoolCVService {
     });
     return response.data.content;
   }
+
+  /**
+   * Record a match decision between a Pool CV and a Position
+   */
+  async matchPosition(poolCvId: string, positionId: string, data?: { matchScore?: number; comment?: string }): Promise<{ success: boolean; message?: string }> {
+    const response = await axios.post<{ success: boolean; message?: string }>(`${this.baseUrl}/${poolCvId}/match/${positionId}`, data || {});
+    return response.data;
+  }
 }
 
 export const poolCVService = new PoolCVService();

@@ -25,10 +25,19 @@ class ApplicationService {
    * Get paginated list of applications
    */
   async getApplications(filter?: ApplicationFilter): Promise<PagedResponse<Application>> {
-    const response = await axios.get<PagedResponse<Application>>(this.baseUrl, {
+    const response = await axios.get(this.baseUrl, {
       params: filter
     });
-    return response.data;
+    const d: any = response.data;
+    // Normalize Spring Page or already-normalized payload
+    const content: Application[] = Array.isArray(d?.content) ? d.content : (Array.isArray(d) ? d : []);
+    const pageInfo = {
+      page: d?.number ?? d?.pageInfo?.page ?? filter?.page ?? 0,
+      size: d?.size ?? d?.pageInfo?.size ?? filter?.size ?? 10,
+      totalElements: d?.totalElements ?? d?.pageInfo?.totalElements ?? content.length ?? 0,
+      totalPages: d?.totalPages ?? d?.pageInfo?.totalPages ?? 1,
+    } as PagedResponse<Application>["pageInfo"];
+    return { content, pageInfo } as PagedResponse<Application>;
   }
 
   /**

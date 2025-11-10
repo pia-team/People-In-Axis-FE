@@ -32,14 +32,19 @@ class PositionService {
    * Get paginated list of positions
    */
   async getPositions(filter?: PositionFilter): Promise<PagedResponse<Position>> {
-    const response = await axios.get<PagedResponse<Position>>(this.baseUrl, {
+    const response = await axios.get(this.baseUrl, {
       params: filter
     });
-    const data: any = response.data;
-    return {
-      ...data,
-      content: Array.isArray(data.content) ? data.content.map(this.normalizePosition) : data.content
-    } as PagedResponse<Position>;
+    const d: any = response.data;
+    const rawContent: any[] = Array.isArray(d?.content) ? d.content : (Array.isArray(d) ? d : []);
+    const content: Position[] = rawContent.map(this.normalizePosition) as Position[];
+    const pageInfo = {
+      page: d?.number ?? d?.pageInfo?.page ?? filter?.page ?? 0,
+      size: d?.size ?? d?.pageInfo?.size ?? filter?.size ?? 10,
+      totalElements: d?.totalElements ?? d?.pageInfo?.totalElements ?? content.length ?? 0,
+      totalPages: d?.totalPages ?? d?.pageInfo?.totalPages ?? 1,
+    } as PagedResponse<Position>["pageInfo"];
+    return { content, pageInfo } as PagedResponse<Position>;
   }
 
   /**
@@ -120,6 +125,24 @@ class PositionService {
   async getPositionStatistics(positionId: string): Promise<any> {
     const response = await axios.get(`${this.baseUrl}/${positionId}/statistics`);
     return response.data;
+  }
+
+  /**
+   * Get recorded matches for a position (from cv_position_match)
+   */
+  async getMatchesForPosition(positionId: string, page = 0, size = 10): Promise<PagedResponse<any>> {
+    const response = await axios.get(`${this.baseUrl}/${positionId}/matches`, {
+      params: { page, size }
+    });
+    const d: any = response.data;
+    const content: any[] = Array.isArray(d?.content) ? d.content : (Array.isArray(d) ? d : []);
+    const pageInfo = {
+      page: d?.number ?? page,
+      size: d?.size ?? size,
+      totalElements: d?.totalElements ?? content.length ?? 0,
+      totalPages: d?.totalPages ?? 1,
+    } as PagedResponse<any>["pageInfo"];
+    return { content, pageInfo } as PagedResponse<any>;
   }
 
   /**

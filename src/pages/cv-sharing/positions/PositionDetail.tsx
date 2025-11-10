@@ -42,7 +42,7 @@ import {
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import { positionService, applicationService } from '@/services/cv-sharing';
+import { positionService } from '@/services/cv-sharing';
 import { PositionStatus, WorkType } from '@/types/cv-sharing';
 import { format } from 'date-fns';
 import PageContainer from '@/components/ui/PageContainer';
@@ -88,9 +88,11 @@ const PositionDetail: React.FC = () => {
     enabled: !!id
   });
 
-  const { data: applications } = useQuery({
-    queryKey: ['applications', 'position', id],
-    queryFn: () => applicationService.getApplicationsByPosition(id!),
+  const [appsPage, setAppsPage] = useState(0);
+  const appsPageSize = 10;
+  const { data: matchesPage } = useQuery({
+    queryKey: ['position-matches', id, appsPage, appsPageSize],
+    queryFn: () => positionService.getMatchesForPosition(id!, appsPage, appsPageSize),
     enabled: !!id
   });
 
@@ -98,8 +100,8 @@ const PositionDetail: React.FC = () => {
     setTabValue(newValue);
   };
 
-  // Prefer backend-provided total count; fallback to loaded applications length
-  const applicationsCount = position?.applicationCount ?? (applications?.length ?? 0);
+  // Prefer backend-provided total count; fallback to loaded matches length
+  const applicationsCount = position?.applicationCount ?? (matchesPage?.pageInfo?.totalElements ?? 0);
 
   const handleActivate = async () => {
     try {
@@ -487,53 +489,70 @@ const PositionDetail: React.FC = () => {
               Applications ({applicationsCount})
             </Typography>
             <Divider sx={{ my: 2 }} />
-            {applications && applications.length > 0 ? (
+            {matchesPage && (matchesPage.content?.length ?? 0) > 0 ? (
               <List>
-                {applications.slice(0, 10).map((app: any) => (
+                {matchesPage.content.map((m: any, idx: number) => (
                   <ListItem
-                    key={app.id}
+                    key={`${m.poolCvId}-${idx}`}
                     secondaryAction={
-                      <IconButton
-                        edge="end"
-                        aria-label="view"
-                        onClick={() => navigate(`/cv-sharing/applications/${app.id}`)}
-                      >
-                        <ViewIcon />
-                      </IconButton>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        {m.matchScore != null && (
+                          <Chip label={`Score: ${m.matchScore}`} size="small" color="primary" />
+                        )}
+                        {m.matchedAt && (
+                          <Chip label={format(new Date(m.matchedAt), 'dd/MM/yyyy')} size="small" />
+                        )}
+                        <IconButton
+                          edge="end"
+                          aria-label="view"
+                          onClick={() => navigate(`/cv-sharing/applications?positionId=${id}`)}
+                        >
+                          <ViewIcon />
+                        </IconButton>
+                      </Stack>
                     }
                   >
                     <ListItemIcon>
                       <Avatar>
-                        {app.firstName?.[0]}{app.lastName?.[0]}
+                        {m.firstName?.[0]}{m.lastName?.[0]}
                       </Avatar>
                     </ListItemIcon>
                     <ListItemText
-                      primary={`${app.firstName} ${app.lastName}`}
-                      secondary={`Applied on ${format(new Date(app.appliedAt), 'dd/MM/yyyy')}`}
+                      primary={`${m.firstName} ${m.lastName}`}
+                      secondary={m.email}
                     />
                     <Chip
-                      label={app.status}
+                      label={m.applicationStatus ?? 'N/A'}
                       size="small"
-                      color={app.status === 'NEW' ? 'info' : 'default'}
+                      color={m.applicationStatus === 'NEW' ? 'info' : 'default'}
                     />
                   </ListItem>
                 ))}
               </List>
             ) : (
               <Typography variant="body2" color="text.secondary">
-                No applications yet
+                No matches found
               </Typography>
             )}
-            {applications && applications.length > 10 && (
-              <Box sx={{ mt: 2, textAlign: 'center' }}>
-                <Button
-                  variant="outlined"
-                  onClick={() => navigate(`/cv-sharing/applications?positionId=${id}`)}
-                >
-                  View All Applications
-                </Button>
-              </Box>
-            )}
+            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
+              <Button
+                variant="outlined"
+                disabled={!matchesPage || appsPage <= 0}
+                onClick={() => setAppsPage((p) => Math.max(0, p - 1))}
+              >
+                Previous
+              </Button>
+              <Typography variant="body2" color="text.secondary">
+                Page {appsPage + 1} of {matchesPage?.pageInfo?.totalPages ?? 1}
+              </Typography>
+              <Button
+                variant="outlined"
+                disabled={!matchesPage || (appsPage + 1) >= (matchesPage.pageInfo?.totalPages ?? 1)}
+                onClick={() => setAppsPage((p) => p + 1)}
+              >
+                Next
+              </Button>
+            </Box>
           </SectionCard>
         </TabPanel>
 

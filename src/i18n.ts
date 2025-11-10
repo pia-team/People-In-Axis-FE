@@ -36,11 +36,13 @@ const resources = {
   },
 };
 
+const initialLang = (typeof window !== 'undefined' && localStorage.getItem('lang')) || 'en';
+
 i18n
   .use(initReactI18next)
   .init({
     resources,
-    lng: 'en',
+    lng: initialLang,
     fallbackLng: 'en',
     interpolation: {
       escapeValue: false,

@@ -8,6 +8,12 @@ export interface DashboardMetrics {
   pendingExpenses?: number;
   teamLeadAssignedRows?: number;
 
+  // HR metrics (CV Sharing)
+  totalPositions?: number;
+  totalApplications?: number;
+  totalPoolCVs?: number;
+  activeMeetings?: number;
+
   timesheetBaseStatusCounts?: Record<string, number>;
   expenseStatusCounts?: Record<string, number>;
 

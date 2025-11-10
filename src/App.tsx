@@ -76,6 +76,8 @@ const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 const UserManagement = lazy(() => import('@/pages/admin/UserManagement'));
 const RoleManagement = lazy(() => import('@/pages/admin/RoleManagement'));
 const Settings = lazy(() => import('@/pages/admin/Settings'));
+// Settings pages
+const LanguagesPage = lazy(() => import('@/pages/settings/Languages'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
 const LoadingScreen: React.FC = () => (
@@ -265,6 +267,12 @@ const App: React.FC = () => {
               <Route path="roles" element={<RoleManagement />} />
               <Route path="settings" element={<Settings />} />
             </Route>
+
+            {/* Settings */}
+            <Route path="/settings">
+              <Route path="languages" element={<LanguagesPage />} />
+            </Route>
+
           </Route>
         </Route>
 

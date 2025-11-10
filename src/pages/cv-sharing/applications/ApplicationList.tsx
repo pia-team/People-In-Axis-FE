@@ -22,7 +22,7 @@ import {
   Badge,
   Stack
 } from '@mui/material';
-import { DataGrid, GridColDef, GridRenderCellParams, GridPaginationModel } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridRenderCellParams, GridPaginationModel, GridSortModel } from '@mui/x-data-grid';
 import {
   Search as SearchIcon,
   Visibility as ViewIcon,
@@ -34,11 +34,11 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import { applicationService } from '@/services/cv-sharing';
+import { applicationService, positionService } from '@/services/cv-sharing';
 import { Application, ApplicationStatus } from '@/types/cv-sharing';
 import PageContainer from '@/components/ui/PageContainer';
 import SectionCard from '@/components/ui/SectionCard';
-import { standardDataGridSx } from '@/components/ui/dataGridStyles';
+// import { standardDataGridSx } from '@/components/ui/dataGridStyles';
 import EmptyState from '@/components/ui/EmptyState';
 import { useKeycloak } from '@/hooks/useKeycloak';
 
@@ -63,6 +63,9 @@ const ApplicationList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<ApplicationStatus | ''>('');
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
+  const [departmentFilter, setDepartmentFilter] = useState<string>('');
+  const [positionIdFilter, setPositionIdFilter] = useState<string>('');
+  const [sortModel, setSortModel] = useState<GridSortModel>([]);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [commentDialog, setCommentDialog] = useState<CommentDialogData>({
     open: false,
@@ -77,13 +80,29 @@ const ApplicationList: React.FC = () => {
   const { hasRole } = useKeycloak();
   const isCompanyManager = hasRole('COMPANY_MANAGER');
 
+  // Load positions for dropdowns
+  const { data: positionsPage } = useQuery({
+    queryKey: ['positions', 'for-applications-filter'],
+    queryFn: () => positionService.getPositions({ page: 0, size: 200 }),
+    staleTime: 5 * 60 * 1000,
+  });
+  const positionOptions = positionsPage?.content ?? [];
+  const departmentOptions: string[] = React.useMemo(() => {
+    const set = new Set<string>();
+    (positionOptions as any[]).forEach((p) => { if (p?.department) set.add(p.department); });
+    return Array.from(set);
+  }, [positionOptions]);
+
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['applications', paginationModel.page, paginationModel.pageSize, statusFilter, searchTerm],
+    queryKey: ['applications', paginationModel.page, paginationModel.pageSize, statusFilter, searchTerm, departmentFilter, positionIdFilter, sortModel],
     queryFn: async () => applicationService.getApplications({
       page: paginationModel.page,
       size: paginationModel.pageSize,
       status: statusFilter || undefined,
-      q: searchTerm || undefined
+      q: searchTerm || undefined,
+      department: departmentFilter || undefined,
+      positionId: positionIdFilter || undefined,
+      sort: sortModel?.[0]?.field ? `${sortModel[0].field},${sortModel[0].sort === 'asc' ? 'asc' : 'desc'}` : undefined,
     }),
     placeholderData: keepPreviousData,
   });
@@ -99,6 +118,8 @@ const ApplicationList: React.FC = () => {
     setSearchTerm(event.target.value);
     if (paginationModel.page !== 0) setPaginationModel(p => ({ ...p, page: 0 }));
   };
+
+  // handlers inlined in Select onChange
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, application: Application) => {
     setAnchorEl(event.currentTarget);
@@ -346,6 +367,43 @@ const ApplicationList: React.FC = () => {
                 )
               }}
             />
+            <FormControl sx={{ minWidth: { xs: '100%', sm: 220 } }}>
+              <InputLabel>Department</InputLabel>
+              <Select
+                value={departmentFilter}
+                label="Department"
+                onChange={(e) => {
+                  setDepartmentFilter(e.target.value as string);
+                  if (paginationModel.page !== 0) setPaginationModel(p => ({ ...p, page: 0 }));
+                }}
+              >
+                <MenuItem value="">All Departments</MenuItem>
+                {departmentOptions.map((dep) => (
+                  <MenuItem key={dep} value={dep}>{dep}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl sx={{ minWidth: { xs: '100%', sm: 260 } }}>
+              <InputLabel>Position</InputLabel>
+              <Select
+                value={positionIdFilter}
+                label="Position"
+                onChange={(e) => {
+                  setPositionIdFilter(e.target.value as string);
+                  if (paginationModel.page !== 0) setPaginationModel(p => ({ ...p, page: 0 }));
+                }}
+                renderValue={(val) => {
+                  if (!val) return 'All Positions';
+                  const found = positionOptions.find((p: any) => p.id === val);
+                  return found?.title || val as any;
+                }}
+              >
+                <MenuItem value="">All Positions</MenuItem>
+                {positionOptions.map((p: any) => (
+                  <MenuItem key={p.id} value={p.id}>{p.title}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             <FormControl sx={{ minWidth: { xs: '100%', sm: 250 } }}>
               <InputLabel>Status</InputLabel>
               <Select
@@ -363,6 +421,8 @@ const ApplicationList: React.FC = () => {
                 <MenuItem value={ApplicationStatus.MEETING_SCHEDULED}>Meeting Scheduled</MenuItem>
                 <MenuItem value={ApplicationStatus.ACCEPTED}>Accepted</MenuItem>
                 <MenuItem value={ApplicationStatus.REJECTED}>Rejected</MenuItem>
+                <MenuItem value={ApplicationStatus.WITHDRAWN}>Withdrawn</MenuItem>
+                <MenuItem value={ApplicationStatus.ARCHIVED}>Archived</MenuItem>
               </Select>
             </FormControl>
           </Box>
@@ -376,10 +436,16 @@ const ApplicationList: React.FC = () => {
               getRowId={(row) => row.id}
               loading={isLoading}
               paginationMode="server"
+              sortingMode="server"
               rowCount={rowCount}
               pageSizeOptions={[5, 10, 25, 50]}
               paginationModel={paginationModel}
               onPaginationModelChange={handlePaginationChange}
+              sortModel={sortModel}
+              onSortModelChange={(model) => {
+                setSortModel(model);
+                if (paginationModel.page !== 0) setPaginationModel(p => ({ ...p, page: 0 }));
+              }}
               onCellClick={(params) => {
                 // Don't navigate if clicking on actions column
                 if (params.field !== 'actions') {
