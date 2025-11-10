@@ -12,6 +12,10 @@ import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import PlaylistAddCheckOutlinedIcon from '@mui/icons-material/PlaylistAddCheckOutlined';
+import BusinessCenterOutlinedIcon from '@mui/icons-material/BusinessCenterOutlined';
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
+import FolderOpenOutlinedIcon from '@mui/icons-material/FolderOpenOutlined';
+import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -98,6 +102,28 @@ const Dashboard: React.FC = () => {
           <MetricCard title="Assigned Rows (Team Lead)" value={data?.teamLeadAssignedRows} loading={isLoading}
             to={hasRole('TEAM_MANAGER') ? '/timesheets/assigned' : undefined}
             icon={<PlaylistAddCheckOutlinedIcon color="primary" />} />
+        </Grid>
+
+        {/* HR Metrics (CV Sharing) */}
+        <Grid item xs={12} sm={6} md={3}>
+          <MetricCard title="Total Positions" value={data?.totalPositions} loading={isLoading}
+            to="/cv-sharing/positions"
+            icon={<BusinessCenterOutlinedIcon sx={{ color: 'primary.main' }} />} />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <MetricCard title="Total Applications" value={data?.totalApplications} loading={isLoading}
+            to="/cv-sharing/applications"
+            icon={<DescriptionOutlinedIcon sx={{ color: 'success.main' }} />} />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <MetricCard title="Pool CVs" value={data?.totalPoolCVs} loading={isLoading}
+            to="/cv-sharing/pool-cvs"
+            icon={<FolderOpenOutlinedIcon sx={{ color: 'secondary.main' }} />} />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <MetricCard title="Active Meetings" value={data?.activeMeetings} loading={isLoading}
+            to="/meetings"
+            icon={<CalendarMonthOutlinedIcon sx={{ color: 'warning.main' }} />} />
         </Grid>
 
         {/* Company-scoped cards */}

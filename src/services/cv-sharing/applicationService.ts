@@ -25,10 +25,19 @@ class ApplicationService {
    * Get paginated list of applications
    */
   async getApplications(filter?: ApplicationFilter): Promise<PagedResponse<Application>> {
-    const response = await axios.get<PagedResponse<Application>>(this.baseUrl, {
+    const response = await axios.get(this.baseUrl, {
       params: filter
     });
-    return response.data;
+    const d: any = response.data;
+    // Normalize Spring Page or already-normalized payload
+    const content: Application[] = Array.isArray(d?.content) ? d.content : (Array.isArray(d) ? d : []);
+    const pageInfo = {
+      page: d?.number ?? d?.pageInfo?.page ?? filter?.page ?? 0,
+      size: d?.size ?? d?.pageInfo?.size ?? filter?.size ?? 10,
+      totalElements: d?.totalElements ?? d?.pageInfo?.totalElements ?? content.length ?? 0,
+      totalPages: d?.totalPages ?? d?.pageInfo?.totalPages ?? 1,
+    } as PagedResponse<Application>["pageInfo"];
+    return { content, pageInfo } as PagedResponse<Application>;
   }
 
   /**
@@ -136,7 +145,7 @@ class ApplicationService {
   /**
    * Update meeting
    */
-  async updateMeeting(applicationId: string, meetingId: string, data: Partial<CreateMeetingRequest>): Promise<Meeting> {
+  async updateMeeting(applicationId: string, meetingId: string, data: any): Promise<Meeting> {
     const response = await axios.patch<Meeting>(`${this.baseUrl}/${applicationId}/meetings/${meetingId}`, data);
     return response.data;
   }
@@ -146,6 +155,22 @@ class ApplicationService {
    */
   async cancelMeeting(applicationId: string, meetingId: string): Promise<void> {
     await axios.delete(`${this.baseUrl}/${applicationId}/meetings/${meetingId}`);
+  }
+
+  /**
+   * Delete a file by ID
+   */
+  async deleteFile(_applicationId: string, fileId: string): Promise<{ success?: boolean; message?: string }> {
+    const response = await axios.delete<{ success?: boolean; message?: string }>(`${apiPath('files')}/${fileId}`);
+    return response.data;
+  }
+
+  /**
+   * Get meetings across the current user's company
+   */
+  async getCompanyMeetings(): Promise<Meeting[]> {
+    const response = await axios.get<Meeting[]>(apiPath('meetings'));
+    return response.data;
   }
 
   /**

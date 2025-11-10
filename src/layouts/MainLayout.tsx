@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import {
   Box,
@@ -18,6 +18,7 @@ import {
   Menu,
   MenuItem,
   Badge,
+  CircularProgress,
   Collapse,
   Container,
 } from '@mui/material';
@@ -56,6 +57,7 @@ import {
   RequestQuote,
   ManageAccounts,
   Share,
+  Language as LanguageIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -66,6 +68,9 @@ import { useQuery } from '@tanstack/react-query';
 import { timeSheetService } from '@/services/timesheetService';
 import { useThemeMode } from '@/providers/ThemeModeProvider';
 import { alpha } from '@mui/material/styles';
+import { useTranslation } from 'react-i18next';
+import { languageService } from '@/services/languageService';
+import { apiClient } from '@/services/api';
 
 const drawerWidth = 280;
 
@@ -156,6 +161,13 @@ const menuItems: MenuItemType[] = [
       { title: 'Settings', path: '/admin/settings', icon: <Settings /> },
     ],
   },
+  {
+    title: 'Settings',
+    icon: <Settings />,
+    children: [
+      { title: 'Languages', path: '/settings/languages', icon: <LanguageIcon /> },
+    ],
+  },
 ];
 
 const MainLayout: React.FC = () => {
@@ -164,6 +176,7 @@ const MainLayout: React.FC = () => {
   const dispatch = useDispatch();
   const { sidebarOpen } = useSelector((state: RootState) => state.ui);
   const { tokenParsed, logout, hasAnyRole } = useKeycloak();
+  const { i18n } = useTranslation();
   const showManagerCounts = hasAnyRole(['TEAM_MANAGER', 'HUMAN_RESOURCES']);
   const { data: managerPendingCount } = useQuery({
     queryKey: ['timesheets', 'manager-pending', 'count'],
@@ -184,6 +197,8 @@ const MainLayout: React.FC = () => {
   });
   
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [langAnchor, setLangAnchor] = useState<null | HTMLElement>(null);
+  const [langLoading, setLangLoading] = useState<string | null>(null);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
   const handleDrawerToggle = () => {
@@ -196,6 +211,67 @@ const MainLayout: React.FC = () => {
 
   const handleMenuClose = () => {
     setAnchorEl(null);
+  };
+
+  const { data: activeLangs } = useQuery({
+    queryKey: ['languages', 'active'],
+    queryFn: languageService.getActive,
+    staleTime: 60_000,
+  });
+
+  // Register i18n bundles for active languages when loaded
+  useEffect(() => {
+    if (!activeLangs || activeLangs.length === 0) return;
+    const enBundle = (i18n.getResourceBundle('en', 'translation') as any) ?? {};
+    activeLangs.forEach(({ code }) => {
+      const lc = (code || '').toLowerCase() || 'en';
+      const has = i18n.hasResourceBundle(lc, 'translation');
+      if (!has) {
+        i18n.addResourceBundle(lc, 'translation', enBundle, true, true);
+      }
+    });
+    const saved = (localStorage.getItem('lang') || 'en').toLowerCase();
+    if (activeLangs.some(l => (l.code || '').toLowerCase() === saved)) {
+      // Preload translations for saved language (if not 'en')
+      (async () => {
+        try {
+          if (saved !== 'en') {
+            const res = await apiClient.get<Record<string, string>>(`/translations/${encodeURIComponent(saved)}`);
+            const map = res.data || {};
+            if (Object.keys(map).length > 0) {
+              i18n.addResourceBundle(saved, 'translation', map, true, true);
+            }
+          }
+          i18n.changeLanguage(saved);
+        } catch {
+          i18n.changeLanguage(saved);
+        }
+      })();
+    }
+  }, [activeLangs, i18n]);
+
+  const openLangMenu = (e: React.MouseEvent<HTMLElement>) => setLangAnchor(e.currentTarget);
+  const closeLangMenu = () => setLangAnchor(null);
+  const changeLang = async (code: string) => {
+    try {
+      setLangLoading(code);
+      // Fetch translations map from backend and register bundle (authorized call)
+      if (code && code.toLowerCase() !== 'en') {
+        const res = await apiClient.get<Record<string, string>>(`/translations/${encodeURIComponent(code)}`);
+        const map = res.data || {};
+        if (Object.keys(map).length > 0) {
+          i18n.addResourceBundle(code, 'translation', map, true, true);
+        }
+      }
+      i18n.changeLanguage(code);
+      try { localStorage.setItem('lang', code); } catch {}
+    } catch (e) {
+      // no-op; fallback still applies via i18n
+      // console.error('Translation fetch failed', e);
+    } finally {
+      setLangLoading(null);
+      closeLangMenu();
+    }
   };
 
   const handleLogout = () => {
@@ -394,6 +470,19 @@ const MainLayout: React.FC = () => {
               <Notifications />
             </Badge>
           </IconButton>
+          <IconButton size="large" color="inherit" onClick={openLangMenu} aria-label="Change language" sx={{ ml: 0.5 }}>
+            <LanguageIcon />
+          </IconButton>
+          <Menu anchorEl={langAnchor} open={Boolean(langAnchor)} onClose={closeLangMenu}>
+            {(activeLangs ?? [{ code: 'en', name: 'English' }]).map(l => (
+              <MenuItem key={l.code} selected={i18n.language === l.code} onClick={() => changeLang(l.code)}>
+                <ListItemText>{l.name} ({l.code})</ListItemText>
+                {langLoading === l.code && (
+                  <CircularProgress size={16} sx={{ ml: 1 }} />
+                )}
+              </MenuItem>
+            ))}
+          </Menu>
           <IconButton
             size="large"
             edge="end"

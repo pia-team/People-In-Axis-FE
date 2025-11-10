@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -12,7 +12,8 @@ import {
   FormControl,
   InputLabel,
   InputAdornment,
-  Tooltip
+  Tooltip,
+  Menu
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -21,7 +22,8 @@ import {
   Search as SearchIcon,
   FilterList as FilterIcon,
   ContentCopy as DuplicateIcon,
-  Archive as ArchiveIcon
+  Archive as ArchiveIcon,
+  MoreVert as MoreVertIcon
 } from '@mui/icons-material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { useNavigate } from 'react-router-dom';
@@ -32,7 +34,7 @@ import { Position, PositionStatus, WorkType } from '@/types/cv-sharing';
 import { format } from 'date-fns';
 import PageContainer from '@/components/ui/PageContainer';
 import SectionCard from '@/components/ui/SectionCard';
-import { standardDataGridSx } from '@/components/ui/dataGridStyles';
+// import { standardDataGridSx } from '@/components/ui/dataGridStyles';
 import EmptyState from '@/components/ui/EmptyState';
 import { useKeycloak } from '@/providers/KeycloakProvider';
 
@@ -46,6 +48,9 @@ const PositionList: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<PositionStatus | ''>('');
   const [departmentFilter, setDepartmentFilter] = useState('');
+  const [departments, setDepartments] = useState<string[]>([]);
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
 
   // Fetch positions
   const { data, isLoading, isError, refetch } = useQuery({
@@ -54,10 +59,24 @@ const PositionList: React.FC = () => {
       page,
       size: pageSize,
       q: searchQuery,
-      status: statusFilter || undefined,
+      status: isHR ? (statusFilter || undefined) : PositionStatus.ACTIVE,
       department: departmentFilter || undefined
     })
   });
+
+  // Ensure non-HR users are locked to ACTIVE status
+  useEffect(() => {
+    if (!isHR && statusFilter !== PositionStatus.ACTIVE) {
+      setStatusFilter(PositionStatus.ACTIVE);
+    }
+  }, [isHR]);
+
+  // Recompute department options from loaded rows (after data is defined)
+  useEffect(() => {
+    const items = (data?.content ?? []) as any[];
+    const unique = Array.from(new Set(items.map((p: any) => p?.department).filter((d: any) => !!d))) as string[];
+    setDepartments(unique);
+  }, [data?.content]);
 
   // status change handled in detail/edit views; not used here
 
@@ -78,6 +97,30 @@ const PositionList: React.FC = () => {
       refetch();
     } catch (error) {
       enqueueSnackbar('Failed to archive position', { variant: 'error' });
+    }
+  };
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, position: Position) => {
+    setMenuAnchorEl(event.currentTarget);
+    setSelectedPosition(position);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
+    setSelectedPosition(null);
+  };
+
+  const handleStatusChange = async (newStatus: PositionStatus) => {
+    if (!selectedPosition) return;
+
+    try {
+      await positionService.updatePositionStatus(selectedPosition.id, newStatus);
+      enqueueSnackbar(`Position status updated to ${newStatus}`, { variant: 'success' });
+      refetch();
+    } catch (error) {
+      enqueueSnackbar('Failed to update position status', { variant: 'error' });
+    } finally {
+      handleMenuClose();
     }
   };
 
@@ -228,6 +271,20 @@ const PositionList: React.FC = () => {
                 </IconButton>
               </span>
             </Tooltip>
+            <Tooltip title={isHR ? 'Change Status' : 'Yalnızca İnsan Kaynakları durumu değiştirebilir'}>
+              <span>
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleMenuOpen(e, position);
+                  }}
+                  disabled={!isHR}
+                >
+                  <MoreVertIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
           </Box>
         );
       }
@@ -282,24 +339,38 @@ const PositionList: React.FC = () => {
             <FormControl sx={{ minWidth: { xs: '100%', sm: 180 } }}>
               <InputLabel>Status</InputLabel>
               <Select
-                value={statusFilter}
+                value={isHR ? (statusFilter as any) : PositionStatus.ACTIVE}
                 label="Status"
                 onChange={(e) => setStatusFilter(e.target.value as PositionStatus | '')}
+                disabled={!isHR}
               >
-                <MenuItem value="">All</MenuItem>
-                <MenuItem value={PositionStatus.DRAFT}>Draft</MenuItem>
-                <MenuItem value={PositionStatus.ACTIVE}>Active</MenuItem>
-                <MenuItem value={PositionStatus.PASSIVE}>Passive</MenuItem>
-                <MenuItem value={PositionStatus.CLOSED}>Closed</MenuItem>
-                <MenuItem value={PositionStatus.ARCHIVED}>Archived</MenuItem>
+                {isHR ? (
+                  [
+                    <MenuItem key="all" value="">All</MenuItem>,
+                    <MenuItem key="draft" value={PositionStatus.DRAFT}>Draft</MenuItem>,
+                    <MenuItem key="active" value={PositionStatus.ACTIVE}>Active</MenuItem>,
+                    <MenuItem key="passive" value={PositionStatus.PASSIVE}>Passive</MenuItem>,
+                    <MenuItem key="closed" value={PositionStatus.CLOSED}>Closed</MenuItem>,
+                    <MenuItem key="archived" value={PositionStatus.ARCHIVED}>Archived</MenuItem>,
+                  ]
+                ) : (
+                  <MenuItem value={PositionStatus.ACTIVE}>Active</MenuItem>
+                )}
               </Select>
             </FormControl>
-            <TextField
-              label="Department"
-              value={departmentFilter}
-              onChange={(e) => setDepartmentFilter(e.target.value)}
-              sx={{ minWidth: { xs: '100%', sm: 200 } }}
-            />
+            <FormControl sx={{ minWidth: { xs: '100%', sm: 200 } }}>
+              <InputLabel>Department</InputLabel>
+              <Select
+                value={departmentFilter}
+                label="Department"
+                onChange={(e) => setDepartmentFilter(e.target.value as string)}
+              >
+                <MenuItem value="">All</MenuItem>
+                {departments.map((name) => (
+                  <MenuItem key={name} value={name}>{name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             <Button
               variant="outlined"
               startIcon={<FilterIcon />}
@@ -365,6 +436,20 @@ const PositionList: React.FC = () => {
           </Typography>
         )}
       </Stack>
+      <Menu
+        anchorEl={menuAnchorEl}
+        open={Boolean(menuAnchorEl)}
+        onClose={handleMenuClose}
+        onClick={(e: React.MouseEvent) => e.stopPropagation()}
+      >
+        {Object.values(PositionStatus)
+          .filter(s => s !== selectedPosition?.status && s !== PositionStatus.ARCHIVED)
+          .map((status) => (
+            <MenuItem key={status} onClick={() => handleStatusChange(status)}>
+              Set as {status}
+            </MenuItem>
+          ))}
+      </Menu>
     </PageContainer>
   );
 };

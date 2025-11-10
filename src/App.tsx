@@ -55,6 +55,7 @@ const PositionList = lazy(() => import('@/pages/cv-sharing/positions/PositionLis
 const PositionDetail = lazy(() => import('@/pages/cv-sharing/positions/PositionDetail'));
 const PositionForm = lazy(() => import('@/pages/cv-sharing/positions/PositionForm'));
 const ApplicationList = lazy(() => import('@/pages/cv-sharing/applications/ApplicationList'));
+import AllMeetingsCalendar from '@/pages/meetings/AllMeetingsCalendar';
 const ApplicationDetail = lazy(() => import('@/pages/cv-sharing/applications/ApplicationDetail'));
 const ApplicationForm = lazy(() => import('@/pages/cv-sharing/applications/ApplicationForm'));
 const ForwardDialog = lazy(() => import('@/pages/cv-sharing/applications/ForwardDialog'));
@@ -76,6 +77,8 @@ const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 const UserManagement = lazy(() => import('@/pages/admin/UserManagement'));
 const RoleManagement = lazy(() => import('@/pages/admin/RoleManagement'));
 const Settings = lazy(() => import('@/pages/admin/Settings'));
+// Settings pages
+const LanguagesPage = lazy(() => import('@/pages/settings/Languages'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
 const LoadingScreen: React.FC = () => (
@@ -237,6 +240,12 @@ const App: React.FC = () => {
               <Route path=":id/review" element={<ApplicationReview />} />
               <Route path=":id/forward" element={<ForwardDialog />} />
               <Route path=":id/meetings" element={<MeetingScheduler />} />
+              <Route path=":id/scheduler" element={<MeetingScheduler />} />
+            </Route>
+
+            {/* Applications - Calendar (non cv-sharing alias) */}
+            <Route path="/applications">
+              <Route path=":id/meetings" element={<AllMeetingsCalendar />} />
             </Route>
 
             {/* CV Sharing - Pool CVs */}
@@ -267,6 +276,12 @@ const App: React.FC = () => {
               <Route path="roles" element={<RoleManagement />} />
               <Route path="settings" element={<Settings />} />
             </Route>
+
+            {/* Settings */}
+            <Route path="/settings">
+              <Route path="languages" element={<LanguagesPage />} />
+            </Route>
+
           </Route>
         </Route>
 

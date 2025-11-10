@@ -416,6 +416,8 @@ export interface ApplicationFilter {
   status?: ApplicationStatus;
   assignee?: string;
   q?: string;
+  department?: string;
+  sort?: string; // e.g. "createdAt,asc" or "appliedAt,desc"
   page?: number;
   size?: number;
 }
