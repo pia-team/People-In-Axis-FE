@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Box, Paper, Stack, Typography, Divider, LinearProgress } from '@mui/material';
 import { applicationService } from '@/services/cv-sharing';
 import { Meeting } from '@/types/cv-sharing';
-import { Calendar, dateFnsLocalizer, View } from 'react-big-calendar';
+import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { parse, startOfWeek, getDay, format } from 'date-fns';
 import enUS from 'date-fns/locale/en-US';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -16,6 +16,9 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
+type RbcView = 'month' | 'week' | 'day' | 'work_week' | 'agenda';
+const RBCalendar = Calendar as unknown as React.ComponentType<any>;
+
 type CalendarEvent = {
   id: string;
   title: string;
@@ -28,7 +31,7 @@ type CalendarEvent = {
 const AllMeetingsCalendar: React.FC = () => {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(false);
-  const [view, setView] = useState<View>('month');
+  const [view, setView] = useState<RbcView>('month');
   const [date, setDate] = useState<Date>(new Date());
 
   useEffect(() => {
@@ -68,7 +71,7 @@ const AllMeetingsCalendar: React.FC = () => {
         <Divider sx={{ mb: 2 }} />
         {loading && <LinearProgress />}
         {!loading && (
-          <Calendar
+          <RBCalendar
             localizer={localizer}
             events={events}
             startAccessor="start"
