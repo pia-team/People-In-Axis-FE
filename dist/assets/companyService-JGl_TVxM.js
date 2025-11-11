@@ -1,0 +1,2 @@
+import{a as s}from"./index--2Lk4t6e.js";const t="/companies",o={getAll:async e=>(await s.get(t,{params:e})).data,getById:async e=>(await s.get(`${t}/${e}`)).data,getParents:async()=>(await s.get(`${t}/parents`)).data,getSubsidiaries:async e=>(await s.get(`${t}/${e}/subsidiaries`)).data,create:async e=>(await s.post(t,e)).data,update:async(e,a)=>(await s.put(`${t}/${e}`,a)).data,delete:async e=>{await s.delete(`${t}/${e}`)}};export{o as c};
+//# sourceMappingURL=companyService-JGl_TVxM.js.map
