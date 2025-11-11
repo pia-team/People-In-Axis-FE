@@ -24,41 +24,49 @@ import './index.css';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: 1,
+      staleTime: 1000 * 60 * 5,
+      retry: (failureCount, error: any) => {
+        const status = error?.response?.status;
+        if (status && status < 500) return false;
+        return failureCount < 1;
+      },
       refetchOnWindowFocus: false,
     },
   },
 });
 
+const RootTree = (
+  <Provider store={store}>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <ThemeModeProvider>
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <CssBaseline />
+            <SnackbarProvider
+              maxSnack={3}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'right',
+              }}
+              autoHideDuration={3000}
+            >
+              <SnackbarConfigurator />
+              <KeycloakProvider>
+                <GlobalErrorBoundary>
+                  <App />
+                </GlobalErrorBoundary>
+              </KeycloakProvider>
+            </SnackbarProvider>
+          </LocalizationProvider>
+        </ThemeModeProvider>
+      </BrowserRouter>
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
+  </Provider>
+);
+
+const enableStrictMode = String(import.meta.env.VITE_ENABLE_STRICT_MODE || 'false').toLowerCase() === 'true';
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <Provider store={store}>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <ThemeModeProvider>
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <CssBaseline />
-              <SnackbarProvider
-                maxSnack={3}
-                anchorOrigin={{
-                  vertical: 'bottom',
-                  horizontal: 'right',
-                }}
-                autoHideDuration={3000}
-              >
-                <SnackbarConfigurator />
-                <KeycloakProvider>
-                  <GlobalErrorBoundary>
-                    <App />
-                  </GlobalErrorBoundary>
-                </KeycloakProvider>
-              </SnackbarProvider>
-            </LocalizationProvider>
-          </ThemeModeProvider>
-        </BrowserRouter>
-        <ReactQueryDevtools initialIsOpen={false} />
-      </QueryClientProvider>
-    </Provider>
-  </React.StrictMode>
+  enableStrictMode ? <React.StrictMode>{RootTree}</React.StrictMode> : RootTree
 );

@@ -50,16 +50,35 @@ const ProjectList = lazy(() => import('@/pages/projects/ProjectList'));
 const ProjectDetail = lazy(() => import('@/pages/projects/ProjectDetail'));
 const ProjectForm = lazy(() => import('@/pages/projects/ProjectForm'));
 
+// CV Sharing pages
+const PositionList = lazy(() => import('@/pages/cv-sharing/positions/PositionList'));
+const PositionDetail = lazy(() => import('@/pages/cv-sharing/positions/PositionDetail'));
+const PositionForm = lazy(() => import('@/pages/cv-sharing/positions/PositionForm'));
+const ApplicationList = lazy(() => import('@/pages/cv-sharing/applications/ApplicationList'));
+import AllMeetingsCalendar from '@/pages/meetings/AllMeetingsCalendar';
+const ApplicationDetail = lazy(() => import('@/pages/cv-sharing/applications/ApplicationDetail'));
+const ApplicationForm = lazy(() => import('@/pages/cv-sharing/applications/ApplicationForm'));
+const ForwardDialog = lazy(() => import('@/pages/cv-sharing/applications/ForwardDialog'));
+const ApplicationReview = lazy(() => import('@/pages/cv-sharing/applications/ApplicationReview'));
+const MeetingScheduler = lazy(() => import('@/pages/cv-sharing/applications/MeetingScheduler'));
+const PoolCVList = lazy(() => import('@/pages/cv-sharing/pool-cvs/PoolCVList'));
+const PoolCVDetail = lazy(() => import('@/pages/cv-sharing/pool-cvs/PoolCVDetail'));
+const PoolCVForm = lazy(() => import('@/pages/cv-sharing/pool-cvs/PoolCVForm'));
+const MatchingSettings = lazy(() => import('@/pages/cv-sharing/settings/MatchingSettings'));
+
 // Reports pages
 const Reports = lazy(() => import('@/pages/reports/Reports'));
 const TimeSheetReport = lazy(() => import('@/pages/reports/TimeSheetReport'));
 const ExpenseReport = lazy(() => import('@/pages/reports/ExpenseReport'));
+const AuditLogs = lazy(() => import('@/pages/reports/Logs'));
 
 // Admin pages
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 const UserManagement = lazy(() => import('@/pages/admin/UserManagement'));
 const RoleManagement = lazy(() => import('@/pages/admin/RoleManagement'));
 const Settings = lazy(() => import('@/pages/admin/Settings'));
+// Settings pages
+const LanguagesPage = lazy(() => import('@/pages/settings/Languages'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
 const LoadingScreen: React.FC = () => (
@@ -191,11 +210,58 @@ const App: React.FC = () => {
               <Route index element={<ExpenseApproval />} />
             </Route>
 
-            {/* Reports */}
-            <Route path="/reports">
+            {/* Reports (protected) */}
+            <Route
+              path="/reports"
+              element={<PrivateRoute roles={["HUMAN_RESOURCES", "ADMIN", "COMPANY_MANAGER"]} />}
+            >
               <Route index element={<Reports />} />
               <Route path="timesheet" element={<TimeSheetReport />} />
               <Route path="expense" element={<ExpenseReport />} />
+              <Route path="logs" element={<AuditLogs />} />
+            </Route>
+
+            {/* CV Sharing - Positions (HR) */}
+            <Route
+              path="/cv-sharing/positions"
+              element={<PrivateRoute roles={["HUMAN_RESOURCES", "COMPANY_MANAGER"]} />}
+            >
+              <Route index element={<PositionList />} />
+              <Route path="new" element={<PositionForm />} />
+              <Route path=":id" element={<PositionDetail />} />
+              <Route path=":id/edit" element={<PositionForm />} />
+            </Route>
+
+            {/* CV Sharing - Applications */}
+            <Route path="/cv-sharing/applications">
+              <Route index element={<ApplicationList />} />
+              <Route path="new/:positionId" element={<ApplicationForm />} />
+              <Route path=":id" element={<ApplicationDetail />} />
+              <Route path=":id/review" element={<ApplicationReview />} />
+              <Route path=":id/forward" element={<ForwardDialog />} />
+              <Route path=":id/meetings" element={<MeetingScheduler />} />
+              <Route path=":id/scheduler" element={<MeetingScheduler />} />
+            </Route>
+
+            {/* Applications - Calendar (non cv-sharing alias) */}
+            <Route path="/applications">
+              <Route path=":id/meetings" element={<AllMeetingsCalendar />} />
+            </Route>
+
+            {/* CV Sharing - Pool CVs */}
+            <Route path="/cv-sharing/pool-cvs">
+              <Route index element={<PoolCVList />} />
+              <Route path=":id" element={<PoolCVDetail />} />
+              <Route path="new" element={<PoolCVForm />} />
+              <Route path=":id/edit" element={<PoolCVForm />} />
+            </Route>
+
+            {/* CV Sharing - Settings (Matching) */}
+            <Route
+              path="/cv-sharing/settings"
+              element={<PrivateRoute roles={["HUMAN_RESOURCES", "COMPANY_MANAGER", "EMPLOYEE"]} />}
+            >
+              <Route path="matching" element={<MatchingSettings />} />
             </Route>
 
             {/* Admin */}
@@ -210,6 +276,12 @@ const App: React.FC = () => {
               <Route path="roles" element={<RoleManagement />} />
               <Route path="settings" element={<Settings />} />
             </Route>
+
+            {/* Settings */}
+            <Route path="/settings">
+              <Route path="languages" element={<LanguagesPage />} />
+            </Route>
+
           </Route>
         </Route>
 

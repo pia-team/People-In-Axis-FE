@@ -3,7 +3,7 @@ import React from 'react';
 import { Box, Typography, Grid, Paper, Stack, Button, Skeleton, Table, TableBody, TableCell, TableHead, TableRow, Divider } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { dashboardService } from '@/services/dashboardService';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useKeycloak } from '@/hooks/useKeycloak';
 import { ResponsiveContainer, PieChart, Pie, Cell, Legend, Tooltip as RTooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
@@ -12,8 +12,13 @@ import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import PlaylistAddCheckOutlinedIcon from '@mui/icons-material/PlaylistAddCheckOutlined';
+import BusinessCenterOutlinedIcon from '@mui/icons-material/BusinessCenterOutlined';
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
+import FolderOpenOutlinedIcon from '@mui/icons-material/FolderOpenOutlined';
+import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const { hasRole, hasAnyRole } = useKeycloak();
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard', 'metrics'],
@@ -54,7 +59,7 @@ const Dashboard: React.FC = () => {
     = ({ title, value: v, loading, to, icon }) => (
       <CardBase
         title={title}
-        action={to ? <Button size="small" component={Link} to={to}>View</Button> : undefined}
+        action={to ? <Button size="small" onClick={() => navigate(to)}>View</Button> : undefined}
       >
         <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 0.5 }}>
           {icon}
@@ -97,6 +102,28 @@ const Dashboard: React.FC = () => {
           <MetricCard title="Assigned Rows (Team Lead)" value={data?.teamLeadAssignedRows} loading={isLoading}
             to={hasRole('TEAM_MANAGER') ? '/timesheets/assigned' : undefined}
             icon={<PlaylistAddCheckOutlinedIcon color="primary" />} />
+        </Grid>
+
+        {/* HR Metrics (CV Sharing) */}
+        <Grid item xs={12} sm={6} md={3}>
+          <MetricCard title="Total Positions" value={data?.totalPositions} loading={isLoading}
+            to="/cv-sharing/positions"
+            icon={<BusinessCenterOutlinedIcon sx={{ color: 'primary.main' }} />} />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <MetricCard title="Total Applications" value={data?.totalApplications} loading={isLoading}
+            to="/cv-sharing/applications"
+            icon={<DescriptionOutlinedIcon sx={{ color: 'success.main' }} />} />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <MetricCard title="Pool CVs" value={data?.totalPoolCVs} loading={isLoading}
+            to="/cv-sharing/pool-cvs"
+            icon={<FolderOpenOutlinedIcon sx={{ color: 'secondary.main' }} />} />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <MetricCard title="Active Meetings" value={data?.activeMeetings} loading={isLoading}
+            to="/meetings"
+            icon={<CalendarMonthOutlinedIcon sx={{ color: 'warning.main' }} />} />
         </Grid>
 
         {/* Company-scoped cards */}
@@ -148,7 +175,7 @@ const Dashboard: React.FC = () => {
               <PieChart>
                 <Pie data={toChartData(data?.timesheetBaseStatusCounts)} dataKey="value" nameKey="name" cx="45%" cy="50%" outerRadius={105} label>
                   {toChartData(data?.timesheetBaseStatusCounts).map((entry, index) => (
-                    <Cell key={`ts-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell key={`ts-${entry.name}-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
                 <Legend layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ paddingLeft: 8 }} />
@@ -188,7 +215,11 @@ const Dashboard: React.FC = () => {
               </TableHead>
               <TableBody>
                 {(data?.recentTimesheets ?? []).map((r) => (
-                  <TableRow key={r.id} hover component={Link as any} to={`/timesheets/${r.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <TableRow 
+                    key={r.id} 
+                    hover 
+                    onClick={() => navigate(`/timesheets/${r.id}`)} 
+                    sx={{ cursor: 'pointer' }}>
                     <TableCell>{r.id}</TableCell>
                     <TableCell>{r.employeeName}</TableCell>
                     <TableCell>{r.projectName}</TableCell>
@@ -215,7 +246,11 @@ const Dashboard: React.FC = () => {
               </TableHead>
               <TableBody>
                 {(data?.recentExpenses ?? []).map((r) => (
-                  <TableRow key={r.id} hover component={Link as any} to={`/expenses/${r.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <TableRow 
+                    key={r.id} 
+                    hover 
+                    onClick={() => navigate(`/expenses/${r.id}`)} 
+                    sx={{ cursor: 'pointer' }}>
                     <TableCell>{r.id}</TableCell>
                     <TableCell>{r.employeeName}</TableCell>
                     <TableCell>{(r.amount ?? 0).toLocaleString()} {r.currency}</TableCell>
