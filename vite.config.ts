@@ -24,7 +24,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'https://people-in-axis-api.dnext-pia.com',
         changeOrigin: true,
         secure: false,
       },
