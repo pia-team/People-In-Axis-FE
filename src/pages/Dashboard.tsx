@@ -175,11 +175,7 @@ const Dashboard: React.FC = () => {
               <PieChart>
                 <Pie data={toChartData(data?.timesheetBaseStatusCounts)} dataKey="value" nameKey="name" cx="45%" cy="50%" outerRadius={105} label>
                   {toChartData(data?.timesheetBaseStatusCounts).map((entry, index) => (
-<<<<<<< HEAD
-                    <Cell key={`ts-${entry.name}`} fill={COLORS[index % COLORS.length]} />
-=======
                     <Cell key={`ts-${entry.name}-${index}`} fill={COLORS[index % COLORS.length]} />
->>>>>>> 3f767b8dafaa0e54014d76f5100e282a3880d9ea
                   ))}
                 </Pie>
                 <Legend layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ paddingLeft: 8 }} />
