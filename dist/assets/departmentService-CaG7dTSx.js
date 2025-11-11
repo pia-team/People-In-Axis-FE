@@ -1,2 +1,0 @@
-import{a as t}from"./index--2Lk4t6e.js";const a="/departments",o={getAll:async e=>(await t.get(a,{params:e})).data,getById:async e=>(await t.get(`${a}/${e}`)).data,getByCompany:async e=>(await t.get(`${a}/company/${e}`)).data,create:async e=>(await t.post(a,e)).data,update:async(e,s)=>(await t.put(`${a}/${e}`,s)).data,delete:async e=>{await t.delete(`${a}/${e}`)}};export{o as d};
-//# sourceMappingURL=departmentService-CaG7dTSx.js.map

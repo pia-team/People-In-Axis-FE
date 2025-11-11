@@ -1,2 +1,0 @@
-import{j as s,B as n,O as c,g as a}from"./mui-CYe98n_K.js";const i=({title:e,subtitle:r,actions:x,children:o})=>s.jsxs(n,{children:[(e||r||x)&&s.jsxs(c,{direction:{xs:"column",sm:"row"},alignItems:{xs:"flex-start",sm:"center"},justifyContent:"space-between",spacing:1.5,sx:{mb:2},children:[s.jsxs(n,{children:[e&&s.jsx(a,{variant:"h5",sx:{fontWeight:700,mb:r?.5:0},children:e}),r&&s.jsx(a,{variant:"body2",color:"text.secondary",children:r})]}),x&&s.jsx(n,{children:x})]}),s.jsx(n,{children:o})]});export{i as P};
-//# sourceMappingURL=PageContainer-BfQWlLPL.js.map

@@ -1,2 +1,0 @@
-import{j as r,Q as n,O as t,g as a,B as o}from"./mui-CYe98n_K.js";const x=({title:s,actions:e,children:i})=>r.jsxs(n,{sx:{p:2.5,borderRadius:2,border:"1px solid",borderColor:"divider"},children:[(s||e)&&r.jsxs(t,{direction:"row",alignItems:"center",justifyContent:"space-between",sx:{mb:1.5},children:[s&&r.jsx(a,{variant:"subtitle1",sx:{fontWeight:600},children:s}),e&&r.jsx(o,{children:e})]}),r.jsx(o,{children:i})]});export{x as S};
-//# sourceMappingURL=SectionCard-4aLOeFJ3.js.map
