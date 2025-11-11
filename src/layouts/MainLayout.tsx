@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import {
   Box,
@@ -18,6 +18,7 @@ import {
   Menu,
   MenuItem,
   Badge,
+  CircularProgress,
   Collapse,
   Container,
 } from '@mui/material';
@@ -26,10 +27,7 @@ import {
   Dashboard,
   People,
   Business,
-  Assignment,
   Receipt,
-  Work,
-  Assessment,
   Settings,
   ExpandLess,
   ExpandMore,
@@ -39,6 +37,27 @@ import {
   Person,
   Brightness4,
   Brightness7,
+  AccessTime,
+  ListAlt,
+  AssignmentInd,
+  AssignmentTurnedIn,
+  AdminPanelSettings,
+  UploadFile,
+  ReceiptLong,
+  FactCheck,
+  Group,
+  GroupAdd,
+  Inventory2,
+  Folder,
+  BarChart,
+  QueryStats,
+  InsertChartOutlined,
+  History,
+  BusinessCenter,
+  RequestQuote,
+  ManageAccounts,
+  Share,
+  Language as LanguageIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -48,6 +67,10 @@ import { useKeycloak } from '@/hooks/useKeycloak';
 import { useQuery } from '@tanstack/react-query';
 import { timeSheetService } from '@/services/timesheetService';
 import { useThemeMode } from '@/providers/ThemeModeProvider';
+import { alpha } from '@mui/material/styles';
+import { useTranslation } from 'react-i18next';
+import { languageService } from '@/services/languageService';
+import { apiClient } from '@/services/api';
 
 const drawerWidth = 280;
 
@@ -57,6 +80,7 @@ interface MenuItemType {
   icon: React.ReactElement;
   children?: MenuItemType[];
   roles?: string[];
+  isModule?: boolean;
 }
 
 const menuItems: MenuItemType[] = [
@@ -70,7 +94,7 @@ const menuItems: MenuItemType[] = [
     icon: <People />,
     roles: ['HUMAN_RESOURCES', 'ADMIN'],
     children: [
-      { title: 'All Employees', path: '/employees', icon: <People /> },
+      { title: 'All Employees', path: '/employees', icon: <Group /> },
       { title: 'My Profile', path: '/profile', icon: <Person /> },
     ],
   },
@@ -82,37 +106,49 @@ const menuItems: MenuItemType[] = [
   },
   {
     title: 'Time Management',
-    icon: <Assignment />,
+    icon: <AccessTime />,
     children: [
-      { title: 'My Timesheets', path: '/timesheets/my', icon: <Assignment /> },
-      { title: 'All Timesheets', path: '/timesheets', icon: <Assignment />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES'] },
-      { title: 'Assigned Rows', path: '/timesheets/assigned', icon: <Assignment />, roles: ['TEAM_MANAGER'] },
-      { title: 'Approval', path: '/timesheets/approval', icon: <Assignment />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES'] },
-      { title: 'Admin Approval', path: '/timesheets/admin-approval', icon: <Assignment />, roles: ['ADMIN'] },
-      { title: 'Import Timesheets', path: '/timesheets/import', icon: <Assignment />, roles: ['HUMAN_RESOURCES', 'COMPANY_MANAGER'] },
+      { title: 'My Timesheets', path: '/timesheets/my', icon: <ListAlt /> },
+      { title: 'All Timesheets', path: '/timesheets', icon: <AssignmentInd />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES'] },
+      { title: 'Assigned Rows', path: '/timesheets/assigned', icon: <AssignmentTurnedIn />, roles: ['TEAM_MANAGER'] },
+      { title: 'Approval', path: '/timesheets/approval', icon: <FactCheck />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES'] },
+      { title: 'Admin Approval', path: '/timesheets/admin-approval', icon: <AdminPanelSettings />, roles: ['ADMIN'] },
+      { title: 'Import Timesheets', path: '/timesheets/import', icon: <UploadFile />, roles: ['HUMAN_RESOURCES', 'COMPANY_MANAGER'] },
     ],
   },
   {
     title: 'Expenses',
-    icon: <Receipt />,
+    icon: <ReceiptLong />,
     children: [
       { title: 'My Expenses', path: '/expenses/my', icon: <Receipt /> },
-      { title: 'All Expenses', path: '/expenses', icon: <Receipt />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES', 'FINANCE'] },
-      { title: 'Approval', path: '/expenses/approval', icon: <Receipt />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES', 'FINANCE'] },
+      { title: 'All Expenses', path: '/expenses', icon: <RequestQuote />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES', 'FINANCE'] },
+      { title: 'Approval', path: '/expenses/approval', icon: <FactCheck />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES', 'FINANCE'] },
     ],
   },
   {
     title: 'Projects',
     path: '/projects',
-    icon: <Work />,
+    icon: <Folder />,
+  },
+  {
+    title: 'CV Sharing',
+    icon: <Share />,
+    isModule: true,
+    children: [
+      { title: 'Positions', path: '/cv-sharing/positions', icon: <BusinessCenter />, roles: ['HUMAN_RESOURCES', 'COMPANY_MANAGER'] },
+      { title: 'Applications', path: '/cv-sharing/applications', icon: <GroupAdd /> },
+      { title: 'Pool CVs', path: '/cv-sharing/pool-cvs', icon: <Inventory2 /> },
+      { title: 'Settings', path: '/cv-sharing/settings/matching', icon: <Settings />, roles: ['HUMAN_RESOURCES', 'COMPANY_MANAGER'] },
+    ],
   },
   {
     title: 'Reports',
-    icon: <Assessment />,
+    icon: <BarChart />,
     roles: ['HUMAN_RESOURCES', 'ADMIN', 'COMPANY_MANAGER'],
     children: [
-      { title: 'Timesheet Report', path: '/reports/timesheet', icon: <Assessment /> },
-      { title: 'Expense Report', path: '/reports/expense', icon: <Assessment /> },
+      { title: 'Timesheet Report', path: '/reports/timesheet', icon: <QueryStats /> },
+      { title: 'Expense Report', path: '/reports/expense', icon: <InsertChartOutlined /> },
+      { title: 'Audit Logs', path: '/reports/logs', icon: <History /> },
     ],
   },
   {
@@ -120,9 +156,16 @@ const menuItems: MenuItemType[] = [
     icon: <Settings />,
     roles: ['ADMIN', 'SYSTEM_ADMIN'],
     children: [
-      { title: 'Users', path: '/admin/users', icon: <People /> },
+      { title: 'Users', path: '/admin/users', icon: <ManageAccounts /> },
       { title: 'Roles', path: '/admin/roles', icon: <Settings /> },
       { title: 'Settings', path: '/admin/settings', icon: <Settings /> },
+    ],
+  },
+  {
+    title: 'Settings',
+    icon: <Settings />,
+    children: [
+      { title: 'Languages', path: '/settings/languages', icon: <LanguageIcon /> },
     ],
   },
 ];
@@ -133,6 +176,7 @@ const MainLayout: React.FC = () => {
   const dispatch = useDispatch();
   const { sidebarOpen } = useSelector((state: RootState) => state.ui);
   const { tokenParsed, logout, hasAnyRole } = useKeycloak();
+  const { i18n } = useTranslation();
   const showManagerCounts = hasAnyRole(['TEAM_MANAGER', 'HUMAN_RESOURCES']);
   const { data: managerPendingCount } = useQuery({
     queryKey: ['timesheets', 'manager-pending', 'count'],
@@ -153,6 +197,8 @@ const MainLayout: React.FC = () => {
   });
   
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [langAnchor, setLangAnchor] = useState<null | HTMLElement>(null);
+  const [langLoading, setLangLoading] = useState<string | null>(null);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
   const handleDrawerToggle = () => {
@@ -165,6 +211,67 @@ const MainLayout: React.FC = () => {
 
   const handleMenuClose = () => {
     setAnchorEl(null);
+  };
+
+  const { data: activeLangs } = useQuery({
+    queryKey: ['languages', 'active'],
+    queryFn: languageService.getActive,
+    staleTime: 60_000,
+  });
+
+  // Register i18n bundles for active languages when loaded
+  useEffect(() => {
+    if (!activeLangs || activeLangs.length === 0) return;
+    const enBundle = (i18n.getResourceBundle('en', 'translation') as any) ?? {};
+    activeLangs.forEach(({ code }) => {
+      const lc = (code || '').toLowerCase() || 'en';
+      const has = i18n.hasResourceBundle(lc, 'translation');
+      if (!has) {
+        i18n.addResourceBundle(lc, 'translation', enBundle, true, true);
+      }
+    });
+    const saved = (localStorage.getItem('lang') || 'en').toLowerCase();
+    if (activeLangs.some(l => (l.code || '').toLowerCase() === saved)) {
+      // Preload translations for saved language (if not 'en')
+      (async () => {
+        try {
+          if (saved !== 'en') {
+            const res = await apiClient.get<Record<string, string>>(`/translations/${encodeURIComponent(saved)}`);
+            const map = res.data || {};
+            if (Object.keys(map).length > 0) {
+              i18n.addResourceBundle(saved, 'translation', map, true, true);
+            }
+          }
+          i18n.changeLanguage(saved);
+        } catch {
+          i18n.changeLanguage(saved);
+        }
+      })();
+    }
+  }, [activeLangs, i18n]);
+
+  const openLangMenu = (e: React.MouseEvent<HTMLElement>) => setLangAnchor(e.currentTarget);
+  const closeLangMenu = () => setLangAnchor(null);
+  const changeLang = async (code: string) => {
+    try {
+      setLangLoading(code);
+      // Fetch translations map from backend and register bundle (authorized call)
+      if (code && code.toLowerCase() !== 'en') {
+        const res = await apiClient.get<Record<string, string>>(`/translations/${encodeURIComponent(code)}`);
+        const map = res.data || {};
+        if (Object.keys(map).length > 0) {
+          i18n.addResourceBundle(code, 'translation', map, true, true);
+        }
+      }
+      i18n.changeLanguage(code);
+      try { localStorage.setItem('lang', code); } catch {}
+    } catch (e) {
+      // no-op; fallback still applies via i18n
+      // console.error('Translation fetch failed', e);
+    } finally {
+      setLangLoading(null);
+      closeLangMenu();
+    }
   };
 
   const handleLogout = () => {
@@ -209,6 +316,7 @@ const MainLayout: React.FC = () => {
 
     const hasChildren = item.children && item.children.length > 0;
     const isExpanded = expandedItems.includes(item.title);
+    const isModule = item.isModule && level === 0;
 
     return (
       <React.Fragment key={item.title}>
@@ -222,8 +330,41 @@ const MainLayout: React.FC = () => {
                 navigate(item.path);
               }
             }}
+            sx={
+              isModule
+                ? {
+                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                    borderRadius: 1,
+                    borderLeft: (theme) => `4px solid ${theme.palette.primary.main}`,
+                    my: 0.5,
+                    '&:hover': {
+                      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.12),
+                    },
+                    '&.Mui-selected': {
+                      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.16),
+                      borderLeft: (theme) => `4px solid ${theme.palette.primary.dark}`,
+                    },
+                  }
+                : undefined
+            }
           >
-            <ListItemIcon>{item.icon}</ListItemIcon>
+            <ListItemIcon sx={isModule ? { color: 'primary.main' } : undefined}>
+              {isModule ? (
+                <Badge badgeContent="MODULE" color="primary" sx={{ 
+                  '& .MuiBadge-badge': { 
+                    fontSize: '0.6rem', 
+                    height: 16,
+                    minWidth: 16,
+                    right: -8,
+                    top: -8
+                  } 
+                }}>
+                  {item.icon}
+                </Badge>
+              ) : (
+                item.icon
+              )}
+            </ListItemIcon>
             <ListItemText
               primary={(() => {
                 if (item.title === 'Approval' && typeof managerPendingCount === 'number' && managerPendingCount > 0) {
@@ -243,7 +384,15 @@ const MainLayout: React.FC = () => {
         </ListItem>
         {hasChildren && (
           <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
+            <List
+              component="div"
+              disablePadding
+              sx={isModule ? { 
+                bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
+                borderLeft: (theme) => `2px solid ${theme.palette.primary.main}`,
+                ml: 2
+              } : undefined}
+            >
               {item.children!.map((child) => renderMenuItem(child, level + 1))}
             </List>
           </Collapse>
@@ -252,18 +401,39 @@ const MainLayout: React.FC = () => {
     );
   };
 
+  const menuItemsOrdered = useMemo(() => {
+    const regularItems = menuItems.filter(item => !item.isModule);
+    const moduleItems = menuItems.filter(item => item.isModule);
+    return { regular: regularItems, modules: moduleItems };
+  }, []);
+
   const drawerContent = (
-    <div>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Toolbar>
         <Typography variant="h6" noWrap component="div">
           People In Axis
         </Typography>
       </Toolbar>
       <Divider />
-      <List>
-        {menuItems.map((item) => renderMenuItem(item))}
-      </List>
-    </div>
+      <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+        <List>
+          {menuItemsOrdered.regular.map((item) => renderMenuItem(item))}
+        </List>
+        {menuItemsOrdered.modules.length > 0 && (
+          <>
+            <Divider sx={{ my: 2, mx: 2 }} />
+            <Box sx={{ px: 2, pb: 1 }}>
+              <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 600 }}>
+                Modules
+              </Typography>
+            </Box>
+            <List>
+              {menuItemsOrdered.modules.map((item) => renderMenuItem(item))}
+            </List>
+          </>
+        )}
+      </Box>
+    </Box>
   );
 
   const { mode, toggle } = useThemeMode();
@@ -300,6 +470,19 @@ const MainLayout: React.FC = () => {
               <Notifications />
             </Badge>
           </IconButton>
+          <IconButton size="large" color="inherit" onClick={openLangMenu} aria-label="Change language" sx={{ ml: 0.5 }}>
+            <LanguageIcon />
+          </IconButton>
+          <Menu anchorEl={langAnchor} open={Boolean(langAnchor)} onClose={closeLangMenu}>
+            {(activeLangs ?? [{ code: 'en', name: 'English' }]).map(l => (
+              <MenuItem key={l.code} selected={i18n.language === l.code} onClick={() => changeLang(l.code)}>
+                <ListItemText>{l.name} ({l.code})</ListItemText>
+                {langLoading === l.code && (
+                  <CircularProgress size={16} sx={{ ml: 1 }} />
+                )}
+              </MenuItem>
+            ))}
+          </Menu>
           <IconButton
             size="large"
             edge="end"
