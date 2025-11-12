@@ -4,18 +4,18 @@ export interface LanguageDto { code: string; name: string }
 
 export const languageService = {
   getActive: async (): Promise<LanguageDto[]> => {
-    const res = await apiClient.get<LanguageDto[]>('/api/languages/active');
+    const res = await apiClient.get<LanguageDto[]>('languages/active');
     return res.data;
   },
   getAll: async (): Promise<LanguageDto[]> => {
-    const res = await apiClient.get<LanguageDto[]>('/api/languages/all');
+    const res = await apiClient.get<LanguageDto[]>('languages/all');
     return res.data;
   },
   add: async (code: string, name?: string): Promise<LanguageDto> => {
-    const res = await apiClient.post<LanguageDto>('/api/languages', { code, name });
+    const res = await apiClient.post<LanguageDto>('languages', { code, name });
     return res.data;
   },
   remove: async (code: string): Promise<void> => {
-    await apiClient.delete(`/api/languages/${encodeURIComponent(code)}`);
+    await apiClient.delete(`languages/${encodeURIComponent(code)}`);
   },
 };
