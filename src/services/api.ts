@@ -6,11 +6,14 @@ const DEDUP_WINDOW_MS = Number(import.meta.env.VITE_API_DEDUP_MS ?? 250);
 const IDEMP_TTL_MS = Number(import.meta.env.VITE_API_IDEMP_TTL_MS ?? 5000);
 
 // Create axios instance
+// Note: User-Agent and Referer headers are set automatically by the browser
+// and cannot be set via JavaScript for security reasons
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json, text/plain, */*',
   },
 });
 
@@ -54,11 +57,19 @@ const genIdempKey = () => {
   return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
 };
 
-// Request interceptor to add auth token
+// Request interceptor to add auth token and standard headers
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    // Add Authorization header if token is available
     if (authToken) {
       config.headers.Authorization = `Bearer ${authToken}`;
+    }
+    
+    // Ensure Accept header is set
+    // Note: User-Agent and Referer are set automatically by the browser
+    // and cannot be set via JavaScript (they are "forbidden headers")
+    if (!config.headers.Accept) {
+      config.headers.Accept = 'application/json, text/plain, */*';
     }
     // De-dup only GET/HEAD within a short window
     const method = (config.method || 'get').toLowerCase();
