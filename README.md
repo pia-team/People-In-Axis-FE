@@ -44,13 +44,61 @@ yarn install
 ```
 
 #### 2. Ortam Değişkenleri
-`.env` dosyası oluşturun:
-```env
-VITE_API_BASE_URL=http://localhost:8080/api
-VITE_KEYCLOAK_URL=http://localhost:8180
-VITE_KEYCLOAK_REALM=people-in-axis
-VITE_KEYCLOAK_CLIENT_ID=people-in-axis-frontend
+
+Proje, environment variable'ları kullanarak local development ve production arasında otomatik geçiş yapar.
+
+**Local Development için:**
+
+1. `.env.local` dosyası oluşturun (bu dosya git'e commit edilmez):
+```bash
+cp .env.example .env.local
 ```
+
+2. `.env.local` dosyasını düzenleyin:
+```env
+# Local Backend API
+VITE_API_BASE_URL=http://localhost:8080/api
+
+# Local UI
+VITE_UI_BASE_URL=http://localhost:3000
+
+# Keycloak (local veya development)
+VITE_KEYCLOAK_URL=http://localhost:8180
+VITE_KEYCLOAK_REALM=orbitant-realm
+VITE_KEYCLOAK_CLIENT_ID=orbitant-ui-client
+
+# Authentication
+VITE_AUTH_ENABLED=true
+```
+
+**Production Build için:**
+
+Production build (`npm run build`) otomatik olarak `.env.production` dosyasını kullanır. Bu dosya zaten projede mevcuttur ve production API URL'lerini içerir:
+- `VITE_API_BASE_URL=https://people-in-axis-api.dnext-pia.com/api`
+- `VITE_UI_BASE_URL=https://people-in-axis-ui.dnext-pia.com`
+
+**Environment Dosyaları Hiyerarşisi:**
+
+Vite, environment dosyalarını şu sırayla yükler (yüksek öncelikten düşüğe):
+
+**Development Mode (`npm run dev`):**
+1. `.env.development.local` (varsa, git'e commit edilmez)
+2. `.env.local` ✓ **Kullanılır** (git'e commit edilmez)
+3. `.env.development` (varsa, git'e commit edilir)
+4. `.env` (varsa, git'e commit edilir - **gereksiz, kullanmayın**)
+
+**Production Mode (`npm run build`):**
+1. `.env.production.local` (varsa, git'e commit edilmez)
+2. `.env.local` (varsa, ama production değerleri override eder)
+3. `.env.production` ✓ **Kullanılır** (git'e commit edilir)
+4. `.env` (varsa, git'e commit edilir - **gereksiz, kullanmayın**)
+
+**Özet:**
+- **Local Development**: `.env.local` dosyası kullanılır
+- **Production Build**: `.env.production` dosyası kullanılır
+- **Template**: `.env.example` dosyası referans için kullanılır (git'e commit edilir)
+
+**Not:** `npm run dev` komutu `development` mode'unda çalışır ve `.env.local` dosyasını kullanır. Eğer `.env.local` yoksa, `.env.example`'dan kopyalayın: `cp .env.example .env.local`
 
 #### 3. Keycloak Client Yapılandırması
 Keycloak admin konsolunda:
