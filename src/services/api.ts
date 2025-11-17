@@ -29,7 +29,7 @@ export const setAuthToken = (token: string | null) => {
 // Simple in-flight de-duplication for GET requests
 const inFlight = new Map<string, number>();
 
-type SerializableValue = string | number | boolean | null | undefined | SerializableValue[] | Record<string, SerializableValue>;
+type SerializableValue = string | number | boolean | null | undefined | SerializableValue[] | { [key: string]: SerializableValue };
 
 const stableStringify = (value: SerializableValue): string => {
   if (value === undefined || value === null) return '';

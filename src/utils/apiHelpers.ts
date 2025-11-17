@@ -1,4 +1,4 @@
-import type { SpringPageResponse, NormalizedPageResponse } from '@/types/api';
+import type { SpringPageResponse } from '@/types/api';
 import { isSpringPageResponse } from '@/types/api';
 import type { PagedResponse } from '@/types/cv-sharing';
 

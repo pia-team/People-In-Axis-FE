@@ -20,7 +20,7 @@ import {
   FileUploadResponse,
   ApplicationStatistics
 } from '@/types/cv-sharing';
-import type { SpringPageResponse, NormalizedPageResponse } from '@/types/api';
+import type { SpringPageResponse } from '@/types/api';
 import { isSpringPageResponse } from '@/types/api';
 
 class ApplicationService {

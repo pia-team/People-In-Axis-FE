@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import Keycloak, { KeycloakInstance, KeycloakTokenParsed } from "keycloak-js";
+import * as Sentry from "@sentry/react";
 import { AUTH_ENABLED } from "@/config/featureFlags";
 import { setAuthToken } from "@/services/api";
 

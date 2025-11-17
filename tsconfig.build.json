@@ -11,8 +11,6 @@
     "src/test/**",
     "tests/**",
     "**/*.config.*",
-    "**/vitest.config.*",
-    "**/playwright.config.*"
+    "**/vitest.config.*"
   ]
 }
-

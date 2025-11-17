@@ -28,20 +28,26 @@ class PositionService {
       ...raw as Position,
       createdBy: (raw.createdByName as string | undefined) ?? (raw.createdBy as string | undefined),
       skills: Array.isArray(raw.skills)
-        ? raw.skills.map((s: Partial<Skill> & Record<string, unknown>) => ({
-            id: s.id as string | undefined,
-            name: (s.skillName as string | undefined) ?? (s.name as string | undefined) ?? '',
-            isRequired: s.isRequired as boolean | undefined,
-            proficiencyLevel: s.proficiencyLevel as string | undefined,
-            yearsOfExperience: s.yearsOfExperience as number | undefined
-          }))
+        ? (raw.skills as unknown[]).map((s: unknown) => {
+            const skill = s as Partial<Skill> & Record<string, unknown>;
+            return {
+              id: skill.id as string | undefined,
+              name: (skill.skillName as string | undefined) ?? (skill.name as string | undefined) ?? '',
+              isRequired: skill.isRequired as boolean | undefined,
+              proficiencyLevel: skill.proficiencyLevel as string | undefined,
+              yearsOfExperience: skill.yearsOfExperience as number | undefined
+            };
+          })
         : (raw.skills as Skill[] | undefined) ?? [],
       languages: Array.isArray(raw.languages)
-        ? raw.languages.map((l: Partial<Language> & Record<string, unknown>) => ({
-            id: l.id as string | undefined,
-            code: (l.languageCode as string | undefined) ?? (l.code as string | undefined) ?? '',
-            proficiencyLevel: (l.proficiencyLevel as Language['proficiencyLevel']) ?? 'A1'
-          }))
+        ? (raw.languages as unknown[]).map((l: unknown) => {
+            const lang = l as Partial<Language> & Record<string, unknown>;
+            return {
+              id: lang.id as string | undefined,
+              code: (lang.languageCode as string | undefined) ?? (lang.code as string | undefined) ?? '',
+              proficiencyLevel: (lang.proficiencyLevel as Language['proficiencyLevel']) ?? 'A1'
+            };
+          })
         : (raw.languages as Language[] | undefined) ?? [],
     };
     return normalized;
@@ -60,7 +66,7 @@ class PositionService {
     let pageInfo: PagedResponse<Position>["pageInfo"];
     
     if (isSpringPageResponse<Position>(data)) {
-      content = data.content.map(this.normalizePosition);
+      content = data.content.map((item) => this.normalizePosition(item as Partial<Position> & Record<string, unknown>));
       pageInfo = {
         page: data.number ?? filter?.page ?? 0,
         size: data.size ?? filter?.size ?? 10,
@@ -68,7 +74,7 @@ class PositionService {
         totalPages: data.totalPages ?? 1,
       };
     } else if (Array.isArray(data)) {
-      content = data.map(this.normalizePosition);
+      content = data.map((item) => this.normalizePosition(item as Partial<Position> & Record<string, unknown>));
       pageInfo = {
         page: filter?.page ?? 0,
         size: filter?.size ?? 10,
@@ -93,7 +99,7 @@ class PositionService {
    */
   async getPositionById(id: string): Promise<Position> {
     const response = await axios.get<Position>(`${this.baseUrl}/${id}`);
-    return this.normalizePosition(response.data) as Position;
+    return this.normalizePosition(response.data as Partial<Position> & Record<string, unknown>) as Position;
   }
 
   /**
@@ -101,7 +107,7 @@ class PositionService {
    */
   async createPosition(data: CreatePositionRequest): Promise<Position> {
     const response = await axios.post<Position>(this.baseUrl, data);
-    return this.normalizePosition(response.data) as Position;
+    return this.normalizePosition(response.data as Partial<Position> & Record<string, unknown>) as Position;
   }
 
   /**
@@ -109,7 +115,7 @@ class PositionService {
    */
   async updatePosition(id: string, data: UpdatePositionRequest): Promise<Position> {
     const response = await axios.patch<Position>(`${this.baseUrl}/${id}`, data);
-    return this.normalizePosition(response.data) as Position;
+    return this.normalizePosition(response.data as Partial<Position> & Record<string, unknown>) as Position;
   }
 
   /**
@@ -124,7 +130,7 @@ class PositionService {
    */
   async duplicatePosition(id: string): Promise<Position> {
     const response = await axios.post<Position>(`${this.baseUrl}/${id}/duplicate`);
-    return this.normalizePosition(response.data) as Position;
+    return this.normalizePosition(response.data as Partial<Position> & Record<string, unknown>) as Position;
   }
 
   /**
@@ -134,7 +140,7 @@ class PositionService {
     const response = await axios.post<Position>(`${this.baseUrl}/${id}/status`, null, {
       params: { status }
     });
-    return this.normalizePosition(response.data) as Position;
+    return this.normalizePosition(response.data as Partial<Position> & Record<string, unknown>) as Position;
   }
 
   /**

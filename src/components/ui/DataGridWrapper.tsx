@@ -1,12 +1,12 @@
 import React from 'react';
-import { DataGrid, DataGridProps, GridColDef } from '@mui/x-data-grid';
+import { DataGrid, DataGridProps, GridColDef, GridValidRowModel } from '@mui/x-data-grid';
 import { Box } from '@mui/material';
 import { standardDataGridSx } from './dataGridStyles';
 import EmptyState from './EmptyState';
 import ErrorState from './ErrorState';
 import { DataGridSkeleton } from './LoadingSkeleton';
 
-interface DataGridWrapperProps<T> extends Omit<DataGridProps, 'rows' | 'columns'> {
+interface DataGridWrapperProps<T extends GridValidRowModel> extends Omit<DataGridProps, 'rows' | 'columns'> {
   rows: T[];
   columns: GridColDef<T>[];
   loading?: boolean;
@@ -20,7 +20,7 @@ interface DataGridWrapperProps<T> extends Omit<DataGridProps, 'rows' | 'columns'
 /**
  * Wrapper component for DataGrid with standardized loading, error, and empty states
  */
-export function DataGridWrapper<T>({
+export function DataGridWrapper<T extends GridValidRowModel>({
   rows,
   columns,
   loading = false,
