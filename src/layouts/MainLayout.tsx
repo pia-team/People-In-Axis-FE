@@ -66,6 +66,7 @@ import { toggleSidebar } from '@/store/slices/uiSlice';
 import { useKeycloak } from '@/hooks/useKeycloak';
 import { useQuery } from '@tanstack/react-query';
 import { timeSheetService } from '@/services/timesheetService';
+import { notificationService } from '@/services/notificationService';
 import { useThemeMode } from '@/providers/ThemeModeProvider';
 import { alpha } from '@mui/material/styles';
 import { useTranslation } from 'react-i18next';
@@ -195,8 +196,19 @@ const MainLayout: React.FC = () => {
     queryFn: timeSheetService.getTeamLeadAssignedCount,
     enabled: showTeamLeadCounts,
   });
+
+  // Fetch unread notifications count
+  // Refetch every 30 seconds to keep count updated
+  const { data: unreadNotificationCount = 0 } = useQuery({
+    queryKey: ['notifications', 'unread-count'],
+    queryFn: notificationService.getUnreadCount,
+    refetchInterval: 30000, // Refetch every 30 seconds to keep notification count up to date
+    staleTime: 25000, // Consider stale after 25 seconds
+    retry: 1, // Only retry once on failure
+  });
   
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [notificationAnchor, setNotificationAnchor] = useState<null | HTMLElement>(null);
   const [langAnchor, setLangAnchor] = useState<null | HTMLElement>(null);
   const [langLoading, setLangLoading] = useState<string | null>(null);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
@@ -211,6 +223,14 @@ const MainLayout: React.FC = () => {
 
   const handleMenuClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleNotificationMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setNotificationAnchor(event.currentTarget);
+  };
+
+  const handleNotificationMenuClose = () => {
+    setNotificationAnchor(null);
   };
 
   const { data: activeLangs } = useQuery({
@@ -465,11 +485,59 @@ const MainLayout: React.FC = () => {
           <IconButton size="large" color="inherit" onClick={toggle} sx={{ mr: 1 }} aria-label="Toggle theme">
             {mode === 'light' ? <Brightness4 /> : <Brightness7 />}
           </IconButton>
-          <IconButton size="large" color="inherit">
-            <Badge badgeContent={4} color="error">
+          <IconButton 
+            size="large" 
+            color="inherit" 
+            onClick={handleNotificationMenuOpen}
+            aria-label="Notifications"
+          >
+            <Badge badgeContent={unreadNotificationCount > 0 ? unreadNotificationCount : undefined} color="error">
               <Notifications />
             </Badge>
           </IconButton>
+          <Menu
+            anchorEl={notificationAnchor}
+            open={Boolean(notificationAnchor)}
+            onClose={handleNotificationMenuClose}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'right',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+            PaperProps={{
+              sx: {
+                mt: 1.5,
+                minWidth: 320,
+                maxWidth: 400,
+                maxHeight: 480,
+                overflow: 'auto',
+              },
+            }}
+          >
+            <MenuItem disabled>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                Notifications
+                {unreadNotificationCount > 0 && (
+                  <Badge badgeContent={unreadNotificationCount} color="error" sx={{ ml: 1 }}>
+                    <span style={{ width: 0, height: 0 }} />
+                  </Badge>
+                )}
+              </Typography>
+            </MenuItem>
+            <MenuItem onClick={() => { navigate('/notifications'); handleNotificationMenuClose(); }}>
+              View all notifications
+            </MenuItem>
+            {unreadNotificationCount === 0 && (
+              <MenuItem disabled>
+                <Typography variant="body2" color="text.secondary">
+                  No new notifications
+                </Typography>
+              </MenuItem>
+            )}
+          </Menu>
           <IconButton size="large" color="inherit" onClick={openLangMenu} aria-label="Change language" sx={{ ml: 0.5 }}>
             <LanguageIcon />
           </IconButton>

@@ -7,7 +7,9 @@ import {
   UpdatePoolCVRequest,
   PoolCVFilter,
   PagedResponse,
-  ApiResponse
+  ApiResponse,
+  FileUploadResponse,
+  PoolCVStatistics
 } from '@/types/cv-sharing';
 import { MatchedPosition } from '@/types/cv-sharing/matched-position';
 
@@ -68,13 +70,13 @@ class PoolCVService {
   /**
    * Upload files to pool CV
    */
-  async uploadFiles(poolCvId: string, files: File[]): Promise<any> {
+  async uploadFiles(poolCvId: string, files: File[]): Promise<FileUploadResponse> {
     const formData = new FormData();
     files.forEach(file => {
       formData.append('files', file);
     });
 
-    const response = await axios.post<any>(
+    const response = await axios.post<FileUploadResponse>(
       `${apiPath('files')}/upload/multiple/pool-cv/${poolCvId}`,
       formData,
       {
@@ -262,8 +264,8 @@ class PoolCVService {
   /**
    * Get pool CV statistics
    */
-  async getStatistics(): Promise<any> {
-    const response = await axios.get(`${this.baseUrl}/statistics`);
+  async getStatistics(): Promise<PoolCVStatistics> {
+    const response = await axios.get<PoolCVStatistics>(`${this.baseUrl}/statistics`);
     return response.data;
   }
 

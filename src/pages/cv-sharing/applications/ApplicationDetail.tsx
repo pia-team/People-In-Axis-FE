@@ -43,7 +43,7 @@ import {
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { applicationService } from '@/services/cv-sharing';
-import { ApplicationDetail as ApplicationDetailType, ApplicationStatus, CreateMeetingRequest, MeetingProvider } from '@/types/cv-sharing';
+import { ApplicationDetail as ApplicationDetailType, ApplicationStatus, CreateMeetingRequest, MeetingProvider, MeetingStatus, Meeting } from '@/types/cv-sharing';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useKeycloak } from '@/hooks/useKeycloak';
 
@@ -87,7 +87,7 @@ const ApplicationDetail: React.FC = () => {
   const isCompanyManager = hasRole('COMPANY_MANAGER');
   const [saving, setSaving] = useState(false);
   const queryClient = useQueryClient();
-  const { data: detail, isLoading, isError } = useQuery<
+  const { data: detail, isPending, isError } = useQuery<
     ApplicationDetailType,
     Error,
     ApplicationDetailType,
@@ -144,7 +144,7 @@ const ApplicationDetail: React.FC = () => {
     if (!detail) return;
     if (!window.confirm('Cancel this meeting?')) return;
     try {
-      await applicationService.updateMeeting(detail.id, meetingId, { status: 'CANCELLED' as any });
+      await applicationService.updateMeeting(detail.id, meetingId, { status: MeetingStatus.CANCELLED });
       enqueueSnackbar('Meeting cancelled', { variant: 'success' });
       await queryClient.invalidateQueries({ queryKey: ['application', id] });
     } catch (error) {
@@ -259,7 +259,7 @@ const ApplicationDetail: React.FC = () => {
     }
   };
 
-  if (isLoading || !detail) {
+  if (isPending || !detail) {
     return (
       <Box sx={{ p: 3 }}>
         <LinearProgress />
@@ -383,7 +383,7 @@ const ApplicationDetail: React.FC = () => {
                     <ListItemIcon><CalendarIcon /></ListItemIcon>
                     <ListItemText
                       primary={`${m.title} • ${new Date(m.startTime).toLocaleString()} (${m.durationMinutes}m)`}
-                      secondary={m.location || (m as any).meetingLink}
+                      secondary={m.location || m.meetingLink}
                     />
                   </ListItem>
                 ))}
@@ -518,8 +518,8 @@ const ApplicationDetail: React.FC = () => {
             fullWidth
             label="Location or Link"
             sx={{ mt: 2 }}
-            value={(meeting as any).location || ''}
-            onChange={(e) => setMeeting(m => ({ ...m, location: e.target.value } as any))}
+            value={meeting.location || ''}
+            onChange={(e) => setMeeting(m => ({ ...m, location: e.target.value }))}
           />
         </DialogContent>
         <DialogActions>

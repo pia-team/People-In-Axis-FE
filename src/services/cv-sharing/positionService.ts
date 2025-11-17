@@ -7,24 +7,43 @@ import {
   PositionFilter,
   PagedResponse,
   PositionTemplate,
-  ApiResponse
+  ApiResponse,
+  PositionStatus,
+  PositionStatistics,
+  PositionMatch,
+  Skill,
+  Language
 } from '@/types/cv-sharing';
+import type { SpringPageResponse } from '@/types/api';
+import { isSpringPageResponse } from '@/types/api';
 
 class PositionService {
   private baseUrl = apiPath('positions');
 
-  private normalizePosition = (raw: any) => {
-    if (!raw) return raw;
-    const normalized = {
-      ...raw,
-      createdBy: raw.createdByName ?? raw.createdBy,
+  private normalizePosition = (raw: Partial<Position> & Record<string, unknown>): Position => {
+    if (!raw) {
+      throw new Error('Position data is required');
+    }
+    const normalized: Position = {
+      ...raw as Position,
+      createdBy: (raw.createdByName as string | undefined) ?? (raw.createdBy as string | undefined),
       skills: Array.isArray(raw.skills)
-        ? raw.skills.map((s: any) => ({ id: s.id, name: s.skillName ?? s.name, isRequired: s.isRequired }))
-        : raw.skills,
+        ? raw.skills.map((s: Partial<Skill> & Record<string, unknown>) => ({
+            id: s.id as string | undefined,
+            name: (s.skillName as string | undefined) ?? (s.name as string | undefined) ?? '',
+            isRequired: s.isRequired as boolean | undefined,
+            proficiencyLevel: s.proficiencyLevel as string | undefined,
+            yearsOfExperience: s.yearsOfExperience as number | undefined
+          }))
+        : (raw.skills as Skill[] | undefined) ?? [],
       languages: Array.isArray(raw.languages)
-        ? raw.languages.map((l: any) => ({ id: l.id, code: l.languageCode ?? l.code, proficiencyLevel: l.proficiencyLevel }))
-        : raw.languages,
-    } as any;
+        ? raw.languages.map((l: Partial<Language> & Record<string, unknown>) => ({
+            id: l.id as string | undefined,
+            code: (l.languageCode as string | undefined) ?? (l.code as string | undefined) ?? '',
+            proficiencyLevel: (l.proficiencyLevel as Language['proficiencyLevel']) ?? 'A1'
+          }))
+        : (raw.languages as Language[] | undefined) ?? [],
+    };
     return normalized;
   };
 
@@ -32,19 +51,41 @@ class PositionService {
    * Get paginated list of positions
    */
   async getPositions(filter?: PositionFilter): Promise<PagedResponse<Position>> {
-    const response = await axios.get(this.baseUrl, {
+    const response = await axios.get<SpringPageResponse<Position> | Position[]>(this.baseUrl, {
       params: filter
     });
-    const d: any = response.data;
-    const rawContent: any[] = Array.isArray(d?.content) ? d.content : (Array.isArray(d) ? d : []);
-    const content: Position[] = rawContent.map(this.normalizePosition) as Position[];
-    const pageInfo = {
-      page: d?.number ?? d?.pageInfo?.page ?? filter?.page ?? 0,
-      size: d?.size ?? d?.pageInfo?.size ?? filter?.size ?? 10,
-      totalElements: d?.totalElements ?? d?.pageInfo?.totalElements ?? content.length ?? 0,
-      totalPages: d?.totalPages ?? d?.pageInfo?.totalPages ?? 1,
-    } as PagedResponse<Position>["pageInfo"];
-    return { content, pageInfo } as PagedResponse<Position>;
+    const data = response.data;
+    
+    let content: Position[];
+    let pageInfo: PagedResponse<Position>["pageInfo"];
+    
+    if (isSpringPageResponse<Position>(data)) {
+      content = data.content.map(this.normalizePosition);
+      pageInfo = {
+        page: data.number ?? filter?.page ?? 0,
+        size: data.size ?? filter?.size ?? 10,
+        totalElements: data.totalElements ?? content.length,
+        totalPages: data.totalPages ?? 1,
+      };
+    } else if (Array.isArray(data)) {
+      content = data.map(this.normalizePosition);
+      pageInfo = {
+        page: filter?.page ?? 0,
+        size: filter?.size ?? 10,
+        totalElements: content.length,
+        totalPages: 1,
+      };
+    } else {
+      content = [];
+      pageInfo = {
+        page: filter?.page ?? 0,
+        size: filter?.size ?? 10,
+        totalElements: 0,
+        totalPages: 1,
+      };
+    }
+    
+    return { content, pageInfo };
   }
 
   /**
@@ -122,27 +163,50 @@ class PositionService {
   /**
    * Get position statistics
    */
-  async getPositionStatistics(positionId: string): Promise<any> {
-    const response = await axios.get(`${this.baseUrl}/${positionId}/statistics`);
+  async getPositionStatistics(positionId: string): Promise<PositionStatistics> {
+    const response = await axios.get<PositionStatistics>(`${this.baseUrl}/${positionId}/statistics`);
     return response.data;
   }
 
   /**
    * Get recorded matches for a position (from cv_position_match)
    */
-  async getMatchesForPosition(positionId: string, page = 0, size = 10): Promise<PagedResponse<any>> {
-    const response = await axios.get(`${this.baseUrl}/${positionId}/matches`, {
+  async getMatchesForPosition(positionId: string, page = 0, size = 10): Promise<PagedResponse<PositionMatch>> {
+    const response = await axios.get<SpringPageResponse<PositionMatch> | PositionMatch[]>(`${this.baseUrl}/${positionId}/matches`, {
       params: { page, size }
     });
-    const d: any = response.data;
-    const content: any[] = Array.isArray(d?.content) ? d.content : (Array.isArray(d) ? d : []);
-    const pageInfo = {
-      page: d?.number ?? page,
-      size: d?.size ?? size,
-      totalElements: d?.totalElements ?? content.length ?? 0,
-      totalPages: d?.totalPages ?? 1,
-    } as PagedResponse<any>["pageInfo"];
-    return { content, pageInfo } as PagedResponse<any>;
+    const data = response.data;
+    
+    let content: PositionMatch[];
+    let pageInfo: PagedResponse<PositionMatch>["pageInfo"];
+    
+    if (isSpringPageResponse<PositionMatch>(data)) {
+      content = data.content;
+      pageInfo = {
+        page: data.number ?? page,
+        size: data.size ?? size,
+        totalElements: data.totalElements ?? content.length,
+        totalPages: data.totalPages ?? 1,
+      };
+    } else if (Array.isArray(data)) {
+      content = data;
+      pageInfo = {
+        page,
+        size,
+        totalElements: content.length,
+        totalPages: 1,
+      };
+    } else {
+      content = [];
+      pageInfo = {
+        page,
+        size,
+        totalElements: 0,
+        totalPages: 1,
+      };
+    }
+    
+    return { content, pageInfo };
   }
 
   /**
@@ -201,7 +265,7 @@ class PositionService {
    */
   async getActivePositions(page = 0, size = 20): Promise<PagedResponse<Position>> {
     return this.getPositions({
-      status: 'ACTIVE' as any,
+      status: PositionStatus.ACTIVE,
       page,
       size
     });

@@ -15,8 +15,13 @@ import {
   Meeting,
   CreateMeetingRequest,
   UpdateApplicationStatusRequest,
-  ApiResponse
+  ApiResponse,
+  ApplicationStatus,
+  FileUploadResponse,
+  ApplicationStatistics
 } from '@/types/cv-sharing';
+import type { SpringPageResponse, NormalizedPageResponse } from '@/types/api';
+import { isSpringPageResponse } from '@/types/api';
 
 class ApplicationService {
   private baseUrl = apiPath('applications');
@@ -25,19 +30,42 @@ class ApplicationService {
    * Get paginated list of applications
    */
   async getApplications(filter?: ApplicationFilter): Promise<PagedResponse<Application>> {
-    const response = await axios.get(this.baseUrl, {
+    const response = await axios.get<SpringPageResponse<Application> | Application[]>(this.baseUrl, {
       params: filter
     });
-    const d: any = response.data;
+    const data = response.data;
+    
     // Normalize Spring Page or already-normalized payload
-    const content: Application[] = Array.isArray(d?.content) ? d.content : (Array.isArray(d) ? d : []);
-    const pageInfo = {
-      page: d?.number ?? d?.pageInfo?.page ?? filter?.page ?? 0,
-      size: d?.size ?? d?.pageInfo?.size ?? filter?.size ?? 10,
-      totalElements: d?.totalElements ?? d?.pageInfo?.totalElements ?? content.length ?? 0,
-      totalPages: d?.totalPages ?? d?.pageInfo?.totalPages ?? 1,
-    } as PagedResponse<Application>["pageInfo"];
-    return { content, pageInfo } as PagedResponse<Application>;
+    let content: Application[];
+    let pageInfo: PagedResponse<Application>["pageInfo"];
+    
+    if (isSpringPageResponse<Application>(data)) {
+      content = data.content;
+      pageInfo = {
+        page: data.number ?? filter?.page ?? 0,
+        size: data.size ?? filter?.size ?? 10,
+        totalElements: data.totalElements ?? content.length,
+        totalPages: data.totalPages ?? 1,
+      };
+    } else if (Array.isArray(data)) {
+      content = data;
+      pageInfo = {
+        page: filter?.page ?? 0,
+        size: filter?.size ?? 10,
+        totalElements: content.length,
+        totalPages: 1,
+      };
+    } else {
+      content = [];
+      pageInfo = {
+        page: filter?.page ?? 0,
+        size: filter?.size ?? 10,
+        totalElements: 0,
+        totalPages: 1,
+      };
+    }
+    
+    return { content, pageInfo };
   }
 
   /**
@@ -78,7 +106,7 @@ class ApplicationService {
    * Withdraw application
    */
   async withdrawApplication(id: string): Promise<void> {
-    await this.updateApplicationStatus(id, { status: 'WITHDRAWN' as any });
+    await this.updateApplicationStatus(id, { status: ApplicationStatus.WITHDRAWN });
   }
 
   /**
@@ -185,13 +213,13 @@ class ApplicationService {
   /**
    * Upload application files
    */
-  async uploadFiles(applicationId: string, files: File[]): Promise<any> {
+  async uploadFiles(applicationId: string, files: File[]): Promise<FileUploadResponse> {
     const formData = new FormData();
     files.forEach(file => {
       formData.append('files', file);
     });
 
-    const response = await axios.post<any>(
+    const response = await axios.post<FileUploadResponse>(
       `${apiPath('files')}/upload/multiple/application/${applicationId}`,
       formData,
       {
@@ -258,9 +286,9 @@ class ApplicationService {
   /**
    * Get application statistics
    */
-  async getApplicationStatistics(positionId?: string): Promise<any> {
+  async getApplicationStatistics(positionId?: string): Promise<ApplicationStatistics> {
     const params = positionId ? { positionId } : {};
-    const response = await axios.get(`${this.baseUrl}/statistics`, { params });
+    const response = await axios.get<ApplicationStatistics>(`${this.baseUrl}/statistics`, { params });
     return response.data;
   }
 

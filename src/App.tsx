@@ -72,6 +72,9 @@ const TimeSheetReport = lazy(() => import('@/pages/reports/TimeSheetReport'));
 const ExpenseReport = lazy(() => import('@/pages/reports/ExpenseReport'));
 const AuditLogs = lazy(() => import('@/pages/reports/Logs'));
 
+// Notifications page
+const NotificationList = lazy(() => import('@/pages/notifications/NotificationList'));
+
 // Admin pages
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 const UserManagement = lazy(() => import('@/pages/admin/UserManagement'));
@@ -281,6 +284,9 @@ const App: React.FC = () => {
             <Route path="/settings">
               <Route path="languages" element={<LanguagesPage />} />
             </Route>
+
+            {/* Notifications */}
+            <Route path="/notifications" element={<NotificationList />} />
 
           </Route>
         </Route>

@@ -1,12 +1,14 @@
 import React from 'react';
 import { Typography, Stack, TextField, MenuItem, Button } from '@mui/material';
-import { useForm, SubmitHandler } from 'react-hook-form';
+import { SubmitHandler } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { employeeService } from '@/services/employeeService';
 import { Employee, EmployeeCreateDTO, EmployeeUpdateDTO, EmploymentType } from '@/types';
 import PageContainer from '@/components/ui/PageContainer';
 import SectionCard from '@/components/ui/SectionCard';
+import { useFormValidation } from '@/hooks/useFormValidation';
+import { employeeCreateSchema } from '@/utils/validation';
 
 const employmentTypes: EmploymentType[] = [
   'FULL_TIME',
@@ -30,10 +32,11 @@ const EmployeeForm: React.FC = () => {
     enabled: isEdit,
   });
 
-  const { register, handleSubmit, reset } = useForm<
+  const { register, handleSubmit, reset, formState: { errors } } = useFormValidation<
     EmployeeCreateDTO & Partial<EmployeeUpdateDTO>
-  >({
-    defaultValues: {
+  >(
+    employeeCreateSchema as any, // Type assertion needed due to yup schema typing
+    {
       firstName: existing?.firstName ?? '',
       lastName: existing?.lastName ?? '',
       email: existing?.email ?? '',
@@ -43,8 +46,8 @@ const EmployeeForm: React.FC = () => {
       companyId: existing?.companyId ?? undefined,
       departmentId: existing?.departmentId ?? undefined,
       managerId: existing?.managerId ?? undefined,
-    },
-  });
+    }
+  );
 
   React.useEffect(() => {
     if (existing) {
