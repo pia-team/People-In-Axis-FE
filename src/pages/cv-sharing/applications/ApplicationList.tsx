@@ -188,6 +188,7 @@ const ApplicationList: React.FC = () => {
     {
       field: 'applicant',
       headerName: 'Applicant',
+      //sortField: 'surname'
       flex: 1.5,
       minWidth: 250,
       renderCell: (params: GridRenderCellParams) => (
@@ -243,6 +244,7 @@ const ApplicationList: React.FC = () => {
       field: 'rating',
       headerName: 'Rating',
       width: 140,
+      sortable: false,
       renderCell: (params: GridRenderCellParams) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           {params.row.averageRating ? (
