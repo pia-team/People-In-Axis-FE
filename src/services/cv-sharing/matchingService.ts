@@ -17,6 +17,7 @@ class MatchingService {
 
   async listAliases(): Promise<SkillAliasItem[]> {
     const res = await axios.get<SkillAliasItem[]>(`${this.baseUrl}/skill-alias`);
+    console.log(res);
     return res.data;
   }
 

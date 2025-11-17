@@ -5,12 +5,10 @@
   "roles": {
     "realm": [
       { "name": "ADMIN", "description": "people-in-axis", "composite": false, "clientRole": false },
-      { "name": "SYSTEM_ADMIN", "description": "people-in-axis", "composite": false, "clientRole": false },
       { "name": "HUMAN_RESOURCES", "description": "people-in-axis", "composite": false, "clientRole": false },
       { "name": "TEAM_MANAGER", "description": "people-in-axis", "composite": false, "clientRole": false },
       { "name": "FINANCE", "description": "people-in-axis", "composite": false, "clientRole": false },
       { "name": "COMPANY_MANAGER", "description": "people-in-axis", "composite": false, "clientRole": false },
-      { "name": "ACCOUNT_ADMIN", "description": "people-in-axis", "composite": false, "clientRole": false },
       { "name": "EMPLOYEE", "description": "people-in-axis", "composite": false, "clientRole": false }
     ]
   },
@@ -61,19 +59,6 @@
       "realmRoles": ["ADMIN", "EMPLOYEE"]
     },
     {
-      "username": "sysadmin@company.local",
-      "email": "sysadmin@company.local",
-      "firstName": "System",
-      "lastName": "Admin",
-      "enabled": true,
-      "emailVerified": true,
-      "attributes": { "description": "people-in-axis" },
-      "credentials": [
-        { "type": "password", "value": "ChangeMe123!", "temporary": true }
-      ],
-      "realmRoles": ["SYSTEM_ADMIN", "EMPLOYEE"]
-    },
-    {
       "username": "hr1@company.local",
       "email": "hr1@company.local",
       "firstName": "HR",
@@ -100,19 +85,6 @@
       "realmRoles": ["TEAM_MANAGER", "EMPLOYEE"]
     },
     {
-      "username": "finance1@company.local",
-      "email": "finance1@company.local",
-      "firstName": "Finance",
-      "lastName": "User",
-      "enabled": true,
-      "emailVerified": true,
-      "attributes": { "description": "people-in-axis" },
-      "credentials": [
-        { "type": "password", "value": "ChangeMe123!", "temporary": true }
-      ],
-      "realmRoles": ["FINANCE", "EMPLOYEE"]
-    },
-    {
       "username": "companymgr1@company.local",
       "email": "companymgr1@company.local",
       "firstName": "Company",
@@ -124,19 +96,6 @@
         { "type": "password", "value": "ChangeMe123!", "temporary": true }
       ],
       "realmRoles": ["COMPANY_MANAGER", "EMPLOYEE"]
-    },
-    {
-      "username": "accountadmin1@company.local",
-      "email": "accountadmin1@company.local",
-      "firstName": "Account",
-      "lastName": "Admin",
-      "enabled": true,
-      "emailVerified": true,
-      "attributes": { "description": "people-in-axis" },
-      "credentials": [
-        { "type": "password", "value": "ChangeMe123!", "temporary": true }
-      ],
-      "realmRoles": ["ACCOUNT_ADMIN", "EMPLOYEE"]
     },
     {
       "username": "employee1@company.local",
