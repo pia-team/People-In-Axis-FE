@@ -1,0 +1,41 @@
+name: Auto Translate (LibreTranslate)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'src/locales/en.json'
+      - 'src/translate.js'
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: |
+          npm ci || npm install
+
+      - name: Run translate script
+        env:
+          TRANSLATE_API_URL: https://libretranslate.com/translate
+        run: node ./src/translate.js
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add src/locales/*.json src/cache.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(i18n): auto-translate locales"
+            git push
+          else
+            echo "No changes to commit."
+          fi
