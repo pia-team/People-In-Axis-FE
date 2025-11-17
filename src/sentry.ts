@@ -13,7 +13,9 @@ if (DSN) {
       tracesSampleRate: 0.2,
     });
   } catch (e) {
-    // eslint-disable-next-line no-console
-    console.warn('Sentry init failed:', e);
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.warn('Sentry init failed:', e);
+    }
   }
 }

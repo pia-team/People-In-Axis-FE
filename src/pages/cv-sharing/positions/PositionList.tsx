@@ -53,7 +53,7 @@ const PositionList: React.FC = () => {
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
 
   // Fetch positions
-  const { data, isLoading, isError, refetch } = useQuery({
+  const { data, isPending, isError, refetch } = useQuery({
     queryKey: ['positions', page, pageSize, searchQuery, statusFilter, departmentFilter],
     queryFn: () => positionService.getPositions({
       page,
@@ -388,7 +388,7 @@ const PositionList: React.FC = () => {
               rows={data?.content || []}
               columns={columns}
               getRowId={(row) => row.id}
-              loading={isLoading}
+              loading={isPending}
               paginationMode="server"
               rowCount={data?.pageInfo?.totalElements || 0}
               pageSizeOptions={[5, 10, 25, 50]}

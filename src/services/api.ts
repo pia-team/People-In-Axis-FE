@@ -1,5 +1,7 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { toast } from '@/utils/toast';
+import type { ExtendedAxiosRequestConfig, ApiErrorResponse } from '@/types/api';
+import { isApiErrorResponse } from '@/types/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
 const DEDUP_WINDOW_MS = Number(import.meta.env.VITE_API_DEDUP_MS ?? 250);
@@ -27,11 +29,13 @@ export const setAuthToken = (token: string | null) => {
 // Simple in-flight de-duplication for GET requests
 const inFlight = new Map<string, number>();
 
-const stableStringify = (value: any): string => {
+type SerializableValue = string | number | boolean | null | undefined | SerializableValue[] | Record<string, SerializableValue>;
+
+const stableStringify = (value: SerializableValue): string => {
   if (value === undefined || value === null) return '';
   if (Array.isArray(value)) return `[${value.map((v) => stableStringify(v)).join(',')}]`;
   if (typeof value === 'object') {
-    return '{' + Object.keys(value).sort().map(k => `${k}:${stableStringify((value as any)[k])}`).join(',') + '}';
+    return '{' + Object.keys(value).sort().map(k => `${k}:${stableStringify((value as Record<string, SerializableValue>)[k])}`).join(',') + '}';
   }
   return String(value);
 };
@@ -46,20 +50,23 @@ const buildKey = (config: InternalAxiosRequestConfig) => {
 
 // Idempotency key cache for write requests
 const idempCache = new Map<string, { key: string; ts: number }>();
-const genIdempKey = () => {
+const genIdempKey = (): string => {
   try {
-    const g: any = globalThis as any;
-    if (g && g.crypto && typeof g.crypto.randomUUID === 'function') {
-      return g.crypto.randomUUID();
+    if (typeof globalThis !== 'undefined' && globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function') {
+      return globalThis.crypto.randomUUID();
     }
-  } catch {}
-  const s4 = () => Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  } catch {
+    // Fallback to manual generation
+  }
+  const s4 = (): string => Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
   return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
 };
 
 // Request interceptor to add auth token and standard headers
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    const extendedConfig = config as InternalAxiosRequestConfig & ExtendedAxiosRequestConfig;
+    
     // Add Authorization header if token is available
     if (authToken) {
       config.headers.Authorization = `Bearer ${authToken}`;
@@ -81,12 +88,12 @@ api.interceptors.request.use(
         // Abort the duplicate request silently
         const controller = new AbortController();
         controller.abort();
-        (config as any).__dedup_key = key;
-        (config as any).__dedup_aborted = true;
+        extendedConfig.__dedup_key = key;
+        extendedConfig.__dedup_aborted = true;
         config.signal = controller.signal;
       } else {
         inFlight.set(key, now);
-        (config as any).__dedup_key = key;
+        extendedConfig.__dedup_key = key;
       }
     }
     // Attach Idempotency-Key for write requests (short TTL reuse)
@@ -98,8 +105,10 @@ api.interceptors.request.use(
         entry = { key: genIdempKey(), ts: now };
         idempCache.set(idKey, entry);
       }
-      (config.headers as any)['Idempotency-Key'] = (config.headers as any)['Idempotency-Key'] || entry.key;
-      (config as any).__idemp_ref = idKey;
+      if (!config.headers['Idempotency-Key']) {
+        config.headers['Idempotency-Key'] = entry.key;
+      }
+      extendedConfig.__idemp_ref = idKey;
     }
     return config;
   },
@@ -112,34 +121,40 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response: AxiosResponse) => {
     // Clear in-flight key if present
-    const key = (response.config as any)?.__dedup_key;
+    const extendedConfig = response.config as InternalAxiosRequestConfig & ExtendedAxiosRequestConfig;
+    const key = extendedConfig?.__dedup_key;
     if (key) inFlight.delete(key);
-    const idref = (response.config as any)?.__idemp_ref;
+    const idref = extendedConfig?.__idemp_ref;
     if (idref) idempCache.delete(idref);
     return response;
   },
-  (error: AxiosError) => {
+  (error: AxiosError<ApiErrorResponse>) => {
     // Clear in-flight key if present
-    const key = (error.config as any)?.__dedup_key;
-    if (key) inFlight.delete(key);
-    const idref = (error.config as any)?.__idemp_ref;
-    if (idref) idempCache.delete(idref);
+    if (error.config) {
+      const extendedConfig = error.config as InternalAxiosRequestConfig & ExtendedAxiosRequestConfig;
+      const key = extendedConfig?.__dedup_key;
+      if (key) inFlight.delete(key);
+      const idref = extendedConfig?.__idemp_ref;
+      if (idref) idempCache.delete(idref);
+    }
 
     // Ignore aborted duplicate requests
-    if ((error as any).code === 'ERR_CANCELED' || (error.message || '').toLowerCase().includes('canceled')) {
+    if (error.code === 'ERR_CANCELED' || (error.message || '').toLowerCase().includes('canceled')) {
       return Promise.reject(error);
     }
     const authEnabled = String(import.meta.env.VITE_AUTH_ENABLED).toLowerCase() === 'true';
     if (error.response) {
       const status = error.response.status;
-      const corrId = (error.response.headers as any)?.['x-correlation-id'];
-      const idempReject = (error.response.headers as any)?.['x-idempotency-reject'];
+      const headers = error.response.headers;
+      const corrId = typeof headers['x-correlation-id'] === 'string' ? headers['x-correlation-id'] : undefined;
+      const idempReject = headers['x-idempotency-reject'] as string | undefined;
       if (status === 409 && idempReject) {
         // Suppress toast for idempotency rejections
         return Promise.reject(error);
       }
-      const baseMsg = typeof error.response.data === 'object' && error.response.data && (error.response.data as any).message
-        ? (error.response.data as any).message
+      const errorData = error.response.data;
+      const baseMsg = isApiErrorResponse(errorData) && errorData.message
+        ? errorData.message
         : `Request failed with status ${status}`;
       const msg = corrId ? `${baseMsg} (trace: ${corrId})` : baseMsg;
       if (status === 401) {
@@ -167,19 +182,19 @@ api.interceptors.response.use(
 
 // Generic API methods
 export const apiClient = {
-  get: <T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => 
+  get: <T = unknown>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => 
     api.get<T>(url, config),
   
-  post: <T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => 
-    api.post<T>(url, data, config),
+  post: <T = unknown, D = unknown>(url: string, data?: D, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => 
+    api.post<T, AxiosResponse<T>, D>(url, data, config),
   
-  put: <T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => 
-    api.put<T>(url, data, config),
+  put: <T = unknown, D = unknown>(url: string, data?: D, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => 
+    api.put<T, AxiosResponse<T>, D>(url, data, config),
   
-  patch: <T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => 
-    api.patch<T>(url, data, config),
+  patch: <T = unknown, D = unknown>(url: string, data?: D, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => 
+    api.patch<T, AxiosResponse<T>, D>(url, data, config),
   
-  delete: <T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => 
+  delete: <T = unknown>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => 
     api.delete<T>(url, config),
 };
 

@@ -12,10 +12,14 @@ module.exports = {
   rules: {
     // Rely on TypeScript compiler for these
     'no-undef': 'off',
-    '@typescript-eslint/no-unused-vars': 'off',
-    '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+    '@typescript-eslint/no-explicit-any': 'error',
     'no-empty': 'off',
     // Avoid warnings failing CI due to max-warnings=0
-    'react-refresh/only-export-components': 'off'
+    'react-refresh/only-export-components': 'off',
+    '@typescript-eslint/no-unsafe-assignment': 'warn',
+    '@typescript-eslint/no-unsafe-member-access': 'warn',
+    '@typescript-eslint/no-unsafe-call': 'warn',
+    '@typescript-eslint/no-unsafe-return': 'warn'
   },
 };

@@ -11,7 +11,7 @@ const Logs: React.FC = () => {
   const [action, setAction] = useState('');
   const [userId, setUserId] = useState('');
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isPending, refetch } = useQuery({
     queryKey: ['logs', entityType, entityId, action, userId],
     queryFn: () => logService.getLogs({ entityType: entityType || undefined, entityId: entityId || undefined, action: action || undefined, userId: userId || undefined }),
   });
@@ -54,7 +54,7 @@ const Logs: React.FC = () => {
           <DataGrid
             rows={rows}
             columns={columns}
-            loading={isLoading}
+            loading={isPending}
             autoHeight
             pageSizeOptions={[10, 25, 50]}
             initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}

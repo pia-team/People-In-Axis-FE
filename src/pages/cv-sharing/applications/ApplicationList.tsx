@@ -35,7 +35,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { applicationService, positionService } from '@/services/cv-sharing';
-import { Application, ApplicationStatus } from '@/types/cv-sharing';
+import { Application, ApplicationStatus, Position } from '@/types/cv-sharing';
 import PageContainer from '@/components/ui/PageContainer';
 import SectionCard from '@/components/ui/SectionCard';
 // import { standardDataGridSx } from '@/components/ui/dataGridStyles';
@@ -89,11 +89,15 @@ const ApplicationList: React.FC = () => {
   const positionOptions = positionsPage?.content ?? [];
   const departmentOptions: string[] = React.useMemo(() => {
     const set = new Set<string>();
-    (positionOptions as any[]).forEach((p) => { if (p?.department) set.add(p.department); });
+    positionOptions.forEach((p) => { 
+      if (p?.department) {
+        set.add(p.department);
+      }
+    });
     return Array.from(set);
   }, [positionOptions]);
 
-  const { data, isLoading, isError, refetch } = useQuery({
+  const { data, isPending, isError, refetch } = useQuery({
     queryKey: ['applications', paginationModel.page, paginationModel.pageSize, statusFilter, searchTerm, departmentFilter, positionIdFilter, sortModel],
     queryFn: async () => applicationService.getApplications({
       page: paginationModel.page,
@@ -396,12 +400,12 @@ const ApplicationList: React.FC = () => {
                 }}
                 renderValue={(val) => {
                   if (!val) return 'All Positions';
-                  const found = positionOptions.find((p: any) => p.id === val);
-                  return found?.title || val as any;
+                  const found = positionOptions.find((p: Position) => p.id === val);
+                  return found?.title || String(val);
                 }}
               >
                 <MenuItem value="">All Positions</MenuItem>
-                {positionOptions.map((p: any) => (
+                {positionOptions.map((p: Position) => (
                   <MenuItem key={p.id} value={p.id}>{p.title}</MenuItem>
                 ))}
               </Select>
@@ -436,7 +440,7 @@ const ApplicationList: React.FC = () => {
               rows={rows}
               columns={columns}
               getRowId={(row) => row.id}
-              loading={isLoading}
+              loading={isPending}
               paginationMode="server"
               sortingMode="server"
               rowCount={rowCount}

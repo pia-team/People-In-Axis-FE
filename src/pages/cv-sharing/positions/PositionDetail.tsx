@@ -86,7 +86,7 @@ const PositionDetail: React.FC = () => {
   const [isActivating, setIsActivating] = useState(false);
   const [statusMenuAnchor, setStatusMenuAnchor] = useState<null | HTMLElement>(null);
 
-  const { data: position, isLoading } = useQuery({
+  const { data: position, isPending } = useQuery({
     queryKey: ['position', id],
     queryFn: () => positionService.getPositionById(id!),
     enabled: !!id
@@ -219,7 +219,7 @@ const PositionDetail: React.FC = () => {
     }
   };
 
-  if (isLoading) {
+  if (isPending) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
         <CircularProgress />

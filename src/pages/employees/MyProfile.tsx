@@ -5,9 +5,10 @@ import { employeeService } from '@/services/employeeService';
 import { Employee } from '@/types';
 import PageContainer from '@/components/ui/PageContainer';
 import SectionCard from '@/components/ui/SectionCard';
+import LoadingState from '@/components/ui/LoadingState';
 
 const MyProfile: React.FC = () => {
-  const { data, isLoading, isError } = useQuery({
+  const { data, isPending, isError } = useQuery({
     queryKey: ['me'],
     queryFn: async () => employeeService.getCurrentEmployee(),
   });
@@ -17,7 +18,7 @@ const MyProfile: React.FC = () => {
   return (
     <PageContainer title="My Profile">
       <SectionCard>
-        {isLoading && <Typography>Loading...</Typography>}
+        {isPending && <LoadingState message="Loading profile..." />}
         {isError && <Typography color="error">Failed to load profile.</Typography>}
         {me && (
           <Stack spacing={1}>

@@ -64,6 +64,9 @@ export default defineConfig(({ mode }) => {
         '@config': path.resolve(__dirname, './src/config'),
       },
     },
+    // Exclude test files from being served in dev mode
+    // Vite only serves files that are imported, so test files won't be served
+    publicDir: 'public',
     server: {
       port: 3000,
       proxy: {
@@ -88,6 +91,9 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist',
       sourcemap: true,
+      // Vite automatically excludes test files (*.test.*, *.spec.*) from build
+      // because they are not imported in the application code
+      // Test files are in devDependencies and won't be included in production bundle
       rollupOptions: {
         output: {
           manualChunks: {
@@ -97,6 +103,17 @@ export default defineConfig(({ mode }) => {
           },
         },
       },
+    },
+    // Exclude test files from dependency optimization
+    optimizeDeps: {
+      exclude: [
+        'vitest',
+        '@vitest/coverage-v8',
+        '@testing-library/react',
+        '@testing-library/jest-dom',
+        '@testing-library/user-event',
+        '@testing-library/dom',
+      ],
     },
   };
 });

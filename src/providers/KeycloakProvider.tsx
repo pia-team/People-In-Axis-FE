@@ -104,8 +104,19 @@ export const KeycloakProvider: React.FC<KeycloakProviderProps> = ({
                 setAuthToken(kc.token ?? null);
               }
             })
-            .catch(() => {
-              console.error("Failed to refresh token");
+            .catch((error) => {
+              if (import.meta.env.DEV) {
+                // eslint-disable-next-line no-console
+                console.error("Failed to refresh token", error);
+              }
+              // Log to Sentry
+              try {
+                Sentry.captureException(error instanceof Error ? error : new Error(String(error)), {
+                  tags: { component: 'KeycloakProvider', action: 'tokenRefresh' }
+                });
+              } catch {
+                // Sentry not available
+              }
               kc.logout();
             });
         };
@@ -132,7 +143,18 @@ export const KeycloakProvider: React.FC<KeycloakProviderProps> = ({
           setTokenParsed(undefined);
         };
       } catch (error) {
-        console.error("Keycloak initialization failed", error);
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.error("Keycloak initialization failed", error);
+        }
+        // Log to Sentry
+        try {
+          Sentry.captureException(error instanceof Error ? error : new Error(String(error)), {
+            tags: { component: 'KeycloakProvider', action: 'initialization' }
+          });
+        } catch {
+          // Sentry not available
+        }
         setInitialized(true);
       }
     };

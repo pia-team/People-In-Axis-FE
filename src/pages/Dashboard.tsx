@@ -20,7 +20,7 @@ import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { hasRole, hasAnyRole } = useKeycloak();
-  const { data, isLoading } = useQuery({
+  const { data, isPending } = useQuery({
     queryKey: ['dashboard', 'metrics'],
     queryFn: () => dashboardService.getMetrics(),
     staleTime: 30_000,
@@ -28,7 +28,7 @@ const Dashboard: React.FC = () => {
 
   const formatNumber = (n?: number) => new Intl.NumberFormat().format(n ?? 0);
   const value = (n?: number) => (
-    isLoading ? <Skeleton variant="text" width={56} height={42} /> : <Typography variant="h3" sx={{ fontWeight: 700 }}>{formatNumber(n)}</Typography>
+    isPending ? <Skeleton variant="text" width={56} height={42} /> : <Typography variant="h3" sx={{ fontWeight: 700 }}>{formatNumber(n)}</Typography>
   );
 
   const toChartData = (m?: Record<string, number>, top: number = 6) => {
@@ -78,50 +78,50 @@ const Dashboard: React.FC = () => {
     <PageContainer title="Dashboard">
       <Grid container spacing={2.5}>
         <Grid item xs={12} sm={6} md={3}>
-          <MetricCard title="Total Employees" value={data?.totalEmployees} loading={isLoading} to="/employees" icon={<PeopleAltIcon color="primary" />} />
+          <MetricCard title="Total Employees" value={data?.totalEmployees} loading={isPending} to="/employees" icon={<PeopleAltIcon color="primary" />} />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <MetricCard title="Active Projects" value={data?.activeProjects} loading={isLoading} to="/projects" icon={<WorkOutlineIcon color="primary" />} />
+          <MetricCard title="Active Projects" value={data?.activeProjects} loading={isPending} to="/projects" icon={<WorkOutlineIcon color="primary" />} />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <MetricCard title="Pending Timesheets (Manager)" value={data?.pendingTimesheetsManager} loading={isLoading}
+          <MetricCard title="Pending Timesheets (Manager)" value={data?.pendingTimesheetsManager} loading={isPending}
             to={hasAnyRole(['TEAM_MANAGER', 'HUMAN_RESOURCES']) ? '/timesheets/approval' : undefined}
             icon={<AssignmentTurnedInIcon color="primary" />} />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <MetricCard title="Pending Timesheets (Admin)" value={data?.pendingTimesheetsAdmin} loading={isLoading}
+          <MetricCard title="Pending Timesheets (Admin)" value={data?.pendingTimesheetsAdmin} loading={isPending}
             to={hasRole('ADMIN') ? '/timesheets/admin-approval' : undefined}
             icon={<AdminPanelSettingsOutlinedIcon color="primary" />} />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <MetricCard title="Pending Expenses" value={data?.pendingExpenses} loading={isLoading}
+          <MetricCard title="Pending Expenses" value={data?.pendingExpenses} loading={isPending}
             to={hasAnyRole(['TEAM_MANAGER', 'HUMAN_RESOURCES', 'FINANCE']) ? '/expenses/approval' : undefined}
             icon={<ReceiptLongOutlinedIcon color="primary" />} />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <MetricCard title="Assigned Rows (Team Lead)" value={data?.teamLeadAssignedRows} loading={isLoading}
+          <MetricCard title="Assigned Rows (Team Lead)" value={data?.teamLeadAssignedRows} loading={isPending}
             to={hasRole('TEAM_MANAGER') ? '/timesheets/assigned' : undefined}
             icon={<PlaylistAddCheckOutlinedIcon color="primary" />} />
         </Grid>
 
         {/* HR Metrics (CV Sharing) */}
         <Grid item xs={12} sm={6} md={3}>
-          <MetricCard title="Total Positions" value={data?.totalPositions} loading={isLoading}
+          <MetricCard title="Total Positions" value={data?.totalPositions} loading={isPending}
             to="/cv-sharing/positions"
             icon={<BusinessCenterOutlinedIcon sx={{ color: 'primary.main' }} />} />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <MetricCard title="Total Applications" value={data?.totalApplications} loading={isLoading}
+          <MetricCard title="Total Applications" value={data?.totalApplications} loading={isPending}
             to="/cv-sharing/applications"
             icon={<DescriptionOutlinedIcon sx={{ color: 'success.main' }} />} />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <MetricCard title="Pool CVs" value={data?.totalPoolCVs} loading={isLoading}
+          <MetricCard title="Pool CVs" value={data?.totalPoolCVs} loading={isPending}
             to="/cv-sharing/pool-cvs"
             icon={<FolderOpenOutlinedIcon sx={{ color: 'secondary.main' }} />} />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <MetricCard title="Active Meetings" value={data?.activeMeetings} loading={isLoading}
+          <MetricCard title="Active Meetings" value={data?.activeMeetings} loading={isPending}
             to="/meetings"
             icon={<CalendarMonthOutlinedIcon sx={{ color: 'warning.main' }} />} />
         </Grid>

@@ -86,8 +86,19 @@ const ProjectForm: React.FC = () => {
       await save();
       navigate('/projects');
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error(err);
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.error('Project save failed:', err);
+      }
+      // Log to Sentry in production
+      try {
+        const Sentry = await import('@sentry/react');
+        Sentry.captureException(err instanceof Error ? err : new Error(String(err)), {
+          tags: { component: 'ProjectForm', action: 'save' }
+        });
+      } catch {
+        // Sentry not available
+      }
     }
   };
 

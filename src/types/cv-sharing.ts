@@ -488,3 +488,30 @@ export interface ApplicationStatistics {
   recentApplications: Application[];
   conversionRate?: number;
 }
+
+// File upload response
+export interface FileUploadResponse {
+  files: FileInfo[];
+  message?: string;
+  success?: boolean;
+}
+
+// Pool CV Statistics
+export interface PoolCVStatistics {
+  total: number;
+  active: number;
+  inactive: number;
+  bySkill?: Record<string, number>;
+  byLanguage?: Record<string, number>;
+}
+
+// Position Match
+export interface PositionMatch {
+  id: string;
+  poolCvId: string;
+  positionId: string;
+  score: number;
+  matchedAt: string;
+  poolCv?: PoolCV;
+  position?: Position;
+}

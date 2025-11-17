@@ -83,10 +83,10 @@ const PoolCVList: React.FC = () => {
   const [toggleBusyId, setToggleBusyId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'card' | 'list' | 'compact'>('card');
 
-  const { data, isLoading, refetch } = useQuery<PagedResponse<PoolCV>>({
+  const { data, isPending, refetch } = useQuery<PagedResponse<PoolCV>>({
     queryKey: ['poolCVs', statusFilter, experienceFilter],
     queryFn: async () => {
-      const params: any = {};
+      const params: Record<string, unknown> = {};
       if (statusFilter !== 'all') {
         params.active = statusFilter === 'active';
       }
@@ -173,7 +173,7 @@ const PoolCVList: React.FC = () => {
   const handleDownload = async (cvId: string) => {
     try {
       const detail = await poolCVService.getPoolCVById(cvId);
-      const files = (detail as any).files as FileInfo[] | undefined;
+      const files = detail.files;
       if (!files || files.length === 0) {
         enqueueSnackbar('No files found for this CV', { variant: 'info' });
         return;
@@ -521,7 +521,7 @@ const PoolCVList: React.FC = () => {
             </List>
           )}
 
-          {filteredPoolCVs.length === 0 && !isLoading && (
+          {filteredPoolCVs.length === 0 && !isPending && (
             <Box sx={{ textAlign: 'center', py: 8 }}>
               <Typography variant="h6" color="text.secondary">
                 No CVs found in the talent pool

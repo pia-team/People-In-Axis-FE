@@ -51,7 +51,7 @@ const PoolCVDetail: React.FC = () => {
   const { hasAnyRole } = useKeycloak();
   const canEdit = hasAnyRole(['COMPANY_MANAGER', 'ADMIN']);
   const queryClient = useQueryClient();
-  const { data: detail, isLoading, isError } = useQuery<
+  const { data: detail, isPending, isError } = useQuery<
     PoolCVDetailType,
     Error,
     PoolCVDetailType,
@@ -152,7 +152,7 @@ const PoolCVDetail: React.FC = () => {
     }
   };
 
-  if (isLoading || !detail) {
+  if (isPending || !detail) {
     return (
       <Box sx={{ p: 3 }}>
         <LinearProgress />
