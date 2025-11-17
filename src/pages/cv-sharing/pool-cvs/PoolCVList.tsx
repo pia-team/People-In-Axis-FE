@@ -47,7 +47,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { poolCVService } from '@/services/cv-sharing';
-import { PoolCV, FileInfo, PagedResponse } from '@/types/cv-sharing';
+import { PoolCV, PagedResponse } from '@/types/cv-sharing';
 import { MatchedPosition } from '@/types/cv-sharing/matched-position';
 import { useKeycloak } from '@/hooks/useKeycloak';
 import PageContainer from '@/components/ui/PageContainer';

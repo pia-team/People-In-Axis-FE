@@ -32,7 +32,7 @@ const EmployeeForm: React.FC = () => {
     enabled: isEdit,
   });
 
-  const { register, handleSubmit, reset, formState: { errors } } = useFormValidation<
+  const { register, handleSubmit, reset } = useFormValidation<
     EmployeeCreateDTO & Partial<EmployeeUpdateDTO>
   >(
     employeeCreateSchema as any, // Type assertion needed due to yup schema typing
@@ -108,7 +108,7 @@ const EmployeeForm: React.FC = () => {
   return (
     <PageContainer title={isEdit ? 'Edit Employee' : 'New Employee'}>
       <SectionCard>
-        <form onSubmit={handleSubmit(onSubmit)} noValidate>
+        <form onSubmit={handleSubmit(onSubmit as any)} noValidate>
           <Stack spacing={2}>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <TextField label="First Name" fullWidth required {...register('firstName')} />

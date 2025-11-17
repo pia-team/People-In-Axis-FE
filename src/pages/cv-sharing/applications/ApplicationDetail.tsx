@@ -43,7 +43,7 @@ import {
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { applicationService } from '@/services/cv-sharing';
-import { ApplicationDetail as ApplicationDetailType, ApplicationStatus, CreateMeetingRequest, MeetingProvider, MeetingStatus, Meeting } from '@/types/cv-sharing';
+import { ApplicationDetail as ApplicationDetailType, ApplicationStatus, CreateMeetingRequest, MeetingProvider, MeetingStatus } from '@/types/cv-sharing';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useKeycloak } from '@/hooks/useKeycloak';
 

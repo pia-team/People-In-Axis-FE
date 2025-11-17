@@ -11,10 +11,10 @@ import { ObjectSchema } from 'yup';
 export function useFormValidation<T extends FieldValues>(
   schema: ObjectSchema<T>,
   defaultValues?: Partial<T>
-): UseFormReturn<T> {
+) {
   return useForm<T>({
-    resolver: yupResolver(schema),
-    defaultValues: defaultValues as T,
+    resolver: yupResolver(schema) as any,
+    defaultValues: defaultValues as any,
     mode: 'onBlur', // Validate on blur for better UX
   });
 }
