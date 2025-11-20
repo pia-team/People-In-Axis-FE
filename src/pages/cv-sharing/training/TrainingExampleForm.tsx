@@ -12,8 +12,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Alert,
-  LinearProgress,
   IconButton,
   Autocomplete,
 } from '@mui/material';
@@ -28,8 +26,7 @@ import { trainingService } from '@/services/cv-sharing/trainingService';
 import { poolCVService } from '@/services/cv-sharing';
 import { positionService } from '@/services/cv-sharing';
 import { CreateTrainingExampleRequest } from '@/types/cv-sharing/training';
-import { PoolCV } from '@/types/cv-sharing';
-import { Position } from '@/types/cv-sharing';
+import { PoolCV, Position, PositionStatus } from '@/types/cv-sharing';
 import { useKeycloak } from '@/hooks/useKeycloak';
 import PageContainer from '@/components/ui/PageContainer';
 
@@ -67,7 +64,7 @@ const TrainingExampleForm: React.FC = () => {
   const { data: positions } = useQuery({
     queryKey: ['positionsForTraining'],
     queryFn: async () => {
-      const response = await positionService.getPositions({ status: 'ACTIVE' });
+      const response = await positionService.getPositions({ status: PositionStatus.ACTIVE });
       return response.content || [];
     },
   });
@@ -168,7 +165,7 @@ const TrainingExampleForm: React.FC = () => {
                       setSelectedPoolCV(newValue);
                       setFormData({ ...formData, poolCvId: newValue?.id || '' });
                     }}
-                    disabled={isEdit}
+                    disabled={!!isEdit}
                     renderInput={(params) => (
                       <TextField {...params} label="Pool CV" required />
                     )}
@@ -183,7 +180,7 @@ const TrainingExampleForm: React.FC = () => {
                       setSelectedPosition(newValue);
                       setFormData({ ...formData, positionId: newValue?.id || '' });
                     }}
-                    disabled={isEdit}
+                    disabled={!!isEdit}
                     renderInput={(params) => (
                       <TextField {...params} label="Position" required />
                     )}

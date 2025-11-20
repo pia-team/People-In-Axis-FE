@@ -4,9 +4,6 @@ import {
   Typography,
   Button,
   Chip,
-  Card,
-  CardContent,
-  Grid,
   Stack,
   IconButton,
   Tooltip,
@@ -245,8 +242,7 @@ const AbTestList: React.FC = () => {
             loading={isLoading}
             paginationMode="server"
             rowCount={data?.totalElements || 0}
-            page={page}
-            pageSize={pageSize}
+            paginationModel={{ page, pageSize }}
             onPaginationModelChange={(model) => {
               setPage(model.page);
               setPageSize(model.pageSize);

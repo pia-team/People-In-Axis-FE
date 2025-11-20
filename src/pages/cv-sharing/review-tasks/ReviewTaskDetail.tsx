@@ -16,14 +16,12 @@ import {
   MenuItem,
   Alert,
   LinearProgress,
-  Paper,
   IconButton,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
   CheckCircle as CompleteIcon,
   Cancel as CancelIcon,
-  Assignment as AssignIcon,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
@@ -41,7 +39,7 @@ const ReviewTaskDetail: React.FC = () => {
   const canEdit = hasAnyRole(['HUMAN_RESOURCES', 'SYSTEM_ADMIN']);
   const queryClient = useQueryClient();
 
-  const [relevanceLabel, setRelevanceLabel] = useState<number>(2);
+  const [relevanceLabel, setRelevanceLabel] = useState<0 | 1 | 2 | 3>(2);
   const [notes, setNotes] = useState('');
 
   const { data: task, isLoading } = useQuery({
@@ -234,7 +232,7 @@ const ReviewTaskDetail: React.FC = () => {
                       <Select
                         value={relevanceLabel}
                         label="Relevance Label"
-                        onChange={(e) => setRelevanceLabel(Number(e.target.value))}
+                        onChange={(e) => setRelevanceLabel(Number(e.target.value) as 0 | 1 | 2 | 3)}
                       >
                         <MenuItem value={0}>0 - Irrelevant</MenuItem>
                         <MenuItem value={1}>1 - Somewhat Relevant</MenuItem>
