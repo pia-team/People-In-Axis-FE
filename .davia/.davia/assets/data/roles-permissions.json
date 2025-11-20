@@ -1,0 +1,51 @@
+[
+  {
+    "role": "ADMIN",
+    "description": "Tam yönetici erişimi",
+    "permissions": ["All modules", "System settings", "User management"],
+    "pages": ["/dashboard", "/employees", "/companies", "/departments", "/projects", "/timesheets", "/expenses", "/cv-sharing/*", "/settings"]
+  },
+  {
+    "role": "SYSTEM_ADMIN",
+    "description": "Sistem yöneticisi",
+    "permissions": ["System admin APIs", "/system-admin/** endpoints"],
+    "pages": ["/dashboard", "/system-admin/*"]
+  },
+  {
+    "role": "HUMAN_RESOURCES",
+    "description": "İnsan kaynakları yönetimi",
+    "permissions": ["Employee management", "CV Sharing full access", "Timesheet approval", "Expense approval", "Reports"],
+    "pages": ["/dashboard", "/employees", "/timesheets", "/expenses", "/cv-sharing/*", "/reports"]
+  },
+  {
+    "role": "TEAM_MANAGER",
+    "description": "Takım lideri",
+    "permissions": ["Team timesheet approval", "Team expense approval", "Project management", "View own team"],
+    "pages": ["/dashboard", "/timesheets/approval", "/expenses/approval", "/projects"]
+  },
+  {
+    "role": "COMPANY_MANAGER",
+    "description": "Şirket yöneticisi",
+    "permissions": ["Company management", "View-only CV Sharing (own CVs)", "Reports"],
+    "pages": ["/dashboard", "/companies", "/cv-sharing/positions", "/cv-sharing/pool-cvs (own only)", "/reports"]
+  },
+  {
+    "role": "FINANCE",
+    "description": "Finans ekibi",
+    "permissions": ["Expense approval", "Payment processing", "Expense import/export"],
+    "pages": ["/dashboard", "/expenses", "/expenses/import"]
+  },
+  {
+    "role": "MANAGER",
+    "description": "CV Sharing yöneticisi",
+    "permissions": ["Position management", "Application management", "CV pool access"],
+    "pages": ["/dashboard", "/cv-sharing/*"]
+  },
+  {
+    "role": "EMPLOYEE",
+    "description": "Çalışan",
+    "permissions": ["Own timesheets", "Own expenses", "Apply to positions"],
+    "pages": ["/dashboard", "/timesheets/my", "/expenses/my", "/cv-sharing/positions"]
+  }
+]
+

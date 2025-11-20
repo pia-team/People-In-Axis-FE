@@ -1,0 +1,23 @@
+sequenceDiagram
+    participant U as User
+    participant F as Frontend
+    participant K as Keycloak
+    participant B as Backend
+    
+    U->>F: Access Protected Route
+    F->>F: Check Token
+    F->>|No Token| K: Redirect to Login
+    K->>U: Show Login Form
+    U->>K: Enter Credentials
+    K->>K: Authenticate
+    K->>F: Return JWT Token
+    F->>F: Store Token
+    F->>B: API Request + Token
+    B->>K: Validate Token
+    K->>B: Token Valid + User Info
+    B->>B: Extract Roles
+    B->>B: Check @PreAuthorize
+    B->>|Authorized| F: Return Data
+    B->>|Unauthorized| F: 403 Forbidden
+    F->>U: Display Content
+

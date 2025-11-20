@@ -1,0 +1,43 @@
+<h1>Configuration Guide</h1>
+
+<p><strong>Configuration files</strong> and environment setup.</p>
+
+<database-view data-path="data/configuration-files.json"></database-view>
+
+<p></p>
+
+<p><strong>Backend Configuration (application.yml):</strong></p>
+
+<ul>
+<li><strong>spring.datasource:</strong> Database connection</li>
+<li><strong>keycloak:</strong> Authentication server settings</li>
+<li><strong>file.upload-dir:</strong> File storage location</li>
+<li><strong>logging:</strong> Log levels and patterns</li>
+</ul>
+
+<p><strong>Frontend Configuration (.env.local):</strong></p>
+
+<ul>
+<li><strong>VITE_API_BASE_URL:</strong> Backend API URL</li>
+<li><strong>VITE_KEYCLOAK_URL:</strong> Keycloak server URL</li>
+<li><strong>VITE_KEYCLOAK_REALM:</strong> Keycloak realm name</li>
+<li><strong>VITE_KEYCLOAK_CLIENT_ID:</strong> Frontend client ID</li>
+</ul>
+
+<p><strong>Environment Profiles:</strong></p>
+
+<ul>
+<li><strong>dev:</strong> Development settings (debug logging)</li>
+<li><strong>prod:</strong> Production settings (optimized)</li>
+<li><strong>cv-sharing:</strong> CV Sharing module config</li>
+</ul>
+
+<p><strong>Keycloak Configuration:</strong></p>
+
+<ul>
+<li>Realm: <strong>people-in-axis</strong></li>
+<li>Client: <strong>people-in-axis-frontend</strong> (public)</li>
+<li>Client: <strong>people-in-axis-backend</strong> (confidential)</li>
+<li>Valid Redirect URIs: <strong>http://localhost:3000/*</strong></li>
+</ul>
+

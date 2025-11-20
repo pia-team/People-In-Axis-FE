@@ -1,0 +1,22 @@
+sequenceDiagram
+    participant C as Controller
+    participant S as Service
+    participant R as Repository
+    participant DB as Database
+    participant M as Mapper
+    participant K as Keycloak
+    
+    C->>K: Validate JWT Token
+    K->>C: Token Valid + User Info
+    C->>S: Call Service Method
+    S->>S: Business Logic
+    S->>R: Query Data
+    R->>DB: Execute Query
+    DB->>R: Return Results
+    R->>S: Entity Objects
+    S->>M: Map to DTO
+    M->>S: DTO Objects
+    S->>C: Return DTO
+    C->>C: Build Response
+    C->>C: Return JSON
+

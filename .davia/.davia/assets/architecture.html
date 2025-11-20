@@ -1,0 +1,28 @@
+<h1>Architecture</h1>
+
+<p><strong>Modern microservices-ready architecture</strong> with clear separation of concerns.</p>
+
+<p>Frontend communicates with backend via REST API. Backend uses JPA for database access. Keycloak handles authentication.</p>
+
+<excalidraw data-path="data/architecture-flow.json"></excalidraw>
+
+<p></p>
+
+<p><strong>System Layers:</strong></p>
+
+<ul>
+<li><strong>Presentation:</strong> React frontend (Port 3000)</li>
+<li><strong>Application:</strong> Spring Boot backend (Port 8080)</li>
+<li><strong>Data:</strong> PostgreSQL database (Port 5432)</li>
+<li><strong>Security:</strong> Keycloak authentication (Port 8180)</li>
+</ul>
+
+<p><strong>Communication:</strong></p>
+
+<ul>
+<li>Frontend ↔ Backend: REST API (HTTPS)</li>
+<li>Backend ↔ Database: JDBC (JPA/Hibernate)</li>
+<li>Frontend ↔ Keycloak: OAuth2/OIDC</li>
+<li>Backend ↔ Keycloak: JWT validation</li>
+</ul>
+

@@ -1,0 +1,39 @@
+[
+  {
+    "module": "Employee Management",
+    "description": "Çalışan yaşam döngüsü yönetimi",
+    "features": ["CRUD operations", "Profile management", "Department assignment", "Excel import/export"],
+    "access_roles": ["HUMAN_RESOURCES", "ADMIN"]
+  },
+  {
+    "module": "Timesheet Tracking",
+    "description": "Zaman çizelgesi takibi ve onay",
+    "features": ["Weekly/monthly timesheets", "Project-based tracking", "Approval workflows", "History tracking"],
+    "access_roles": ["EMPLOYEE", "TEAM_MANAGER", "HUMAN_RESOURCES"]
+  },
+  {
+    "module": "Expense Management",
+    "description": "Gider yönetimi ve geri ödeme",
+    "features": ["Expense recording", "File attachments", "Approval workflows", "Payment tracking"],
+    "access_roles": ["EMPLOYEE", "TEAM_MANAGER", "FINANCE", "HUMAN_RESOURCES"]
+  },
+  {
+    "module": "CV Sharing & Applications",
+    "description": "İşe alım ve yetenek yönetimi",
+    "features": ["Position management", "Application processing", "CV pool", "Matching & AI"],
+    "access_roles": ["HUMAN_RESOURCES", "COMPANY_MANAGER", "MANAGER"]
+  },
+  {
+    "module": "Project Management",
+    "description": "Proje takibi ve kaynak tahsisi",
+    "features": ["Project CRUD", "Status tracking", "Resource allocation"],
+    "access_roles": ["TEAM_MANAGER", "HUMAN_RESOURCES"]
+  },
+  {
+    "module": "Dashboard & Reporting",
+    "description": "Dashboard metrikleri ve raporlar",
+    "features": ["Metrics dashboard", "Timesheet reports", "Expense reports", "Application statistics"],
+    "access_roles": ["All roles"]
+  }
+]
+

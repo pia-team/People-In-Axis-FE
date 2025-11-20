@@ -1,0 +1,56 @@
+[
+  {
+    "layer": "Controllers",
+    "location": "controller/",
+    "description": "REST API endpoints",
+    "examples": ["PositionController.java", "ApplicationController.java", "EmployeeController.java"],
+    "annotations": ["@RestController", "@RequestMapping", "@PreAuthorize"]
+  },
+  {
+    "layer": "Services",
+    "location": "service/",
+    "description": "Business logic",
+    "examples": ["PositionService.java", "ApplicationService.java", "EmployeeService.java"],
+    "annotations": ["@Service", "@Transactional"]
+  },
+  {
+    "layer": "Repositories",
+    "location": "repository/",
+    "description": "Data access layer",
+    "examples": ["PositionRepository.java", "ApplicationRepository.java", "EmployeeRepository.java"],
+    "interfaces": ["JpaRepository", "JpaSpecificationExecutor"]
+  },
+  {
+    "layer": "Entities",
+    "location": "entity/",
+    "description": "Domain models",
+    "examples": ["Position.java", "Application.java", "Employee.java"],
+    "annotations": ["@Entity", "@Table", "@ManyToOne", "@OneToMany"]
+  },
+  {
+    "layer": "DTOs",
+    "location": "dto/",
+    "description": "Data transfer objects",
+    "examples": ["PositionRequest.java", "PositionResponse.java", "ApplicationResponse.java"]
+  },
+  {
+    "layer": "Mappers",
+    "location": "mapper/",
+    "description": "Entity-DTO mapping",
+    "examples": ["PositionMapper.java", "ApplicationMapper.java"],
+    "technology": "MapStruct"
+  },
+  {
+    "layer": "Config",
+    "location": "config/",
+    "description": "Configuration classes",
+    "examples": ["SecurityConfig.java", "KeycloakConfig.java", "WebConfig.java"]
+  },
+  {
+    "layer": "Security",
+    "location": "security/",
+    "description": "Security components",
+    "examples": ["CurrentUser.java", "CurrentUserArgumentResolver.java"]
+  }
+]
+

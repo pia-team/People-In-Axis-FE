@@ -1,0 +1,56 @@
+<h1>Getting Started</h1>
+
+<p><strong>Quick setup guide</strong> for developers.</p>
+
+<h2>Prerequisites</h2>
+
+<ul>
+<li>Java 21+</li>
+<li>Node.js 18+</li>
+<li>PostgreSQL 14+</li>
+<li>Maven 3.8+</li>
+<li>npm 9+ or yarn 1.22+</li>
+<li>Keycloak 24.0+ (or access to instance)</li>
+</ul>
+
+<h2>Backend Setup</h2>
+
+<pre><code>cd People-In-Axis-BE
+mvn clean install
+createdb people_in_axis
+# Configure application.yml (database, keycloak)
+mvn spring-boot:run
+</code></pre>
+
+<p>Backend runs on <strong>http://localhost:8080</strong></p>
+
+<h2>Frontend Setup</h2>
+
+<pre><code>cd People-In-Axis-FE
+npm install
+cp .env.example .env.local
+# Configure .env.local (API URL, Keycloak URL)
+npm run dev
+</code></pre>
+
+<p>Frontend runs on <strong>http://localhost:3000</strong></p>
+
+<h2>Keycloak Configuration</h2>
+
+<ul>
+<li>Create realm: <strong>people-in-axis</strong></li>
+<li>Create client: <strong>people-in-axis-frontend</strong></li>
+<li>Set Valid Redirect URIs: <strong>http://localhost:3000/*</strong></li>
+<li>Define roles: ADMIN, HUMAN_RESOURCES, COMPANY_MANAGER, etc.</li>
+</ul>
+
+<h2>First Login</h2>
+
+<ul>
+<li>Open http://localhost:3000</li>
+<li>Redirected to Keycloak login</li>
+<li>Login with valid credentials</li>
+<li>Access granted based on role</li>
+<li>Dashboard displayed according to permissions</li>
+</ul>
+

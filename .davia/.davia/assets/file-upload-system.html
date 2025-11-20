@@ -1,0 +1,38 @@
+<h1>File Upload System</h1>
+
+<p><strong>File upload and management</strong> workflow.</p>
+
+<excalidraw data-path="data/file-upload-flow.json"></excalidraw>
+
+<p></p>
+
+<p><strong>Upload Process:</strong></p>
+
+<ul>
+<li>Frontend validates file size (max 10MB)</li>
+<li>Creates FormData with file</li>
+<li>POST to /api/files/upload</li>
+<li>Backend validates file type and size</li>
+<li>File saved to disk (./uploads/)</li>
+<li>File record created in database</li>
+<li>File ID returned to frontend</li>
+<li>File associated with entity (CV, Application, etc.)</li>
+</ul>
+
+<p><strong>File Storage:</strong></p>
+
+<ul>
+<li>Location: <strong>./uploads/</strong></li>
+<li>Structure: <strong>uploads/cvs/pool/{cvId}/</strong></li>
+<li>Naming: <strong>timestamp_randomId.extension</strong></li>
+<li>Security: Token-based download URLs</li>
+</ul>
+
+<p><strong>Supported Formats:</strong></p>
+
+<ul>
+<li>Documents: PDF, DOC, DOCX</li>
+<li>Images: JPG, PNG (for profiles)</li>
+<li>Max size: 10MB per file</li>
+</ul>
+

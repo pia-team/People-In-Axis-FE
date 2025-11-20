@@ -1,0 +1,16 @@
+graph TB
+    A[Developer Creates Migration] --> B[Create .xml File<br/>in db/changelog/]
+    B --> C[Add to Master Changelog]
+    C --> D[Commit to Git]
+    D --> E[Application Starts]
+    E --> F[Liquibase Checks<br/>DATABASECHANGELOG]
+    F --> G{New Migration?}
+    G -->|Yes| H[Execute Migration]
+    G -->|No| I[Skip]
+    H --> J[Update DATABASECHANGELOG]
+    J --> K[Application Ready]
+    H -->|Error| L[Rollback & Log Error]
+    
+    style H fill:#10b981
+    style L fill:#ef4444
+

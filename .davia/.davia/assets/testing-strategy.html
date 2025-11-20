@@ -1,0 +1,45 @@
+<h1>Testing Strategy</h1>
+
+<p><strong>Testing approach</strong> for frontend and backend.</p>
+
+<p><strong>Frontend Testing:</strong></p>
+
+<ul>
+<li><strong>Unit Tests:</strong> Vitest for component testing</li>
+<li><strong>E2E Tests:</strong> Playwright for integration testing</li>
+<li><strong>Coverage:</strong> Test coverage reports</li>
+</ul>
+
+<p><strong>Backend Testing:</strong></p>
+
+<ul>
+<li><strong>Unit Tests:</strong> JUnit for service and repository tests</li>
+<li><strong>Integration Tests:</strong> @SpringBootTest for API testing</li>
+<li><strong>Repository Tests:</strong> @DataJpaTest for database tests</li>
+</ul>
+
+<p><strong>Test Structure:</strong></p>
+
+<ul>
+<li>Frontend: <strong>src/test/</strong> directory</li>
+<li>Backend: <strong>src/test/java/</strong> directory</li>
+<li>Test files: <strong>*.test.ts</strong> (frontend), <strong>*Test.java</strong> (backend)</li>
+</ul>
+
+<p><strong>Running Tests:</strong></p>
+
+<ul>
+<li>Frontend: <strong>npm run test</strong></li>
+<li>Backend: <strong>mvn test</strong></li>
+<li>Coverage: <strong>npm run test:coverage</strong></li>
+</ul>
+
+<p><strong>Test Best Practices:</strong></p>
+
+<ul>
+<li>Test business logic, not implementation</li>
+<li>Mock external dependencies</li>
+<li>Use test databases for integration tests</li>
+<li>Keep tests fast and isolated</li>
+</ul>
+

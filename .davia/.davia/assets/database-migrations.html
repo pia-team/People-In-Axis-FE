@@ -1,0 +1,49 @@
+<h1>Database Migrations</h1>
+
+<p><strong>Liquibase migration</strong> system for database version control.</p>
+
+<excalidraw data-path="data/liquibase-migration-flow.json"></excalidraw>
+
+<p></p>
+
+<p><strong>Migration Process:</strong></p>
+
+<ul>
+<li>Developer creates XML migration file</li>
+<li>File added to master changelog</li>
+<li>Committed to Git</li>
+<li>Application starts</li>
+<li>Liquibase checks DATABASECHANGELOG table</li>
+<li>New migrations executed automatically</li>
+<li>Migration history tracked</li>
+</ul>
+
+<p><strong>Migration File Structure:</strong></p>
+
+<pre><code>&lt;changeSet id="cv-sharing-035" author="developer"&gt;
+    &lt;createTable tableName="new_table"&gt;
+        &lt;column name="id" type="UUID"&gt;
+            &lt;constraints primaryKey="true"/&gt;
+        &lt;/column&gt;
+    &lt;/createTable&gt;
+&lt;/changeSet&gt;
+</code></pre>
+
+<p><strong>Best Practices:</strong></p>
+
+<ul>
+<li>One changeSet per logical change</li>
+<li>Use meaningful IDs and author names</li>
+<li>Test migrations on dev environment first</li>
+<li>Never modify executed migrations</li>
+<li>Use rollback tags for reversibility</li>
+</ul>
+
+<p><strong>Migration Locations:</strong></p>
+
+<ul>
+<li>Core migrations: <strong>db/changelog/changes/</strong></li>
+<li>CV Sharing: <strong>db/changelog/cv-sharing/</strong></li>
+<li>Master file: <strong>db/changelog/db.changelog-master.xml</strong></li>
+</ul>
+

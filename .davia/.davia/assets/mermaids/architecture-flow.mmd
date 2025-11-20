@@ -1,0 +1,24 @@
+graph LR
+    A[User Browser] -->|HTTPS| B[Frontend<br/>Port 3000]
+    B -->|REST API| C[Backend<br/>Port 8080]
+    C -->|JPA Queries| D[(PostgreSQL<br/>Port 5432)]
+    B -->|OAuth2/OIDC| E[Keycloak<br/>Port 8180]
+    C -->|JWT Validation| E
+    
+    subgraph "Frontend Stack"
+        B1[React 18] --> B2[TypeScript]
+        B2 --> B3[Material UI]
+        B3 --> B4[Redux + React Query]
+    end
+    
+    subgraph "Backend Stack"
+        C1[Spring Boot 3.3.4] --> C2[Spring Data JPA]
+        C2 --> C3[Liquibase]
+        C3 --> C4[MapStruct]
+    end
+    
+    style B fill:#61dafb
+    style C fill:#6db33f
+    style D fill:#336791
+    style E fill:#4a5568
+

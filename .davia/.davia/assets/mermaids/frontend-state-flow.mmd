@@ -1,0 +1,32 @@
+graph TB
+    A[User Action] --> B{Action Type?}
+    
+    B -->|Form Submit| C[React Hook Form]
+    B -->|Data Fetch| D[React Query]
+    B -->|Global State| E[Redux Store]
+    
+    C --> F[Form Validation<br/>Yup Schema]
+    F -->|Valid| G[Service Call]
+    F -->|Invalid| H[Show Errors]
+    
+    D --> I[Query Cache]
+    I -->|Cache Hit| J[Return Cached Data]
+    I -->|Cache Miss| G
+    
+    E --> K[Redux Slice]
+    K --> L[State Update]
+    L --> M[Component Re-render]
+    
+    G --> N[Axios Request]
+    N --> O[Backend API]
+    O -->|Success| P[Update Cache/Store]
+    O -->|Error| Q[Error Handler]
+    
+    P --> R[UI Update]
+    Q --> S[Show Notification]
+    
+    style D fill:#ff4154
+    style E fill:#764abc
+    style C fill:#ec5990
+    style N fill:#5a29e4
+
