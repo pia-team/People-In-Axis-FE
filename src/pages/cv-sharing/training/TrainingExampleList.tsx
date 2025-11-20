@@ -6,9 +6,6 @@ import {
   TextField,
   InputAdornment,
   Chip,
-  Card,
-  CardContent,
-  Grid,
   Stack,
   IconButton,
   Tooltip,
@@ -17,10 +14,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Alert,
 } from '@mui/material';
 import {
@@ -315,8 +308,7 @@ const TrainingExampleList: React.FC = () => {
             loading={isLoading}
             paginationMode="server"
             rowCount={data?.totalElements || 0}
-            page={page}
-            pageSize={pageSize}
+            paginationModel={{ page, pageSize }}
             onPaginationModelChange={(model) => {
               setPage(model.page);
               setPageSize(model.pageSize);

@@ -47,7 +47,7 @@ type WeightKey =
 const MatchingSettings: React.FC = () => {
   const qc = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
-  const { data: cfg, isLoading: cfgLoading, error: cfgError } = useQuery({ 
+  const { data: cfg } = useQuery({ 
     queryKey: ['matching','config'], 
     queryFn: matchingService.getConfig 
   });
@@ -113,7 +113,7 @@ const MatchingSettings: React.FC = () => {
       };
       return matchingService.upsertAlias(trimmedPayload);
     },
-    onSuccess: async (data, variables) => {
+    onSuccess: async (data) => {
       const wasEditing = editingAlias !== null;
       console.log('[MatchingSettings] upsertAlias success:', { data, wasEditing });
       setAliasForm({ alias: '', canonicalSkill: '' });

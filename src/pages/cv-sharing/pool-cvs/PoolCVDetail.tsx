@@ -240,7 +240,7 @@ const PoolCVDetail: React.FC = () => {
             <Divider sx={{ mb: 2 }} />
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
               {(detail.languages || []).map((l) => {
-                const code = l.code || l.languageCode || '';
+                const code = l.code || '';
                 const proficiency = l.proficiencyLevel || '';
                 return code ? (
                   <Chip key={`${code}-${proficiency}`} label={`${code.toUpperCase()} • ${proficiency}`} />

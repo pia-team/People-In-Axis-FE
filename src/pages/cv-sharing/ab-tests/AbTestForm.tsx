@@ -10,7 +10,6 @@ import {
   Stack,
   IconButton,
   Alert,
-  Paper,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,

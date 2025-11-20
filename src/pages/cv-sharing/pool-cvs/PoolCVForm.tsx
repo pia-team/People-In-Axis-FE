@@ -432,7 +432,7 @@ const PoolCVForm: React.FC = () => {
                         <Checkbox 
                           {...field} 
                           checked={!!field.value} 
-                          disabled={id && hasKvkkConsent}
+                          disabled={!!(id && hasKvkkConsent)}
                         />
                       } 
                       label={

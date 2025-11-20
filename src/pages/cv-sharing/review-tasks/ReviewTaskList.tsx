@@ -8,7 +8,6 @@ import {
   Chip,
   Card,
   CardContent,
-  CardActions,
   Grid,
   Dialog,
   DialogTitle,
@@ -19,8 +18,6 @@ import {
   Select,
   MenuItem,
   Stack,
-  LinearProgress,
-  Alert,
   IconButton,
   Tooltip,
   Paper,
@@ -28,10 +25,6 @@ import {
 import {
   Search as SearchIcon,
   Refresh as RefreshIcon,
-  Assignment as AssignmentIcon,
-  CheckCircle as CompletedIcon,
-  Cancel as CancelledIcon,
-  Pending as PendingIcon,
   PlayArrow as GenerateIcon,
   Visibility as ViewIcon,
 } from '@mui/icons-material';
@@ -356,8 +349,7 @@ const ReviewTaskList: React.FC = () => {
             loading={isLoading}
             paginationMode="server"
             rowCount={data?.totalElements || 0}
-            page={page}
-            pageSize={pageSize}
+            paginationModel={{ page, pageSize }}
             onPaginationModelChange={(model) => {
               setPage(model.page);
               setPageSize(model.pageSize);
