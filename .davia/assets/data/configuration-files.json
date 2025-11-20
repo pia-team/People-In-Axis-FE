@@ -1,0 +1,45 @@
+[
+  {
+    "file": "application.yml",
+    "location": "src/main/resources/",
+    "description": "Main configuration",
+    "sections": ["spring.datasource", "keycloak", "file.upload-dir", "logging"]
+  },
+  {
+    "file": "application-dev.yml",
+    "location": "src/main/resources/",
+    "description": "Development profile",
+    "sections": ["debug logging", "dev database", "local keycloak"]
+  },
+  {
+    "file": "application-prod.yml",
+    "location": "src/main/resources/",
+    "description": "Production profile",
+    "sections": ["production database", "production keycloak", "error tracking"]
+  },
+  {
+    "file": ".env.local",
+    "location": "People-In-Axis-FE/",
+    "description": "Frontend environment variables",
+    "variables": ["VITE_API_BASE_URL", "VITE_KEYCLOAK_URL", "VITE_KEYCLOAK_REALM", "VITE_KEYCLOAK_CLIENT_ID"]
+  },
+  {
+    "file": "vite.config.ts",
+    "location": "People-In-Axis-FE/",
+    "description": "Vite build configuration",
+    "sections": ["plugins", "resolve", "server", "build"]
+  },
+  {
+    "file": "pom.xml",
+    "location": "People-In-Axis-BE/",
+    "description": "Maven dependencies",
+    "sections": ["dependencies", "build", "profiles"]
+  },
+  {
+    "file": "package.json",
+    "location": "People-In-Axis-FE/",
+    "description": "npm dependencies and scripts",
+    "sections": ["dependencies", "devDependencies", "scripts"]
+  }
+]
+

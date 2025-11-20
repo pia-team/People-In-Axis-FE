@@ -1,0 +1,63 @@
+[
+  {
+    "module": "CV Sharing - Pool CV",
+    "endpoints": [
+      {"method": "GET", "path": "/api/pool-cvs", "description": "List CVs", "roles": ["HUMAN_RESOURCES", "COMPANY_MANAGER"]},
+      {"method": "GET", "path": "/api/pool-cvs/:id", "description": "Get CV details", "roles": ["HUMAN_RESOURCES", "COMPANY_MANAGER"]},
+      {"method": "POST", "path": "/api/pool-cvs", "description": "Create CV", "roles": ["HUMAN_RESOURCES"]},
+      {"method": "PUT", "path": "/api/pool-cvs/:id", "description": "Update CV", "roles": ["HUMAN_RESOURCES"]},
+      {"method": "DELETE", "path": "/api/pool-cvs/:id", "description": "Delete CV", "roles": ["HUMAN_RESOURCES"]},
+      {"method": "POST", "path": "/api/pool-cvs/:id/tags", "description": "Add tags", "roles": ["HUMAN_RESOURCES"]},
+      {"method": "POST", "path": "/api/pool-cvs/:cvId/positions/:positionId/match", "description": "Match CV to position", "roles": ["HUMAN_RESOURCES", "COMPANY_MANAGER"]}
+    ]
+  },
+  {
+    "module": "CV Sharing - Positions",
+    "endpoints": [
+      {"method": "GET", "path": "/api/positions", "description": "List positions", "roles": ["HUMAN_RESOURCES", "COMPANY_MANAGER", "MANAGER"]},
+      {"method": "GET", "path": "/api/positions/:id", "description": "Get position details", "roles": ["HUMAN_RESOURCES", "COMPANY_MANAGER", "MANAGER"]},
+      {"method": "POST", "path": "/api/positions", "description": "Create position", "roles": ["HUMAN_RESOURCES", "MANAGER"]},
+      {"method": "PUT", "path": "/api/positions/:id", "description": "Update position", "roles": ["HUMAN_RESOURCES", "MANAGER"]},
+      {"method": "DELETE", "path": "/api/positions/:id", "description": "Delete position", "roles": ["HUMAN_RESOURCES"]},
+      {"method": "GET", "path": "/api/positions/:id/matches", "description": "Get position matches", "roles": ["HUMAN_RESOURCES", "MANAGER"]}
+    ]
+  },
+  {
+    "module": "CV Sharing - Applications",
+    "endpoints": [
+      {"method": "GET", "path": "/api/applications", "description": "List applications", "roles": ["HUMAN_RESOURCES", "MANAGER"]},
+      {"method": "GET", "path": "/api/applications/:id", "description": "Get application details", "roles": ["HUMAN_RESOURCES", "MANAGER"]},
+      {"method": "POST", "path": "/api/applications", "description": "Create application", "roles": ["HUMAN_RESOURCES", "EMPLOYEE"]},
+      {"method": "PUT", "path": "/api/applications/:id/status", "description": "Update status", "roles": ["HUMAN_RESOURCES", "MANAGER"]},
+      {"method": "POST", "path": "/api/applications/:id/comments", "description": "Add comment", "roles": ["HUMAN_RESOURCES", "MANAGER"]},
+      {"method": "POST", "path": "/api/applications/:id/ratings", "description": "Add rating", "roles": ["HUMAN_RESOURCES", "MANAGER"]},
+      {"method": "POST", "path": "/api/applications/:id/forward", "description": "Forward to reviewer", "roles": ["HUMAN_RESOURCES"]}
+    ]
+  },
+  {
+    "module": "Core - Employees",
+    "endpoints": [
+      {"method": "GET", "path": "/api/employees", "description": "List employees", "roles": ["HUMAN_RESOURCES", "ADMIN"]},
+      {"method": "POST", "path": "/api/employees", "description": "Create employee", "roles": ["HUMAN_RESOURCES", "ADMIN"]},
+      {"method": "GET", "path": "/api/employees/:id", "description": "Get employee details", "roles": ["HUMAN_RESOURCES", "ADMIN"]},
+      {"method": "PUT", "path": "/api/employees/:id", "description": "Update employee", "roles": ["HUMAN_RESOURCES", "ADMIN"]}
+    ]
+  },
+  {
+    "module": "Core - Timesheets",
+    "endpoints": [
+      {"method": "GET", "path": "/api/timesheets", "description": "List timesheets", "roles": ["TEAM_MANAGER", "HUMAN_RESOURCES"]},
+      {"method": "POST", "path": "/api/timesheets", "description": "Create timesheet", "roles": ["EMPLOYEE"]},
+      {"method": "PUT", "path": "/api/timesheets/:id/status", "description": "Update status", "roles": ["TEAM_MANAGER", "HUMAN_RESOURCES"]}
+    ]
+  },
+  {
+    "module": "Core - Expenses",
+    "endpoints": [
+      {"method": "GET", "path": "/api/expenses", "description": "List expenses", "roles": ["TEAM_MANAGER", "FINANCE", "HUMAN_RESOURCES"]},
+      {"method": "POST", "path": "/api/expenses", "description": "Create expense", "roles": ["EMPLOYEE"]},
+      {"method": "PUT", "path": "/api/expenses/:id/status", "description": "Update status", "roles": ["TEAM_MANAGER", "FINANCE", "HUMAN_RESOURCES"]}
+    ]
+  }
+]
+

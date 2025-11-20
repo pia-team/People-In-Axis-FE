@@ -1,0 +1,21 @@
+graph LR
+    A[User Selects File] --> B[Frontend Validation]
+    B -->|Size OK| C[Create FormData]
+    B -->|Size > 10MB| D[Show Error]
+    
+    C --> E[POST /api/files/upload]
+    E --> F[Backend Controller]
+    F --> G[File Validation]
+    G -->|Valid| H[Save to Disk]
+    G -->|Invalid| I[Return Error]
+    
+    H --> J[Generate File Record]
+    J --> K[Save to Database]
+    K --> L[Return File ID]
+    L --> M[Frontend Receives ID]
+    M --> N[Associate with Entity]
+    
+    style B fill:#f59e0b
+    style H fill:#10b981
+    style I fill:#ef4444
+

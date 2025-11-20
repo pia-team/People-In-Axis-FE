@@ -1,0 +1,28 @@
+<h1>Deployment</h1>
+
+<p><strong>CI/CD pipeline</strong> and deployment process.</p>
+
+<excalidraw data-path="data/deployment-flow.json"></excalidraw>
+
+<p></p>
+
+<p><strong>Deployment Steps:</strong></p>
+
+<ul>
+<li>Developer pushes to Git repository</li>
+<li>Jenkins CI/CD triggers build</li>
+<li>Docker images created for frontend and backend</li>
+<li>Images pushed to container registry</li>
+<li>Kubernetes deploys to cluster</li>
+<li>Ingress controller exposes services</li>
+</ul>
+
+<p><strong>Infrastructure:</strong></p>
+
+<ul>
+<li>Kubernetes for container orchestration</li>
+<li>Docker for containerization</li>
+<li>Jenkins for CI/CD</li>
+<li>Container registry for image storage</li>
+</ul>
+

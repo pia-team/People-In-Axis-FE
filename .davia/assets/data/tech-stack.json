@@ -1,0 +1,38 @@
+[
+  {
+    "layer": "Frontend",
+    "technologies": [
+      {"name": "React", "version": "18.2", "purpose": "UI library"},
+      {"name": "TypeScript", "version": "5.3", "purpose": "Type-safe development"},
+      {"name": "Material UI", "version": "5.15", "purpose": "Component library"},
+      {"name": "Redux Toolkit", "version": "Latest", "purpose": "State management"},
+      {"name": "React Query", "version": "Latest", "purpose": "Server state & caching"},
+      {"name": "Vite", "version": "Latest", "purpose": "Build tool"}
+    ]
+  },
+  {
+    "layer": "Backend",
+    "technologies": [
+      {"name": "Java", "version": "21", "purpose": "Programming language"},
+      {"name": "Spring Boot", "version": "3.3.4", "purpose": "Application framework"},
+      {"name": "Spring Data JPA", "version": "3.3.4", "purpose": "Data persistence"},
+      {"name": "Liquibase", "version": "Latest", "purpose": "Database migrations"},
+      {"name": "MapStruct", "version": "1.5.5", "purpose": "Bean mapping"}
+    ]
+  },
+  {
+    "layer": "Database",
+    "technologies": [
+      {"name": "PostgreSQL", "version": "14+", "purpose": "Primary database"}
+    ]
+  },
+  {
+    "layer": "Security",
+    "technologies": [
+      {"name": "Keycloak", "version": "24.0+", "purpose": "Identity management"},
+      {"name": "OAuth2/OIDC", "version": "Latest", "purpose": "Authentication protocol"},
+      {"name": "JWT", "version": "Latest", "purpose": "Token-based auth"}
+    ]
+  }
+]
+

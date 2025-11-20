@@ -1,0 +1,73 @@
+[
+  {
+    "entity": "Company",
+    "module": "Core",
+    "description": "Şirket bilgileri",
+    "key_fields": ["id", "uuid", "name", "code", "tax_number"],
+    "relationships": ["has Departments", "employs Employees", "posts Positions"]
+  },
+  {
+    "entity": "Department",
+    "module": "Core",
+    "description": "Departman yapısı",
+    "key_fields": ["id", "name", "company_id", "parent_id"],
+    "relationships": ["belongs to Company", "contains Employees"]
+  },
+  {
+    "entity": "Employee",
+    "module": "Core",
+    "description": "Çalışan bilgileri",
+    "key_fields": ["id", "uuid", "name", "email", "company_id", "department_id"],
+    "relationships": ["belongs to Company", "belongs to Department", "creates Timesheets", "submits Expenses"]
+  },
+  {
+    "entity": "Position",
+    "module": "CV Sharing",
+    "description": "İş pozisyonları",
+    "key_fields": ["id", "title", "status", "company_id", "created_by"],
+    "relationships": ["belongs to Company", "has Skills", "has Languages", "receives Applications"]
+  },
+  {
+    "entity": "PoolCV",
+    "module": "CV Sharing",
+    "description": "CV havuzu",
+    "key_fields": ["id", "firstName", "lastName", "email", "company_id"],
+    "relationships": ["belongs to Company", "has Skills", "has Languages", "creates Applications"]
+  },
+  {
+    "entity": "Application",
+    "module": "CV Sharing",
+    "description": "Başvurular",
+    "key_fields": ["id", "position_id", "pool_cv_id", "status", "company_id"],
+    "relationships": ["belongs to Position", "belongs to PoolCV", "has Files", "has Comments", "has Ratings"]
+  },
+  {
+    "entity": "TimeSheet",
+    "module": "Time Management",
+    "description": "Zaman çizelgeleri",
+    "key_fields": ["id", "employee_id", "week_start_date", "status"],
+    "relationships": ["belongs to Employee", "has Rows"]
+  },
+  {
+    "entity": "Expense",
+    "module": "Expense Management",
+    "description": "Giderler",
+    "key_fields": ["id", "employee_id", "amount", "status", "type_id"],
+    "relationships": ["belongs to Employee", "belongs to ExpenseType"]
+  },
+  {
+    "entity": "Project",
+    "module": "Project Management",
+    "description": "Projeler",
+    "key_fields": ["id", "name", "company_id", "status"],
+    "relationships": ["belongs to Company"]
+  },
+  {
+    "entity": "User",
+    "module": "Security",
+    "description": "Keycloak kullanıcıları",
+    "key_fields": ["id", "keycloak_id", "email", "firstName", "lastName"],
+    "relationships": ["writes Comments", "gives Ratings", "schedules Meetings"]
+  }
+]
+

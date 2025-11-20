@@ -1,0 +1,51 @@
+[
+  {
+    "layer": "Pages",
+    "location": "src/pages/",
+    "description": "Route components",
+    "examples": ["Dashboard.tsx", "cv-sharing/positions/PositionList.tsx", "timesheets/TimesheetList.tsx"]
+  },
+  {
+    "layer": "Components",
+    "location": "src/components/",
+    "description": "Reusable UI components",
+    "examples": ["ui/Button.tsx", "cv-sharing/PositionCard.tsx", "auth/LoginForm.tsx"]
+  },
+  {
+    "layer": "Services",
+    "location": "src/services/",
+    "description": "API client layer",
+    "examples": ["cv-sharing/positionService.ts", "cv-sharing/applicationService.ts", "employeeService.ts"]
+  },
+  {
+    "layer": "Types",
+    "location": "src/types/",
+    "description": "TypeScript type definitions",
+    "examples": ["cv-sharing.ts", "employee.ts", "timesheet.ts"]
+  },
+  {
+    "layer": "Hooks",
+    "location": "src/hooks/",
+    "description": "Custom React hooks",
+    "examples": ["useKeycloak.ts", "useFormValidation.ts"]
+  },
+  {
+    "layer": "Store",
+    "location": "src/store/",
+    "description": "Redux store and slices",
+    "examples": ["slices/authSlice.ts", "slices/uiSlice.ts"]
+  },
+  {
+    "layer": "Layouts",
+    "location": "src/layouts/",
+    "description": "Layout components",
+    "examples": ["MainLayout.tsx", "AuthLayout.tsx"]
+  },
+  {
+    "layer": "Providers",
+    "location": "src/providers/",
+    "description": "Context providers",
+    "examples": ["KeycloakProvider.tsx", "QueryProvider.tsx"]
+  }
+]
+

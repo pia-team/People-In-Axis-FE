@@ -1,0 +1,23 @@
+sequenceDiagram
+    participant HR as HR User
+    participant FE as Frontend
+    participant BE as Backend
+    participant AI as Matching Service
+    participant DB as Database
+    
+    HR->>FE: Search CVs for Position
+    FE->>BE: GET /api/pool-cvs?positionId=xxx
+    BE->>AI: Calculate Match Scores
+    AI->>DB: Load Position Requirements
+    AI->>DB: Load CV Skills/Languages
+    AI->>AI: Calculate Compatibility
+    AI->>BE: Return Match Scores
+    BE->>FE: Return CVs with Scores
+    FE->>HR: Display Matched CVs
+    HR->>FE: Select CV to Match
+    FE->>BE: POST /api/pool-cvs/:id/positions/:id/match
+    BE->>DB: Create CvPositionMatch
+    BE->>DB: Create Application
+    BE->>FE: Success Response
+    FE->>HR: Show Success Message
+

@@ -1,0 +1,53 @@
+[
+  {
+    "error": "401 Unauthorized",
+    "cause": "Missing or invalid JWT token",
+    "solution": "Login again, check Keycloak configuration, verify token expiration"
+  },
+  {
+    "error": "403 Forbidden",
+    "cause": "User doesn't have required role",
+    "solution": "Check user roles in Keycloak, verify @PreAuthorize annotations"
+  },
+  {
+    "error": "404 Not Found",
+    "cause": "Resource doesn't exist or wrong URL",
+    "solution": "Verify endpoint path, check if resource exists in database"
+  },
+  {
+    "error": "500 Internal Server Error",
+    "cause": "Backend exception",
+    "solution": "Check application logs, verify database connection, check entity relationships"
+  },
+  {
+    "error": "Liquibase migration failed",
+    "cause": "Migration checksum mismatch or syntax error",
+    "solution": "Run fix-liquibase-checksums.sql, verify migration XML syntax"
+  },
+  {
+    "error": "Database connection failed",
+    "cause": "PostgreSQL not running or wrong credentials",
+    "solution": "Start PostgreSQL service, verify application.yml database settings"
+  },
+  {
+    "error": "Keycloak redirect URI mismatch",
+    "cause": "Frontend URL not in Keycloak client valid redirect URIs",
+    "solution": "Add frontend URL to Keycloak client configuration"
+  },
+  {
+    "error": "File upload size exceeded",
+    "cause": "File larger than 10MB limit",
+    "solution": "Reduce file size or increase limit in application.yml"
+  },
+  {
+    "error": "TypeScript compilation errors",
+    "cause": "Type mismatches or missing types",
+    "solution": "Run npm run build to see errors, fix type definitions"
+  },
+  {
+    "error": "Maven build failed",
+    "cause": "Missing dependencies or compilation errors",
+    "solution": "Run mvn clean install, check pom.xml dependencies"
+  }
+]
+

@@ -1,0 +1,44 @@
+<h1>Troubleshooting Guide</h1>
+
+<p><strong>Common errors</strong> and solutions.</p>
+
+<database-view data-path="data/common-errors.json"></database-view>
+
+<p></p>
+
+<p><strong>Debugging Steps:</strong></p>
+
+<ul>
+<li>Check browser console for frontend errors</li>
+<li>Check backend logs: <strong>logs/application.log</strong></li>
+<li>Verify database connection</li>
+<li>Verify Keycloak is running</li>
+<li>Check network tab for API requests</li>
+</ul>
+
+<p><strong>Log Locations:</strong></p>
+
+<ul>
+<li>Backend: <strong>People-In-Axis-BE/logs/application.log</strong></li>
+<li>Frontend: Browser DevTools Console</li>
+<li>Keycloak: Keycloak server logs</li>
+</ul>
+
+<p><strong>Useful Commands:</strong></p>
+
+<ul>
+<li><strong>mvn clean install:</strong> Rebuild backend</li>
+<li><strong>npm run build:</strong> Check TypeScript errors</li>
+<li><strong>npm run dev:</strong> Start dev server with hot reload</li>
+<li><strong>davia open:</strong> View documentation</li>
+</ul>
+
+<p><strong>Health Checks:</strong></p>
+
+<ul>
+<li>Backend: <strong>http://localhost:8080/actuator/health</strong></li>
+<li>Frontend: <strong>http://localhost:3000</strong></li>
+<li>Keycloak: <strong>http://localhost:8180</strong></li>
+<li>Database: <strong>psql -U postgres -d people_in_axis</strong></li>
+</ul>
+

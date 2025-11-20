@@ -1,0 +1,40 @@
+<h1>Authentication System</h1>
+
+<p><strong>OAuth2/OIDC authentication</strong> flow with Keycloak.</p>
+
+<excalidraw data-path="data/authentication-flow.json"></excalidraw>
+
+<p></p>
+
+<p><strong>Authentication Flow:</strong></p>
+
+<ul>
+<li>User accesses protected route</li>
+<li>Frontend checks for JWT token</li>
+<li>If no token: Redirect to Keycloak login</li>
+<li>User enters credentials</li>
+<li>Keycloak validates and returns JWT</li>
+<li>Frontend stores token</li>
+<li>All API requests include token</li>
+<li>Backend validates token with Keycloak</li>
+<li>Backend extracts user roles</li>
+<li>Authorization check via @PreAuthorize</li>
+</ul>
+
+<p><strong>Token Structure:</strong></p>
+
+<ul>
+<li>JWT contains: user ID, roles, email, name</li>
+<li>Token expiration: Configurable in Keycloak</li>
+<li>Refresh token: Automatic refresh on expiry</li>
+</ul>
+
+<p><strong>Security Features:</strong></p>
+
+<ul>
+<li>HTTPS only in production</li>
+<li>Token stored in memory (not localStorage)</li>
+<li>Automatic token refresh</li>
+<li>Role-based access control</li>
+</ul>
+
