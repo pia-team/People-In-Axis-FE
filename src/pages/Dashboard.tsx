@@ -85,7 +85,7 @@ const Dashboard: React.FC = () => {
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <MetricCard title="Pending Timesheets (Manager)" value={data?.pendingTimesheetsManager} loading={isPending}
-            to={hasAnyRole(['TEAM_MANAGER', 'HUMAN_RESOURCES']) ? '/timesheets/approval' : undefined}
+            to={hasAnyRole(['MANAGER', 'HUMAN_RESOURCES']) ? '/timesheets/approval' : undefined}
             icon={<AssignmentTurnedInIcon color="primary" />} />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
@@ -95,12 +95,12 @@ const Dashboard: React.FC = () => {
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <MetricCard title="Pending Expenses" value={data?.pendingExpenses} loading={isPending}
-            to={hasAnyRole(['TEAM_MANAGER', 'HUMAN_RESOURCES', 'FINANCE']) ? '/expenses/approval' : undefined}
+            to={hasAnyRole(['MANAGER', 'HUMAN_RESOURCES', 'FINANCE']) ? '/expenses/approval' : undefined}
             icon={<ReceiptLongOutlinedIcon color="primary" />} />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <MetricCard title="Assigned Rows (Team Lead)" value={data?.teamLeadAssignedRows} loading={isPending}
-            to={hasRole('TEAM_MANAGER') ? '/timesheets/assigned' : undefined}
+            to={hasRole('MANAGER') ? '/timesheets/assigned' : undefined}
             icon={<PlaylistAddCheckOutlinedIcon color="primary" />} />
         </Grid>
 

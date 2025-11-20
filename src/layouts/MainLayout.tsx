@@ -110,9 +110,9 @@ const menuItems: MenuItemType[] = [
     icon: <AccessTime />,
     children: [
       { title: 'My Timesheets', path: '/timesheets/my', icon: <ListAlt /> },
-      { title: 'All Timesheets', path: '/timesheets', icon: <AssignmentInd />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES'] },
-      { title: 'Assigned Rows', path: '/timesheets/assigned', icon: <AssignmentTurnedIn />, roles: ['TEAM_MANAGER'] },
-      { title: 'Approval', path: '/timesheets/approval', icon: <FactCheck />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES'] },
+      { title: 'All Timesheets', path: '/timesheets', icon: <AssignmentInd />, roles: ['MANAGER', 'HUMAN_RESOURCES'] },
+      { title: 'Assigned Rows', path: '/timesheets/assigned', icon: <AssignmentTurnedIn />, roles: ['MANAGER'] },
+      { title: 'Approval', path: '/timesheets/approval', icon: <FactCheck />, roles: ['MANAGER', 'HUMAN_RESOURCES'] },
       { title: 'Admin Approval', path: '/timesheets/admin-approval', icon: <AdminPanelSettings />, roles: ['ADMIN'] },
       { title: 'Import Timesheets', path: '/timesheets/import', icon: <UploadFile />, roles: ['HUMAN_RESOURCES', 'COMPANY_MANAGER'] },
     ],
@@ -122,8 +122,8 @@ const menuItems: MenuItemType[] = [
     icon: <ReceiptLong />,
     children: [
       { title: 'My Expenses', path: '/expenses/my', icon: <Receipt /> },
-      { title: 'All Expenses', path: '/expenses', icon: <RequestQuote />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES', 'FINANCE'] },
-      { title: 'Approval', path: '/expenses/approval', icon: <FactCheck />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES', 'FINANCE'] },
+      { title: 'All Expenses', path: '/expenses', icon: <RequestQuote />, roles: ['MANAGER', 'HUMAN_RESOURCES', 'FINANCE'] },
+      { title: 'Approval', path: '/expenses/approval', icon: <FactCheck />, roles: ['MANAGER', 'HUMAN_RESOURCES', 'FINANCE'] },
     ],
   },
   {
@@ -226,7 +226,7 @@ const MainLayout: React.FC = () => {
   const { sidebarOpen } = useSelector((state: RootState) => state.ui);
   const { tokenParsed, logout, hasAnyRole } = useKeycloak();
   const { i18n } = useTranslation();
-  const showManagerCounts = hasAnyRole(['TEAM_MANAGER', 'HUMAN_RESOURCES']);
+  const showManagerCounts = hasAnyRole(['MANAGER', 'HUMAN_RESOURCES']);
   const { data: managerPendingCount } = useQuery({
     queryKey: ['timesheets', 'manager-pending', 'count'],
     queryFn: timeSheetService.getManagerPendingCount,
@@ -238,7 +238,7 @@ const MainLayout: React.FC = () => {
     queryFn: timeSheetService.getAdminPendingCount,
     enabled: showAdminCounts,
   });
-  const showTeamLeadCounts = hasAnyRole(['TEAM_MANAGER']);
+  const showTeamLeadCounts = hasAnyRole(['MANAGER']);
   const { data: teamLeadAssignedCount } = useQuery({
     queryKey: ['timesheets', 'teamlead-assigned', 'count'],
     queryFn: timeSheetService.getTeamLeadAssignedCount,

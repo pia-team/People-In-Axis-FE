@@ -184,7 +184,7 @@ const App: React.FC = () => {
             {/* TimeSheets Approval (role-guarded) */}
             <Route
               path="/timesheets/approval"
-              element={<PrivateRoute roles={["TEAM_MANAGER", "HUMAN_RESOURCES"]} />}
+              element={<PrivateRoute roles={["MANAGER", "HUMAN_RESOURCES"]} />}
             >
               <Route index element={<TimeSheetApproval />} />
             </Route>
@@ -192,7 +192,7 @@ const App: React.FC = () => {
             {/* TeamLead Assigned Rows (role-guarded) */}
             <Route
               path="/timesheets/assigned"
-              element={<PrivateRoute roles={["TEAM_MANAGER"]} />}
+              element={<PrivateRoute roles={["MANAGER"]} />}
             >
               <Route index element={<TeamLeadAssigned />} />
             </Route>
@@ -225,7 +225,7 @@ const App: React.FC = () => {
             {/* Expenses Approval (role-guarded) */}
             <Route
               path="/expenses/approval"
-              element={<PrivateRoute roles={["TEAM_MANAGER", "HUMAN_RESOURCES", "FINANCE"]} />}
+              element={<PrivateRoute roles={["MANAGER", "HUMAN_RESOURCES", "FINANCE"]} />}
             >
               <Route index element={<ExpenseApproval />} />
             </Route>

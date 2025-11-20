@@ -38,7 +38,7 @@ Sistemde aşağıdaki roller kullanılmaktadır. Roller Keycloak üzerinden yön
 - **ADMIN** - Tam yönetici erişimi, tüm modüllere erişim ve sistem ayarları
 - **SYSTEM_ADMIN** - Sistem seviyesi yönetici, `/system-admin/**` endpoint'lerine erişim
 - **HUMAN_RESOURCES** - İnsan kaynakları yönetimi, çalışan/şirket/departman yönetimi, timesheet/expense onayı, raporlama
-- **TEAM_MANAGER** - Takım lideri, timesheet/expense onayı (takım seviyesinde), proje oluşturma/güncelleme
+- **MANAGER** - Takım lideri, timesheet/expense onayı (takım seviyesinde), proje oluşturma/güncelleme
 - **COMPANY_MANAGER** - Şirket yöneticisi, şirket modülüne erişim, raporlama, CV Sharing modülü yönetimi
 - **FINANCE** - Finans ekibi, expense onayı ve ödeme işlemleri, expense import/export
 - **Authenticated (Giriş Yapmış Kullanıcı)** - Tüm giriş yapmış kullanıcılar, kendi timesheet/expense'lerini görüntüleme ve oluşturma
@@ -808,7 +808,7 @@ ApplicationForm, adayların pozisyonlara başvuru yapması için kullanılan mul
 
 **Rota:** `/cv-sharing/applications/:id/review`  
 **Dosya:** `src/pages/cv-sharing/applications/ApplicationReview.tsx`  
-**Yetki Gereksinimleri:** `HUMAN_RESOURCES`, `COMPANY_MANAGER`, `TEAM_MANAGER`
+**Yetki Gereksinimleri:** `HUMAN_RESOURCES`, `COMPANY_MANAGER`, `MANAGER`
 
 **Amaç ve İşlev:**
 ApplicationReview, başvuruların hızlı değerlendirilmesi için optimize edilmiş bir sayfadır. Değerlendiriciler bu sayfa üzerinden hızlıca yorum ekleyebilir, puan verebilir ve karar verebilir.
@@ -1323,7 +1323,7 @@ MyTimeSheets sayfası, kullanıcının kendi timesheet'lerini görüntülemek ve
 
 **Rota:** `/timesheets`  
 **Dosya:** `src/pages/timesheets/TimeSheetList.tsx`  
-**Yetki Gereksinimleri:** `TEAM_MANAGER`, `HUMAN_RESOURCES`, `ADMIN`
+**Yetki Gereksinimleri:** `MANAGER`, `HUMAN_RESOURCES`, `ADMIN`
 
 **Amaç ve İşlev:**
 TimeSheetList sayfası, yöneticiler ve HR ekipleri için tüm çalışanların timesheet'lerini görüntülemek ve yönetmek için kullanılan merkezi yönetim sayfasıdır. Bu sayfa üzerinden tüm timesheet'ler görüntülenebilir, filtreleme yapılabilir ve toplu işlemler gerçekleştirilebilir.
@@ -1481,7 +1481,7 @@ TimeSheetDetail sayfası, bir timesheet'in tüm detaylarını görüntülemek, d
 - Timesheet kopyalama (Clone)
 - Geçmiş görüntüleme
 
-**TEAM_MANAGER (Takım Lideri):**
+**MANAGER (Takım Lideri):**
 - Atanmış satırları görüntüleme
 - Satır onaylama/reddetme
 - Satır atama işlemi
@@ -1627,7 +1627,7 @@ TimeSheetForm, yeni timesheet oluşturma veya mevcut timesheet'i düzenleme içi
 
 **Rota:** `/timesheets/approval`  
 **Dosya:** `src/pages/timesheets/TimeSheetApproval.tsx`  
-**Yetki Gereksinimleri:** `TEAM_MANAGER`, `HUMAN_RESOURCES`
+**Yetki Gereksinimleri:** `MANAGER`, `HUMAN_RESOURCES`
 
 **Amaç ve İşlev:**
 TimeSheetApproval sayfası, yöneticiler ve HR ekipleri için onay bekleyen timesheet'leri görüntülemek ve yönetmek için kullanılan özel bir sayfadır. Bu sayfa, onay sürecini hızlandırmak için optimize edilmiştir.
@@ -1731,7 +1731,7 @@ AdminTimeSheetApproval sayfası, admin onayı bekleyen timesheet'ler için özel
 
 **Rota:** `/timesheets/assigned`  
 **Dosya:** `src/pages/timesheets/TeamLeadAssigned.tsx`  
-**Yetki Gereksinimleri:** `TEAM_MANAGER`
+**Yetki Gereksinimleri:** `MANAGER`
 
 **Amaç ve İşlev:**
 TeamLeadAssigned sayfası, takım liderlerine atanmış timesheet satırlarını görüntülemek ve yönetmek için kullanılan özel bir sayfadır. Bu sayfa, takım liderlerinin sadece kendilerine atanmış satırları görmesini sağlar.

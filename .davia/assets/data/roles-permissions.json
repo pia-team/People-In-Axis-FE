@@ -18,7 +18,7 @@
     "pages": ["/dashboard", "/employees", "/timesheets", "/expenses", "/cv-sharing/*", "/reports"]
   },
   {
-    "role": "TEAM_MANAGER",
+    "role": "MANAGER",
     "description": "Takım lideri",
     "permissions": ["Team timesheet approval", "Team expense approval", "Project management", "View own team"],
     "pages": ["/dashboard", "/timesheets/approval", "/expenses/approval", "/projects"]
