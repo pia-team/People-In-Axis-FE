@@ -20,7 +20,7 @@ import {
   Save as SaveIcon,
   Cancel as CancelIcon
 } from '@mui/icons-material';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { useSnackbar } from 'notistack';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -49,6 +49,7 @@ interface PositionFormData {
 const PositionForm: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
   const { hasRole } = useKeycloak();
@@ -86,8 +87,11 @@ const PositionForm: React.FC = () => {
   useEffect(() => {
     if (id) {
       loadPosition();
+    } else if (location.state?.duplicateFrom) {
+      // Load position data for duplication (create mode)
+      loadPositionForDuplicate(location.state.duplicateFrom);
     }
-  }, [id]);
+  }, [id, location.state]);
 
   const loadPosition = async () => {
     try {
@@ -110,10 +114,40 @@ const PositionForm: React.FC = () => {
         skills: [],
         languages: []
       });
-      setSkills((position.skills || []).map((s: any) => s.skillName));
+      setSkills((position.skills || []).map((s: any) => s.name || s.skillName || ''));
       setLanguages((position.languages || []).map((l: any) => ({ code: l.code, level: l.proficiencyLevel })));
     } catch (error) {
       enqueueSnackbar('Failed to load position', { variant: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadPositionForDuplicate = async (positionId: string) => {
+    try {
+      setLoading(true);
+      const position = await positionService.getPositionById(positionId);
+      reset({
+        name: (position.name || '') + ' (Copy)',
+        title: (position.title || '') + ' (Copy)',
+        department: position.department || '',
+        location: position.location || '',
+        workType: position.workType,
+        minExperience: position.minExperience || 0,
+        educationLevel: position.educationLevel || '',
+        description: position.description || '',
+        requirements: position.requirements || '',
+        visibility: (position.visibility as any) || 'PUBLIC',
+        applicationDeadline: position.applicationDeadline || '',
+        salaryRangeMin: position.salaryRangeMin || 0,
+        salaryRangeMax: position.salaryRangeMax || 0,
+        skills: [],
+        languages: []
+      });
+      setSkills((position.skills || []).map((s: any) => s.name || s.skillName || ''));
+      setLanguages((position.languages || []).map((l: any) => ({ code: l.code, level: l.proficiencyLevel })));
+    } catch (error) {
+      enqueueSnackbar('Failed to load position for duplication', { variant: 'error' });
     } finally {
       setLoading(false);
     }

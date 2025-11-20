@@ -26,7 +26,7 @@ const ForwardDialog: React.FC = () => {
       setSaving(true);
       await applicationService.forwardApplication(id, { recipients: emails, message });
       enqueueSnackbar('Application forwarded', { variant: 'success' });
-      navigate(`/applications/${id}`);
+      navigate(`/cv-sharing/applications/${id}`);
     } catch (e) {
       enqueueSnackbar('Failed to forward application', { variant: 'error' });
     } finally {

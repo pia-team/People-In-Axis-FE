@@ -239,9 +239,13 @@ const PoolCVDetail: React.FC = () => {
             <Typography variant="h6" sx={{ mt: 3 }}>Languages</Typography>
             <Divider sx={{ mb: 2 }} />
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              {(detail.languages || []).map((l) => (
-                <Chip key={`${l.code}-${l.proficiencyLevel}`} label={`${l.code.toUpperCase()} • ${l.proficiencyLevel}`} />
-              ))}
+              {(detail.languages || []).map((l) => {
+                const code = l.code || l.languageCode || '';
+                const proficiency = l.proficiencyLevel || '';
+                return code ? (
+                  <Chip key={`${code}-${proficiency}`} label={`${code.toUpperCase()} • ${proficiency}`} />
+                ) : null;
+              })}
             </Box>
 
             <Typography variant="h6" sx={{ mt: 3 }}>Files</Typography>

@@ -43,6 +43,7 @@ const PositionList: React.FC = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { hasRole } = useKeycloak();
   const isHR = hasRole('HUMAN_RESOURCES');
+  const isCompanyManager = hasRole('COMPANY_MANAGER');
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
@@ -80,14 +81,11 @@ const PositionList: React.FC = () => {
 
   // status change handled in detail/edit views; not used here
 
-  const handleDuplicate = async (id: string) => {
-    try {
-      const newPosition = await positionService.duplicatePosition(id);
-      enqueueSnackbar('Position duplicated successfully', { variant: 'success' });
-      navigate(`/cv-sharing/positions/${newPosition.id}/edit`);
-    } catch (error) {
-      enqueueSnackbar('Failed to duplicate position', { variant: 'error' });
-    }
+  const handleDuplicate = (id: string) => {
+    // Navigate to new position form with duplicate data
+    navigate('/cv-sharing/positions/new', {
+      state: { duplicateFrom: id }
+    });
   };
 
   const handleArchive = async (id: string) => {
@@ -229,7 +227,7 @@ const PositionList: React.FC = () => {
                 <ViewIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-            <Tooltip title={isHR ? 'Edit' : 'Yalnızca İnsan Kaynakları düzenleyebilir'}>
+            <Tooltip title={isCompanyManager ? 'Company Manager sadece görüntüleme yapabilir' : (isHR ? 'Edit' : 'Yalnızca İnsan Kaynakları düzenleyebilir')}>
               <span>
                 <IconButton
                   size="small"
@@ -237,13 +235,13 @@ const PositionList: React.FC = () => {
                     e.stopPropagation();
                     navigate(`/cv-sharing/positions/${position.id}/edit`);
                   }}
-                  disabled={!isHR}
+                  disabled={!isHR || isCompanyManager}
                 >
                   <EditIcon fontSize="small" />
                 </IconButton>
               </span>
             </Tooltip>
-            <Tooltip title={isHR ? 'Duplicate' : 'Yalnızca İnsan Kaynakları kopyalayabilir'}>
+            <Tooltip title={isCompanyManager ? 'Company Manager sadece görüntüleme yapabilir' : (isHR ? 'Duplicate' : 'Yalnızca İnsan Kaynakları kopyalayabilir')}>
               <span>
                 <IconButton
                   size="small"
@@ -251,13 +249,13 @@ const PositionList: React.FC = () => {
                     e.stopPropagation();
                     handleDuplicate(position.id);
                   }}
-                  disabled={!isHR}
+                  disabled={!isHR || isCompanyManager}
                 >
                   <DuplicateIcon fontSize="small" />
                 </IconButton>
               </span>
             </Tooltip>
-            <Tooltip title={isHR ? 'Archive' : 'Yalnızca İnsan Kaynakları arşivleyebilir'}>
+            <Tooltip title={isCompanyManager ? 'Company Manager sadece görüntüleme yapabilir' : (isHR ? 'Archive' : 'Yalnızca İnsan Kaynakları arşivleyebilir')}>
               <span>
                 <IconButton
                   size="small"
@@ -265,13 +263,13 @@ const PositionList: React.FC = () => {
                     e.stopPropagation();
                     handleArchive(position.id);
                   }}
-                  disabled={!isHR || position.status === PositionStatus.ARCHIVED}
+                  disabled={!isHR || isCompanyManager || position.status === PositionStatus.ARCHIVED}
                 >
                   <ArchiveIcon fontSize="small" />
                 </IconButton>
               </span>
             </Tooltip>
-            <Tooltip title={isHR ? 'Change Status' : 'Yalnızca İnsan Kaynakları durumu değiştirebilir'}>
+            <Tooltip title={isCompanyManager ? 'Company Manager sadece görüntüleme yapabilir' : (isHR ? 'Change Status' : 'Yalnızca İnsan Kaynakları durumu değiştirebilir')}>
               <span>
                 <IconButton
                   size="small"
@@ -279,7 +277,7 @@ const PositionList: React.FC = () => {
                     e.stopPropagation();
                     handleMenuOpen(e, position);
                   }}
-                  disabled={!isHR}
+                  disabled={!isHR || isCompanyManager}
                 >
                   <MoreVertIcon fontSize="small" />
                 </IconButton>

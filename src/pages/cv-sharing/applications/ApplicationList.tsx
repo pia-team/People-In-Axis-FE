@@ -33,7 +33,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
-import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { applicationService, positionService } from '@/services/cv-sharing';
 import { Application, ApplicationStatus, Position } from '@/types/cv-sharing';
 import PageContainer from '@/components/ui/PageContainer';
@@ -135,10 +135,14 @@ const ApplicationList: React.FC = () => {
     setSelectedApplication(null);
   };
 
+  const queryClient = useQueryClient();
+
   const handleStatusChange = async (applicationId: string, newStatus: ApplicationStatus) => {
     try {
       await applicationService.updateApplicationStatus(applicationId, { status: newStatus });
       enqueueSnackbar('Status updated successfully', { variant: 'success' });
+      // Invalidate applications cache to refresh the list
+      await queryClient.invalidateQueries({ queryKey: ['applications'] });
       refetch();
     } catch (error) {
       enqueueSnackbar('Failed to update status', { variant: 'error' });

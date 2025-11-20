@@ -50,6 +50,7 @@ import { PositionStatus, WorkType } from '@/types/cv-sharing';
 import { format } from 'date-fns';
 import PageContainer from '@/components/ui/PageContainer';
 import SectionCard from '@/components/ui/SectionCard';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useKeycloak } from '@/providers/KeycloakProvider';
 
 interface TabPanelProps {
@@ -82,9 +83,12 @@ const PositionDetail: React.FC = () => {
   const queryClient = useQueryClient();
   const { hasRole } = useKeycloak();
   const isHR = hasRole('HUMAN_RESOURCES');
+  const isCompanyManager = hasRole('COMPANY_MANAGER');
   const [isArchiving, setIsArchiving] = useState(false);
   const [isActivating, setIsActivating] = useState(false);
   const [statusMenuAnchor, setStatusMenuAnchor] = useState<null | HTMLElement>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { data: position, isPending } = useQuery({
     queryKey: ['position', id],
@@ -128,8 +132,8 @@ const PositionDetail: React.FC = () => {
     }
   };
 
-  // Prefer backend-provided total count; fallback to loaded matches length
-  const applicationsCount = position?.applicationCount ?? (matchesPage?.pageInfo?.totalElements ?? 0);
+  // Use matches page total elements for accurate count, fallback to position applicationCount
+  const applicationsCount = matchesPage?.pageInfo?.totalElements ?? position?.applicationCount ?? 0;
 
   const handleActivate = async () => {
     try {
@@ -152,25 +156,27 @@ const PositionDetail: React.FC = () => {
   };
 
   const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete this position?')) {
-      try {
-        await positionService.deletePosition(id!);
-        enqueueSnackbar('Position deleted successfully', { variant: 'success' });
-        navigate('/cv-sharing/positions');
-      } catch (error) {
-        enqueueSnackbar('Failed to delete position', { variant: 'error' });
-      }
+    try {
+      setIsDeleting(true);
+      await positionService.deletePosition(id!);
+      enqueueSnackbar('Position deleted successfully', { variant: 'success' });
+      // Invalidate positions list cache to refresh the list
+      queryClient.invalidateQueries({ queryKey: ['positions'] });
+      queryClient.invalidateQueries({ queryKey: ['position', id] });
+      navigate('/cv-sharing/positions');
+    } catch (error) {
+      enqueueSnackbar('Failed to delete position', { variant: 'error' });
+    } finally {
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
     }
   };
 
-  const handleDuplicate = async () => {
-    try {
-      const newPosition = await positionService.duplicatePosition(id!);
-      enqueueSnackbar('Position duplicated successfully', { variant: 'success' });
-      navigate(`/cv-sharing/positions/${newPosition.id}/edit`);
-    } catch (error) {
-      enqueueSnackbar('Failed to duplicate position', { variant: 'error' });
-    }
+  const handleDuplicate = () => {
+    // Navigate to new position form with duplicate data
+    navigate('/cv-sharing/positions/new', {
+      state: { duplicateFrom: id }
+    });
   };
 
   const handleArchive = async () => {
@@ -266,76 +272,76 @@ const PositionDetail: React.FC = () => {
           >
             Share
           </Button>
-          <Tooltip title={isHR ? 'Duplicate' : 'Yalnızca İnsan Kaynakları kopyalayabilir'}>
+          <Tooltip title={isCompanyManager ? 'Company Manager sadece görüntüleme yapabilir' : (isHR ? 'Duplicate' : 'Yalnızca İnsan Kaynakları kopyalayabilir')}>
             <span>
               <Button
                 variant="outlined"
                 startIcon={<CopyIcon />}
                 onClick={handleDuplicate}
-                disabled={!isHR}
+                disabled={!isHR || isCompanyManager}
               >
                 Duplicate
               </Button>
             </span>
           </Tooltip>
-          <Tooltip title={isHR ? 'Change Status' : 'Yalnızca İnsan Kaynakları durumu değiştirebilir'}>
+          <Tooltip title={isCompanyManager ? 'Company Manager sadece görüntüleme yapabilir' : (isHR ? 'Change Status' : 'Yalnızca İnsan Kaynakları durumu değiştirebilir')}>
             <span>
               <IconButton
                 size="small"
                 onClick={handleOpenStatusMenu}
-                disabled={!isHR}
+                disabled={!isHR || isCompanyManager}
               >
                 <MoreVertIcon />
               </IconButton>
             </span>
           </Tooltip>
           {position.status === PositionStatus.ARCHIVED ? (
-            <Tooltip title={isHR ? 'Activate' : 'Yalnızca İnsan Kaynakları aktive edebilir'}>
+            <Tooltip title={isCompanyManager ? 'Company Manager sadece görüntüleme yapabilir' : (isHR ? 'Activate' : 'Yalnızca İnsan Kaynakları aktive edebilir')}>
               <span>
                 <Button
                   variant="outlined"
                   startIcon={<CheckIcon />}
                   onClick={handleActivate}
-                  disabled={!isHR || isActivating}
+                  disabled={!isHR || isCompanyManager || isActivating}
                 >
                   Activate
                 </Button>
               </span>
             </Tooltip>
           ) : (
-            <Tooltip title={isHR ? 'Archive' : 'Yalnızca İnsan Kaynakları arşivleyebilir'}>
+            <Tooltip title={isCompanyManager ? 'Company Manager sadece görüntüleme yapabilir' : (isHR ? 'Archive' : 'Yalnızca İnsan Kaynakları arşivleyebilir')}>
               <span>
                 <Button
                   variant="outlined"
                   startIcon={<ArchiveIcon />}
                   onClick={handleArchive}
-                  disabled={!isHR || isArchiving}
+                  disabled={!isHR || isCompanyManager || isArchiving}
                 >
                   Archive
                 </Button>
               </span>
             </Tooltip>
           )}
-          <Tooltip title={isHR ? 'Edit' : 'Yalnızca İnsan Kaynakları düzenleyebilir'}>
+          <Tooltip title={isCompanyManager ? 'Company Manager sadece görüntüleme yapabilir' : (isHR ? 'Edit' : 'Yalnızca İnsan Kaynakları düzenleyebilir')}>
             <span>
               <Button
                 variant="outlined"
                 startIcon={<EditIcon />}
                 onClick={handleEdit}
-                disabled={!isHR}
+                disabled={!isHR || isCompanyManager}
               >
                 Edit
               </Button>
             </span>
           </Tooltip>
-          <Tooltip title={isHR ? 'Delete' : 'Yalnızca İnsan Kaynakları silebilir'}>
+          <Tooltip title={isCompanyManager ? 'Company Manager sadece görüntüleme yapabilir' : (isHR ? 'Delete' : 'Yalnızca İnsan Kaynakları silebilir')}>
             <span>
               <Button
                 variant="outlined"
                 color="error"
                 startIcon={<DeleteIcon />}
-                onClick={handleDelete}
-                disabled={!isHR}
+                onClick={() => setDeleteDialogOpen(true)}
+                disabled={!isHR || isCompanyManager}
               >
                 Delete
               </Button>
@@ -547,16 +553,20 @@ const PositionDetail: React.FC = () => {
                         {m.matchScore != null && (
                           <Chip label={`Score: ${m.matchScore}`} size="small" color="primary" />
                         )}
-                        {m.matchedAt && (
+                        {m.matchedAt ? (
                           <Chip label={format(new Date(m.matchedAt), 'dd/MM/yyyy')} size="small" />
+                        ) : (
+                          <Chip label="N/A" size="small" variant="outlined" />
                         )}
-                        <IconButton
-                          edge="end"
-                          aria-label="view"
-                          onClick={() => navigate(`/cv-sharing/applications?positionId=${id}`)}
-                        >
-                          <ViewIcon />
-                        </IconButton>
+                        {!isCompanyManager && (
+                          <IconButton
+                            edge="end"
+                            aria-label="view"
+                            onClick={() => navigate(`/cv-sharing/applications?positionId=${id}`)}
+                          >
+                            <ViewIcon />
+                          </IconButton>
+                        )}
                       </Stack>
                     }
                   >
@@ -568,11 +578,6 @@ const PositionDetail: React.FC = () => {
                     <ListItemText
                       primary={`${m.firstName} ${m.lastName}`}
                       secondary={m.email}
-                    />
-                    <Chip
-                      label={m.applicationStatus ?? 'N/A'}
-                      size="small"
-                      color={m.applicationStatus === 'NEW' ? 'info' : 'default'}
                     />
                   </ListItem>
                 ))}
@@ -685,6 +690,17 @@ const PositionDetail: React.FC = () => {
             </MenuItem>
           ))}
       </Menu>
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        title="Delete Position"
+        description="Are you sure you want to delete this position? This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        confirmColor="error"
+        loading={isDeleting}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={handleDelete}
+      />
     </PageContainer>
   );
 };

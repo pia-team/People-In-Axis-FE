@@ -140,7 +140,7 @@ const menuItems: MenuItemType[] = [
         title: 'Positions',
         path: '/cv-sharing/positions',
         icon: <BusinessCenter />,
-        roles: ['HUMAN_RESOURCES', 'MANAGER']
+        roles: ['HUMAN_RESOURCES', 'MANAGER', 'COMPANY_MANAGER']
       },
 
 
@@ -158,12 +158,35 @@ const menuItems: MenuItemType[] = [
         icon: <Inventory2 />,
         roles: ['HUMAN_RESOURCES', 'MANAGER', 'COMPANY_MANAGER', 'EMPLOYEE']
       },
-
+      {
+        title: 'Review Tasks',
+        path: '/cv-sharing/review-tasks',
+        icon: <AssignmentInd />,
+        roles: ['HUMAN_RESOURCES', 'SYSTEM_ADMIN']
+      },
+      {
+        title: 'Training',
+        path: '/cv-sharing/training',
+        icon: <QueryStats />,
+        roles: ['HUMAN_RESOURCES', 'SYSTEM_ADMIN']
+      },
       {
         title: 'Settings',
         path: '/cv-sharing/settings/matching',
         icon: <Settings />,
-        roles: ['HUMAN_RESOURCES', 'MANAGER']
+        roles: ['HUMAN_RESOURCES']
+      },
+      {
+        title: 'Models',
+        path: '/cv-sharing/models',
+        icon: <InsertChartOutlined />,
+        roles: ['HUMAN_RESOURCES', 'SYSTEM_ADMIN']
+      },
+      {
+        title: 'A/B Tests',
+        path: '/cv-sharing/ab-tests',
+        icon: <BarChart />,
+        roles: ['HUMAN_RESOURCES', 'SYSTEM_ADMIN']
       },
     ],
   },

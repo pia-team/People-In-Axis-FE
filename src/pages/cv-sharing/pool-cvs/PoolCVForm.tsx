@@ -18,6 +18,7 @@ import { Add as AddIcon, Delete as DeleteIcon, Save as SaveIcon, Cancel as Cance
 import { useForm, Controller } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
+import { useQueryClient } from '@tanstack/react-query';
 import FileUpload from '@/components/ui/FileUpload';
 import { poolCVService } from '@/services/cv-sharing';
 import { CreatePoolCVRequest, PoolCVDetail, LanguageProficiency } from '@/types/cv-sharing';
@@ -29,10 +30,12 @@ const PoolCVForm: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { enqueueSnackbar } = useSnackbar();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [skills, setSkills] = useState<{ name: string; yearsOfExperience?: number }[]>([]);
   const [languages, setLanguages] = useState<{ code: string; proficiencyLevel: LanguageProficiency }[]>([]);
+  const [hasKvkkConsent, setHasKvkkConsent] = useState(false);
 
   const { control, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
     defaultValues: {
@@ -64,6 +67,8 @@ const PoolCVForm: React.FC = () => {
     try {
       setLoading(true);
       const data: PoolCVDetail = await poolCVService.getPoolCVById(id!);
+      const hasConsent = !!data.kvkkConsentId;
+      setHasKvkkConsent(hasConsent);
       reset({
         firstName: data.firstName,
         lastName: data.lastName,
@@ -78,7 +83,7 @@ const PoolCVForm: React.FC = () => {
         skills: data.skills as any,
         languages: data.languages as any,
         tags: data.tags || [],
-        kvkkConsent: true,
+        kvkkConsent: hasConsent,
         isActive: data.isActive
       } as any);
       setSkills((data.skills || []).map(s => ({ name: s.name, yearsOfExperience: s.yearsOfExperience })));
@@ -114,9 +119,9 @@ const PoolCVForm: React.FC = () => {
 
       let poolCvId = id;
       if (id) {
-        const { kvkkConsent, ...updateData } = payload;
+        // Include all fields including kvkkConsent (backend will handle it appropriately)
         await poolCVService.updatePoolCV(id, {
-          ...updateData,
+          ...payload,
           isActive: data.isActive
         });
       } else {
@@ -126,7 +131,13 @@ const PoolCVForm: React.FC = () => {
 
       if (poolCvId && files.length > 0) {
         await poolCVService.uploadFiles(poolCvId, files);
+        // Invalidate cache to refresh files list
+        await queryClient.invalidateQueries({ queryKey: ['poolCV', poolCvId] });
       }
+
+      // Invalidate cache to ensure updated data is shown
+      await queryClient.invalidateQueries({ queryKey: ['poolCV', poolCvId || id] });
+      await queryClient.invalidateQueries({ queryKey: ['poolCVs'] });
 
       enqueueSnackbar(`CV ${id ? 'updated' : 'created'} successfully`, { variant: 'success' });
       const targetId = poolCvId || id;
@@ -188,7 +199,16 @@ const PoolCVForm: React.FC = () => {
           {id ? 'Edit Pool CV' : 'Add CV to Talent Pool'}
         </Typography>
 
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit, (errors) => {
+          // Show validation errors
+          const errorMessages = Object.keys(errors).map(key => {
+            const error = errors[key as keyof typeof errors];
+            return error?.message || `${key} is invalid`;
+          });
+          if (errorMessages.length > 0) {
+            enqueueSnackbar(`Please fix the form errors: ${errorMessages.join(', ')}`, { variant: 'error' });
+          }
+        })}>
           <Grid container spacing={3}>
             <Grid item xs={12}>
               <Typography variant="h6">Personal Information</Typography>
@@ -401,27 +421,47 @@ const PoolCVForm: React.FC = () => {
 
             {/* Consent and Active */}
             <Grid item xs={12}>
-              {!id && (
-                <Controller
-                  name="kvkkConsent"
-                  control={control}
-                  rules={{ required: 'KVKK consent is required' }}
-                  render={({ field }) => (
-                    <FormControl error={!!errors.kvkkConsent}>
-                      <FormControlLabel control={<Checkbox {...field} checked={!!field.value} />} label="I consent to the processing of my personal data (KVKK)" />
-                      {errors.kvkkConsent && (
-                        <FormHelperText>{errors.kvkkConsent.message as any}</FormHelperText>
-                      )}
-                    </FormControl>
-                  )}
-                />
-              )}
+              <Controller
+                name="kvkkConsent"
+                control={control}
+                rules={!id ? { required: 'KVKK consent is required' } : {}}
+                render={({ field }) => (
+                  <FormControl error={!!errors.kvkkConsent}>
+                    <FormControlLabel 
+                      control={
+                        <Checkbox 
+                          {...field} 
+                          checked={!!field.value} 
+                          disabled={id && hasKvkkConsent}
+                        />
+                      } 
+                      label={
+                        id && hasKvkkConsent 
+                          ? "KVKK consent has been given (cannot be changed)" 
+                          : "I consent to the processing of my personal data (KVKK)"
+                      } 
+                    />
+                    {errors.kvkkConsent && (
+                      <FormHelperText>{errors.kvkkConsent.message as any}</FormHelperText>
+                    )}
+                    {id && hasKvkkConsent && (
+                      <FormHelperText>
+                        KVKK consent was provided when this CV was created and cannot be modified.
+                      </FormHelperText>
+                    )}
+                  </FormControl>
+                )}
+              />
               {id && (
                 <Controller
                   name="isActive"
                   control={control}
                   render={({ field }) => (
-                    <FormControlLabel control={<Checkbox {...field} checked={!!field.value} />} label="Active" />
+                    <FormControlLabel 
+                      control={<Checkbox {...field} checked={!!field.value} />} 
+                      label="Active" 
+                      sx={{ mt: 1 }}
+                    />
                   )}
                 />
               )}
@@ -431,7 +471,18 @@ const PoolCVForm: React.FC = () => {
             <Grid item xs={12}>
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                 <Button variant="outlined" startIcon={<CancelIcon />} onClick={() => navigate('/cv-sharing/pool-cvs')} disabled={loading}>Cancel</Button>
-                <Button type="submit" variant="contained" startIcon={<SaveIcon />} disabled={loading}>
+                <Button 
+                  type="submit" 
+                  variant="contained" 
+                  startIcon={<SaveIcon />} 
+                  disabled={loading}
+                  onClick={(e) => {
+                    // Ensure form validation runs
+                    if (!e.isDefaultPrevented()) {
+                      // Let the form handle submit normally
+                    }
+                  }}
+                >
                   {id ? 'Save Changes' : 'Create CV'}
                 </Button>
               </Box>

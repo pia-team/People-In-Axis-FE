@@ -23,6 +23,14 @@ class PoolCVService {
     const response = await axios.get<PagedResponse<PoolCV>>(this.baseUrl, {
       params: filter
     });
+    // Normalize response to ensure createdById is available
+    if (response.data?.content) {
+      response.data.content = response.data.content.map((cv: any) => ({
+        ...cv,
+        createdById: cv.createdById || cv.createdBy?.id || undefined,
+        createdByName: cv.createdByName || cv.createdBy?.name || undefined
+      }));
+    }
     return response.data;
   }
 
@@ -31,7 +39,41 @@ class PoolCVService {
    */
   async getPoolCVById(id: string): Promise<PoolCVDetail> {
     const response = await axios.get<PoolCVDetail>(`${this.baseUrl}/${id}`);
-    return response.data;
+    const data = response.data;
+    
+    // Normalize files if present
+    if (data.files && Array.isArray(data.files)) {
+      data.files = data.files.map((file: any) => ({
+        id: file.id,
+        fileName: file.fileName || file.name,
+        fileSize: file.fileSize || 0,
+        fileType: file.fileType || file.type || '',
+        mimeType: file.mimeType || file.mime_type || '',
+        uploadedAt: file.uploadedAt || file.uploaded_at || '',
+        downloadUrl: file.downloadUrl || file.download_url
+      }));
+    }
+    
+    // Normalize languages if present (backend returns languageCode, frontend expects code)
+    if (data.languages && Array.isArray(data.languages)) {
+      data.languages = data.languages.map((lang: any) => ({
+        id: lang.id,
+        code: lang.code || lang.languageCode || '',
+        proficiencyLevel: lang.proficiencyLevel || ''
+      }));
+    }
+    
+    // Normalize skills if present
+    if (data.skills && Array.isArray(data.skills)) {
+      data.skills = data.skills.map((skill: any) => ({
+        id: skill.id,
+        name: skill.name || skill.skillName || '',
+        yearsOfExperience: skill.yearsOfExperience,
+        proficiencyLevel: skill.proficiencyLevel
+      }));
+    }
+    
+    return data;
   }
 
   /**

@@ -23,7 +23,10 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  LinearProgress
+  LinearProgress,
+  Stack,
+  Tooltip,
+  Menu
 } from '@mui/material';
 import {
   Email as EmailIcon,
@@ -36,9 +39,10 @@ import {
   Star as StarIcon,
   Schedule as ScheduleIcon,
   Save as SaveIcon,
-  RateReview as ReviewIcon,
   ForwardToInbox as ForwardIcon,
-  Fingerprint as IdIcon
+  Person as PersonIcon,
+  Fingerprint as IdIcon,
+  Edit as EditIcon
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
@@ -46,6 +50,7 @@ import { applicationService } from '@/services/cv-sharing';
 import { ApplicationDetail as ApplicationDetailType, ApplicationStatus, CreateMeetingRequest, MeetingProvider, MeetingStatus } from '@/types/cv-sharing';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useKeycloak } from '@/hooks/useKeycloak';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 const statusOptions: ApplicationStatus[] = [
   ApplicationStatus.NEW,
@@ -83,8 +88,9 @@ const ApplicationDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  const { hasRole } = useKeycloak();
+  const { hasRole, tokenParsed } = useKeycloak();
   const isCompanyManager = hasRole('COMPANY_MANAGER');
+  const currentUserId = tokenParsed?.sub;
   const [saving, setSaving] = useState(false);
   const queryClient = useQueryClient();
   const { data: detail, isPending, isError } = useQuery<
@@ -103,6 +109,8 @@ const ApplicationDetail: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [commentSaving, setCommentSaving] = useState(false);
   const [ratingSaving, setRatingSaving] = useState(false);
+  const [editingRating, setEditingRating] = useState<string | null>(null);
+  const [editScore, setEditScore] = useState<number | null>(null);
   const [meetingSaving, setMeetingSaving] = useState(false);
   const [filesToUpload, setFilesToUpload] = useState<File[]>([]);
   const [meetingOpen, setMeetingOpen] = useState(false);
@@ -114,6 +122,9 @@ const ApplicationDetail: React.FC = () => {
     provider: MeetingProvider.TEAMS,
     meetingLink: ''
   });
+  const [deleteFileDialogOpen, setDeleteFileDialogOpen] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState<string | null>(null);
+  const [isDeletingFile, setIsDeletingFile] = useState(false);
 
   useEffect(() => {
     if (detail) setNewStatus(detail.status);
@@ -132,7 +143,9 @@ const ApplicationDetail: React.FC = () => {
       setSaving(true);
       await applicationService.updateApplicationStatus(detail.id, { status: newStatus });
       enqueueSnackbar('Status updated', { variant: 'success' });
+      // Invalidate both detail and list caches
       await queryClient.invalidateQueries({ queryKey: ['application', id] });
+      await queryClient.invalidateQueries({ queryKey: ['applications'] });
     } catch (error) {
       enqueueSnackbar('Failed to update status', { variant: 'error' });
     } finally {
@@ -152,15 +165,24 @@ const ApplicationDetail: React.FC = () => {
     }
   };
 
-  const handleDeleteFile = async (fileId: string) => {
-    if (!detail) return;
-    if (!window.confirm('Delete this file?')) return;
+  const handleDeleteFileClick = (fileId: string) => {
+    setFileToDelete(fileId);
+    setDeleteFileDialogOpen(true);
+  };
+
+  const handleDeleteFile = async () => {
+    if (!detail || !fileToDelete) return;
     try {
-      await applicationService.deleteFile(detail.id, fileId);
+      setIsDeletingFile(true);
+      await applicationService.deleteFile(detail.id, fileToDelete);
       enqueueSnackbar('File deleted', { variant: 'success' });
       await queryClient.invalidateQueries({ queryKey: ['application', id] });
+      setDeleteFileDialogOpen(false);
+      setFileToDelete(null);
     } catch (error) {
       enqueueSnackbar('Failed to delete file', { variant: 'error' });
+    } finally {
+      setIsDeletingFile(false);
     }
   };
 
@@ -351,7 +373,7 @@ const ApplicationDetail: React.FC = () => {
                         <IconButton edge="end" onClick={() => handleDownload(f.id, f.fileName)} aria-label="download">
                           <DownloadIcon />
                         </IconButton>
-                        <IconButton edge="end" onClick={() => handleDeleteFile(f.id)} aria-label="delete" sx={{ ml: 1 }}>
+                        <IconButton edge="end" onClick={() => handleDeleteFileClick(f.id)} aria-label="delete" sx={{ ml: 1 }}>
                           <DeleteIcon />
                         </IconButton>
                       </Box>
@@ -407,8 +429,17 @@ const ApplicationDetail: React.FC = () => {
               Update Status
             </Button>
             <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-              <Button size="small" startIcon={<ReviewIcon />} onClick={() => navigate(`/applications/${detail.id}/review`)}>Review</Button>
-              <Button size="small" startIcon={<ForwardIcon />} onClick={() => navigate(`/applications/${detail.id}/forward`)}>Forward</Button>
+              {detail.poolCvId && (
+                <Button 
+                  size="small" 
+                  startIcon={<PersonIcon />} 
+                  onClick={() => navigate(`/cv-sharing/pool-cvs/${detail.poolCvId}`)}
+                  variant="outlined"
+                >
+                  View Applicant Details
+                </Button>
+              )}
+              <Button size="small" startIcon={<ForwardIcon />} onClick={() => navigate(`/cv-sharing/applications/${detail.id}/forward`)}>Forward</Button>
             </Box>
 
             <Typography variant="h6" sx={{ mt: 3 }}>Ratings</Typography>
@@ -419,12 +450,83 @@ const ApplicationDetail: React.FC = () => {
             </Box>
             {detail.ratings && detail.ratings.length > 0 && (
               <List>
-                {detail.ratings.map(r => (
-                  <ListItem key={r.id}>
-                    <ListItemIcon><StarIcon /></ListItemIcon>
-                    <ListItemText primary={`${r.score}/5 by ${r.userName || r.userId}`} secondary={new Date(r.createdAt).toLocaleString()} />
-                  </ListItem>
-                ))}
+                {detail.ratings.map(r => {
+                  const isOwnRating = currentUserId === r.userId;
+                  
+                  const handleEditRating = () => {
+                    setEditingRating(r.id);
+                    setEditScore(r.score);
+                  };
+                  
+                  const handleSaveRating = async () => {
+                    if (!editScore || editingRating !== r.id) return;
+                    try {
+                      setRatingSaving(true);
+                      await applicationService.addRating(detail.id, { score: editScore });
+                      enqueueSnackbar('Rating updated', { variant: 'success' });
+                      setEditingRating(null);
+                      setEditScore(null);
+                      await queryClient.invalidateQueries({ queryKey: ['application', id] });
+                    } catch (e) {
+                      enqueueSnackbar('Failed to update rating', { variant: 'error' });
+                    } finally {
+                      setRatingSaving(false);
+                    }
+                  };
+                  
+                  const handleCancelEdit = () => {
+                    setEditingRating(null);
+                    setEditScore(null);
+                  };
+                  
+                  return (
+                    <ListItem 
+                      key={r.id}
+                      secondaryAction={
+                        isOwnRating && !isCompanyManager && (
+                          editingRating === r.id ? (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Rating 
+                                value={editScore || 0} 
+                                onChange={(_, v) => setEditScore(v)} 
+                                size="small"
+                              />
+                              <IconButton 
+                                size="small" 
+                                onClick={handleSaveRating} 
+                                disabled={ratingSaving || !editScore}
+                                color="primary"
+                              >
+                                <SaveIcon />
+                              </IconButton>
+                              <IconButton 
+                                size="small" 
+                                onClick={handleCancelEdit}
+                                disabled={ratingSaving}
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            </Box>
+                          ) : (
+                            <IconButton 
+                              size="small" 
+                              onClick={handleEditRating}
+                              disabled={isCompanyManager || ratingSaving}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                          )
+                        )
+                      }
+                    >
+                      <ListItemIcon><StarIcon /></ListItemIcon>
+                      <ListItemText 
+                        primary={editingRating === r.id ? 'Editing...' : `${r.score}/5 by ${r.userName || r.userId}`} 
+                        secondary={new Date(r.createdAt).toLocaleString()} 
+                      />
+                    </ListItem>
+                  );
+                })}
               </List>
             )}
 
@@ -527,6 +629,22 @@ const ApplicationDetail: React.FC = () => {
           <Button variant="contained" onClick={handleScheduleMeeting} disabled={meetingSaving}>Schedule</Button>
         </DialogActions>
       </Dialog>
+
+      {/* Delete File Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteFileDialogOpen}
+        title="Delete File"
+        description="Are you sure you want to delete this file? This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        confirmColor="error"
+        loading={isDeletingFile}
+        onClose={() => {
+          setDeleteFileDialogOpen(false);
+          setFileToDelete(null);
+        }}
+        onConfirm={handleDeleteFile}
+      />
     </Box>
   );
 };

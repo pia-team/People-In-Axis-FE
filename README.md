@@ -2102,6 +2102,1419 @@ MIT
 
 ---
 
+---
+
+## AI-Powered Matching System: Phase 2 & Phase 3
+
+CV-Pozisyon eşleştirme sistemi, iki büyük fazda AI destekli yeteneklerle geliştirilmiştir. Bu bölüm, her iki fazın bileşenleri, kullanım senaryoları ve teknik detaylar hakkında kapsamlı dokümantasyon sağlar.
+
+---
+
+## Phase 2: AI-Enhanced Matching (Embeddings, ANN Search, Re-ranking)
+
+### Genel Bakış
+
+Phase 2, AI destekli semantik benzerlik eşleştirmesi ile CV-Pozisyon eşleştirme doğruluğunu artırır. Sistem, embeddings (metin vektör temsilleri), yaklaşık en yakın komşu (ANN) araması ve cross-encoder yeniden sıralama kullanarak en ilgili eşleşmeleri bulur.
+
+### Gereksinimler
+
+**Backend Gereksinimleri:**
+- PostgreSQL 14+ with pgvector extension
+- HuggingFace API key (veya OpenAI API key)
+- Backend API çalışıyor olmalı
+
+**Frontend Gereksinimleri:**
+- React 18.2+
+- TypeScript 5.3+
+- Material UI 5.15+
+- React Query 5.22+
+
+### Frontend Entegrasyonu
+
+#### Matching Settings Sayfası
+
+**Rota:** `/cv-sharing/settings/matching`  
+**Dosya:** `src/pages/cv-sharing/settings/MatchingSettings.tsx`
+
+**Phase 2 Özellikleri:**
+
+1. **Semantic Weight (Anlamsal Ağırlık)**
+   - AI semantik benzerlik için ağırlık ayarı (0-100)
+   - Varsayılan: 15
+   - Diğer ağırlıklarla birlikte toplam 100 olmalı
+
+2. **Embedding Durumu**
+   - Embedding'lerin otomatik oluşturulduğunu gösterir
+   - Kullanıcı müdahalesi gerekmez
+   - Backend'de otomatik olarak yönetilir
+
+3. **ANN Search Ayarları**
+   - Candidate limit (varsayılan: 500)
+   - Backend'de yapılandırılır, frontend'de görüntülenir
+
+4. **Re-ranker Ayarları**
+   - Re-ranker aktif/pasif durumu
+   - Top-K değeri (varsayılan: 100)
+   - Backend'de yapılandırılır
+
+**Örnek Konfigürasyon Verisi:**
+
+```typescript
+// MatchingConfig type
+interface MatchingConfig {
+  id: string;
+  weights: {
+    skills: number;        // 0-100, örnek: 35
+    experience: number;    // 0-100, örnek: 20
+    language: number;     // 0-100, örnek: 10
+    education: number;    // 0-100, örnek: 5
+    location: number;     // 0-100, örnek: 10
+    salary: number;       // 0-100, örnek: 5
+    semantic: number;     // 0-100, örnek: 15 (Phase 2)
+  };
+  thresholds: {
+    minMatchScore: number;    // 0-100, örnek: 60
+    highMatchScore: number;   // 0-100, örnek: 80
+  };
+  ann: {
+    enabled: boolean;
+    candidateLimit: number;   // örnek: 500
+  };
+  reranker: {
+    enabled: boolean;
+    topK: number;            // örnek: 100
+  };
+}
+```
+
+**API Request Örneği (Konfigürasyon Güncelleme):**
+
+```typescript
+// matchingService.updateConfig()
+const config: MatchingConfig = {
+  id: "config-uuid",
+  weights: {
+    skills: 40,
+    experience: 20,
+    language: 10,
+    education: 5,
+    location: 10,
+    salary: 5,
+    semantic: 10  // Toplam 100 olmalı
+  },
+  thresholds: {
+    minMatchScore: 65,
+    highMatchScore: 85
+  },
+  ann: {
+    enabled: true,
+    candidateLimit: 500
+  },
+  reranker: {
+    enabled: true,
+    topK: 100
+  }
+};
+
+await matchingService.updateConfig(config);
+```
+
+**API Response Örneği (Eşleştirme Sonuçları):**
+
+```typescript
+// poolCVService.matchPositions() response
+interface MatchedPositionResponse {
+  positionId: string;
+  positionTitle: string;
+  matchScore: number;        // 0-100
+  annDistance: number;       // 0-1, lower = more similar
+  rerankScore: number;       // 0-1, higher = more relevant
+  featureScores: {
+    skills: number;
+    experience: number;
+    education: number;
+    language: number;
+    location: number;
+    salary: number;
+    semantic: number;
+  };
+}
+
+// Örnek response
+const matches: MatchedPositionResponse[] = [
+  {
+    positionId: "uuid-1",
+    positionTitle: "Senior Java Developer",
+    matchScore: 85,
+    annDistance: 0.234,
+    rerankScore: 0.92,
+    featureScores: {
+      skills: 90,
+      experience: 80,
+      education: 75,
+      language: 100,
+      location: 60,
+      salary: 50,
+      semantic: 85
+    }
+  }
+];
+```
+
+**Kullanım Senaryoları:**
+
+**Senaryo 1: Semantic Weight Ayarlama**
+1. Matching Settings sayfasına gidin (`/cv-sharing/settings/matching`)
+2. "Semantic Weight" slider'ını ayarlayın (varsayılan: 15)
+3. Diğer ağırlıkları da ayarlayın (toplam 100 olmalı)
+4. Sistem otomatik olarak toplamı kontrol eder
+5. Toplam 1.00 değilse "Save Configuration" butonu devre dışı kalır
+6. Ağırlıkları ayarlayın ve "Save Configuration" butonuna tıklayın
+7. Başarılı kayıt sonrası snackbar bildirimi gösterilir
+
+**Senaryo 2: Otomatik Eşleştirme**
+1. PoolCV detay sayfasında "Match Positions" butonuna tıklayın
+2. Sistem otomatik olarak:
+   - Embedding oluşturur (yoksa)
+   - ANN araması yapar (top 500 aday)
+   - Re-ranker ile yeniden sıralar (top 100)
+3. Sonuçlar eşleşme skorlarıyla gösterilir
+4. Kullanıcı minimum skor filtresi uygulayabilir
+
+### Kullanıcı Deneyimi
+
+**Phase 2 Kullanıcıya Nasıl Görünür:**
+
+1. **Daha İyi Eşleşmeler:**
+   - Eşleşme sonuçları daha doğru ve ilgili
+   - Semantik benzerlik sayesinde eş anlamlılar eşleşir
+   - Örnek: "JavaScript" ve "JS" aynı yetenek olarak kabul edilir
+
+2. **Hızlı Sonuçlar:**
+   - ANN araması sayesinde hızlı eşleştirme
+   - Re-ranker ile iyileştirilmiş doğruluk
+   - Kullanıcı farkı fark etmez (arka planda çalışır)
+
+3. **Görsel Geri Bildirim:**
+   - Eşleşme skorları gösterilir
+   - Yüksek skorlu eşleşmeler vurgulanır
+   - Kullanıcı filtreleme yapabilir (minimum skor)
+
+### Frontend API Entegrasyonu
+
+**Kullanılan Servisler:**
+- `matchingService.getConfig()` - Matching konfigürasyonunu getir
+- `matchingService.updateConfig()` - Konfigürasyonu güncelle
+- `poolCVService.matchPositions()` - PoolCV için pozisyon eşleştir (Phase 2 kullanır)
+
+**Service Kullanım Örnekleri:**
+
+```typescript
+// 1. Matching konfigürasyonunu getir
+import { matchingService } from '@/services/cv-sharing/matchingService';
+
+const config = await matchingService.getConfig();
+console.log(config.weights.semantic); // Phase 2 semantic weight
+
+// 2. Konfigürasyonu güncelle
+const updatedConfig = {
+  ...config,
+  weights: {
+    ...config.weights,
+    semantic: 20  // Semantic weight'i artır
+  }
+};
+await matchingService.updateConfig(updatedConfig);
+
+// 3. PoolCV için eşleştirme yap
+import { poolCVService } from '@/services/cv-sharing/poolCVService';
+
+const matches = await poolCVService.matchPositions(poolCvId, {
+  limit: 20,
+  minScore: 60
+});
+// matches -> Phase 2 ile eşleştirilmiş pozisyonlar
+
+// 4. React Query ile kullanım
+import { useQuery, useMutation } from '@tanstack/react-query';
+
+// Konfigürasyonu getir
+const { data: config, isLoading } = useQuery({
+  queryKey: ['matching-config'],
+  queryFn: () => matchingService.getConfig()
+});
+
+// Konfigürasyonu güncelle
+const updateMutation = useMutation({
+  mutationFn: (config: MatchingConfig) => 
+    matchingService.updateConfig(config),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['matching-config'] });
+    enqueueSnackbar('Configuration updated successfully', { variant: 'success' });
+  }
+});
+```
+
+**Component Örnekleri:**
+
+```typescript
+// MatchingSettings.tsx - Semantic Weight Input
+<TextField
+  label="Semantic Weight"
+  type="number"
+  value={config.weights.semantic}
+  onChange={(e) => {
+    setConfig({
+      ...config,
+      weights: {
+        ...config.weights,
+        semantic: Number(e.target.value)
+      }
+    });
+  }}
+  inputProps={{ min: 0, max: 100, step: 1 }}
+  helperText="AI semantic similarity weight (0-100)"
+/>
+
+// Weight Total Validation
+const totalWeight = Object.values(config.weights).reduce((sum, w) => sum + w, 0);
+const diff = Math.abs(totalWeight - 100);
+const tolerance = 1; // 1% tolerance
+
+{diff > tolerance && (
+  <Alert severity="error">
+    Weight total must equal 100. Current: {totalWeight.toFixed(2)}
+  </Alert>
+)}
+```
+
+---
+
+## Phase 3: Machine Learning & Active Learning
+
+### Genel Bakış
+
+Phase 3, makine öğrenmesi yetenekleri ile eşleştirme kalitesini sürekli iyileştirir:
+- **Eğitim Verisi Toplama:** İnsan etiketli ilgili veriler
+- **Model Eğitimi:** LambdaMART sıralama modelleri
+- **Aktif Öğrenme:** Belirsiz çiftleri insan incelemesi için belirleme
+- **A/B Testi:** Farklı eşleştirme stratejilerini karşılaştırma
+
+### Gereksinimler
+
+**Backend Gereksinimleri:**
+- PostgreSQL 14+ (JSONB support)
+- Phase 3 API endpoints aktif olmalı
+- Model storage (S3 veya local)
+
+**Frontend Gereksinimleri:**
+- React 18.2+
+- TypeScript 5.3+
+- Material UI 5.15+
+- React Query 5.22+
+
+**Minimum Veri:**
+- İlk model için: 500 etiketli örnek
+- Production model için: 2000+ etiketli örnek
+- Önerilen: 5000+ örnek
+
+### Frontend Sayfaları
+
+#### 1. Training Examples (Eğitim Örnekleri) Sayfası
+
+**Rota:** `/cv-sharing/training`  
+**Dosya:** `src/pages/cv-sharing/training/TrainingExampleList.tsx`
+
+**Amaç:**
+İnsan etiketli CV-Pozisyon çiftlerini görüntüleme, yönetme ve dışa aktarma.
+
+**Özellikler:**
+- **Eğitim Örnekleri Listesi:** Tüm etiketli çiftler
+- **Filtreleme:** İlgili skor, tarih, CV, pozisyon bazlı
+- **Arama:** CV adı, pozisyon adı ile arama
+- **İstatistikler:** Toplam, etiketlenmiş, dışa aktarılmış sayıları
+- **Dışa Aktarma:** CSV/JSON formatında eğitim verisi dışa aktarma
+- **Oluşturma:** Yeni eğitim örneği oluşturma
+
+**Type Definitions:**
+
+```typescript
+// types/cv-sharing/training.ts
+export interface TrainingExample {
+  id: string;
+  companyUuid: string;
+  poolCvId: number;
+  poolCvName: string;
+  positionId: number;
+  positionTitle: string;
+  relevanceLabel: number;  // 0-5
+  matchScore: number;
+  annDistance: number;
+  rerankScore: number;
+  featuresSnapshot: Record<string, number>;
+  notes?: string;
+  labeledBy: string;
+  labeledByName: string;
+  labeledAt: string;
+  exported: boolean;
+  exportedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateTrainingExampleRequest {
+  poolCvId: number;
+  positionId: number;
+  relevanceLabel: number;  // 0-5, required
+  notes?: string;
+}
+
+export interface ExportTrainingDataRequest {
+  format: 'CSV' | 'JSON';
+  includeFeatures: boolean;
+  startDate?: string;
+  endDate?: string;
+  minRelevance?: number;  // 0-5
+  maxRelevance?: number;  // 0-5
+  includeExported?: boolean;
+}
+
+export interface TrainingStats {
+  totalExamples: number;
+  exportedExamples: number;
+  unexportedExamples: number;
+  byRelevanceLabel: Record<string, number>;  // "0": 50, "1": 100, etc.
+  averageRelevanceLabel: number;
+  lastExportedAt?: string;
+}
+```
+
+**API Service Kullanımı:**
+
+```typescript
+// services/cv-sharing/trainingService.ts
+import { trainingService } from '@/services/cv-sharing/trainingService';
+
+// 1. Eğitim örneklerini listele
+const { data: examples } = useQuery({
+  queryKey: ['training-examples', { page: 0, size: 20 }],
+  queryFn: () => trainingService.getTrainingExamples({
+    page: 0,
+    size: 20,
+    relevanceLabel: 4
+  })
+});
+
+// 2. Yeni eğitim örneği oluştur
+const createMutation = useMutation({
+  mutationFn: (data: CreateTrainingExampleRequest) =>
+    trainingService.createTrainingExample(data),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['training-examples'] });
+    enqueueSnackbar('Training example created', { variant: 'success' });
+  }
+});
+
+// Kullanım
+createMutation.mutate({
+  poolCvId: 123,
+  positionId: 456,
+  relevanceLabel: 4,
+  notes: "Strong match, candidate has all required skills"
+});
+
+// 3. Eğitim verisini dışa aktar
+const exportMutation = useMutation({
+  mutationFn: (request: ExportTrainingDataRequest) =>
+    trainingService.exportTrainingData(request),
+  onSuccess: (blob, variables) => {
+    // Download file
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `training-data-${Date.now()}.${variables.format.toLowerCase()}`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
+});
+
+// Kullanım
+exportMutation.mutate({
+  format: 'CSV',
+  includeFeatures: true,
+  startDate: '2024-01-01',
+  endDate: '2024-01-31',
+  minRelevance: 3,
+  maxRelevance: 5,
+  includeExported: false
+});
+
+// 4. İstatistikleri getir
+const { data: stats } = useQuery({
+  queryKey: ['training-stats'],
+  queryFn: () => trainingService.getTrainingStats()
+});
+```
+
+**Form Örneği (Training Example Oluşturma):**
+
+```typescript
+// TrainingExampleForm.tsx
+const [formData, setFormData] = useState<CreateTrainingExampleRequest>({
+  poolCvId: 0,
+  positionId: 0,
+  relevanceLabel: 3,
+  notes: ''
+});
+
+// Relevance Label seçimi
+<FormControl fullWidth>
+  <InputLabel>Relevance Label</InputLabel>
+  <Select
+    value={formData.relevanceLabel}
+    onChange={(e) => setFormData({ ...formData, relevanceLabel: Number(e.target.value) })}
+  >
+    <MenuItem value={0}>0 - Completely Irrelevant</MenuItem>
+    <MenuItem value={1}>1 - Slightly Relevant</MenuItem>
+    <MenuItem value={2}>2 - Somewhat Relevant</MenuItem>
+    <MenuItem value={3}>3 - Relevant</MenuItem>
+    <MenuItem value={4}>4 - Highly Relevant</MenuItem>
+    <MenuItem value={5}>5 - Perfect Match</MenuItem>
+  </Select>
+  <FormHelperText>
+    Rate how well this CV matches the position (0-5)
+  </FormHelperText>
+</FormControl>
+```
+
+**Kullanım Senaryoları:**
+
+**Senaryo 1: Manuel Etiketleme**
+1. Training Examples sayfasına gidin
+2. "Create Training Example" butonuna tıklayın
+3. PoolCV ve Position seçin
+4. İlgili skor verin (0-5)
+5. Notlar ekleyin
+6. Kaydedin
+
+**Senaryo 2: Toplu Dışa Aktarma**
+1. Training Examples sayfasına gidin
+2. Filtreleri uygulayın (isteğe bağlı)
+3. "Export Training Data" butonuna tıklayın
+4. Format seçin (CSV/JSON)
+5. Dosyayı indirin
+6. Data scientist'e gönderin
+
+**Senaryo 3: İstatistikleri Görüntüleme**
+1. Training Examples sayfasına gidin
+2. Üst kısımda istatistikler gösterilir:
+   - Toplam örnek sayısı
+   - Etiketlenmiş örnek sayısı
+   - Dışa aktarılmış örnek sayısı
+   - İlgili skor dağılımı
+
+#### 2. Review Tasks (İnceleme Görevleri) Sayfası
+
+**Rota:** `/cv-sharing/review-tasks`  
+**Dosya:** `src/pages/cv-sharing/review-tasks/ReviewTaskList.tsx`
+
+**Amaç:**
+Aktif öğrenme tarafından belirlenen belirsiz CV-Pozisyon çiftlerini inceleme ve etiketleme.
+
+**Özellikler:**
+- **Görev Listesi:** Tüm inceleme görevleri
+- **Durum Filtreleme:** PENDING, ASSIGNED, COMPLETED, CANCELLED
+- **Öncelik Göstergesi:** HIGH, MEDIUM, LOW
+- **Belirsizlik Skoru:** Sistem tarafından hesaplanan belirsizlik (0-1)
+- **Atama:** Görevleri kullanıcılara atama
+- **Tamamlama:** Görevleri tamamlama (etiket ekleme)
+- **Toplu İşlemler:** Birden fazla görevi seçerek toplu işlem
+
+**Type Definitions:**
+
+```typescript
+// types/cv-sharing/review-task.ts
+export type ReviewTaskStatus = 'PENDING' | 'ASSIGNED' | 'COMPLETED' | 'CANCELLED';
+export type ReviewTaskPriority = 'HIGH' | 'MEDIUM' | 'LOW';
+
+export interface ReviewTask {
+  id: string;
+  companyUuid: string;
+  poolCvId: number;
+  poolCvName: string;
+  positionId: number;
+  positionTitle: string;
+  uncertaintyScore: number;  // 0-1, higher = more uncertain
+  matchScore: number;        // 0-100
+  status: ReviewTaskStatus;
+  assignedTo?: string;
+  assignedToName?: string;
+  priority: ReviewTaskPriority;
+  completedAt?: string;
+  completedBy?: string;
+  relevanceLabel?: number;   // 0-5, set when completed
+  notes?: string;
+  reason?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CompleteReviewTaskRequest {
+  relevanceLabel: number;  // 0-5, required
+  notes?: string;
+}
+
+export interface ReviewTaskStats {
+  total: number;
+  pending: number;
+  assigned: number;
+  completed: number;
+  cancelled: number;
+  averageUncertaintyScore: number;
+}
+```
+
+**API Service Kullanımı:**
+
+```typescript
+// services/cv-sharing/reviewTaskService.ts
+import { reviewTaskService } from '@/services/cv-sharing/reviewTaskService';
+
+// 1. İnceleme görevlerini listele
+const { data: tasks } = useQuery({
+  queryKey: ['review-tasks', { status: 'PENDING' }],
+  queryFn: () => reviewTaskService.getReviewTasks({
+    page: 0,
+    size: 20,
+    status: 'PENDING'
+  })
+});
+
+// 2. Yeni görevler oluştur (aktif öğrenme)
+const generateMutation = useMutation({
+  mutationFn: () => reviewTaskService.generateReviewTasks({
+    maxTasks: 100,
+    uncertaintyThreshold: 0.5,
+    matchScoreMin: 40,
+    matchScoreMax: 70
+  }),
+  onSuccess: (data) => {
+    queryClient.invalidateQueries({ queryKey: ['review-tasks'] });
+    enqueueSnackbar(`${data.generated} review tasks generated`, { variant: 'success' });
+  }
+});
+
+// 3. Görevi tamamla (etiket ekle)
+const completeMutation = useMutation({
+  mutationFn: ({ taskId, data }: { taskId: string, data: CompleteReviewTaskRequest }) =>
+    reviewTaskService.completeReviewTask(taskId, data),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['review-tasks'] });
+    queryClient.invalidateQueries({ queryKey: ['training-examples'] });
+    enqueueSnackbar('Review task completed', { variant: 'success' });
+  }
+});
+
+// Kullanım
+completeMutation.mutate({
+  taskId: 'task-uuid',
+  data: {
+    relevanceLabel: 3,
+    notes: 'Moderate match, candidate has most skills but lacks some experience'
+  }
+});
+
+// 4. Görevi kullanıcıya ata
+const assignMutation = useMutation({
+  mutationFn: ({ taskId, userId }: { taskId: string, userId: string }) =>
+    reviewTaskService.assignReviewTask(taskId, userId),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['review-tasks'] });
+    enqueueSnackbar('Task assigned successfully', { variant: 'success' });
+  }
+});
+```
+
+**Component Örneği (Review Task Tamamlama):**
+
+```typescript
+// ReviewTaskDetail.tsx
+const [formData, setFormData] = useState<CompleteReviewTaskRequest>({
+  relevanceLabel: 3,
+  notes: ''
+});
+
+// Relevance Label slider
+<Box sx={{ mt: 2 }}>
+  <Typography gutterBottom>
+    Relevance Label: {formData.relevanceLabel}
+  </Typography>
+  <Slider
+    value={formData.relevanceLabel}
+    onChange={(_, value) => setFormData({ ...formData, relevanceLabel: value as number })}
+    min={0}
+    max={5}
+    step={1}
+    marks={[
+      { value: 0, label: '0 - Irrelevant' },
+      { value: 1, label: '1' },
+      { value: 2, label: '2' },
+      { value: 3, label: '3' },
+      { value: 4, label: '4' },
+      { value: 5, label: '5 - Perfect' }
+    ]}
+  />
+</Box>
+
+// Notes input
+<TextField
+  label="Notes"
+  multiline
+  rows={4}
+  value={formData.notes}
+  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+  helperText="Add notes about this match (optional)"
+  fullWidth
+/>
+
+// Complete button
+<Button
+  variant="contained"
+  onClick={() => completeMutation.mutate({ taskId: task.id, data: formData })}
+  disabled={completeMutation.isPending}
+>
+  {completeMutation.isPending ? <CircularProgress size={20} /> : 'Complete Task'}
+</Button>
+```
+
+**Kullanım Senaryoları:**
+
+**Senaryo 1: Günlük Aktif Öğrenme İş Akışı**
+1. Review Tasks sayfasına gidin
+2. "Generate Review Tasks" butonuna tıklayın (veya otomatik çalışır)
+3. Sistem belirsiz çiftleri belirler
+4. Görevler listelenir
+5. Her görevi inceleyin
+6. İlgili skor verin (0-5)
+7. Notlar ekleyin
+8. Tamamlayın
+
+**Senaryo 2: Görev Atama**
+1. Review Tasks sayfasına gidin
+2. Bir görevi seçin
+3. "Assign" butonuna tıklayın
+4. Kullanıcı seçin
+5. Görev atanır
+6. Atanan kullanıcı bildirim alır
+
+**Senaryo 3: Görev Detayı ve Tamamlama**
+1. Review Tasks sayfasından bir göreve tıklayın
+2. Review Task Detail sayfasına yönlendirilirsiniz
+3. CV ve Position detaylarını görüntüleyin
+4. Eşleşme skorunu inceleyin
+5. İlgili skor verin (0-5)
+6. Notlar ekleyin
+7. "Complete Task" butonuna tıklayın
+8. Görev tamamlanır ve eğitim örneği oluşturulur
+
+#### 3. Model Registry (Model Kayıt Defteri) Sayfası
+
+**Rota:** `/cv-sharing/models`  
+**Dosya:** `src/pages/cv-sharing/models/ModelRegistryList.tsx`
+
+**Amaç:**
+Eğitilmiş ML modellerini görüntüleme, yönetme ve etkinleştirme.
+
+**Özellikler:**
+- **Model Listesi:** Tüm kayıtlı modeller
+- **Durum Göstergesi:** TRAINING, READY, ACTIVE, DEPRECATED
+- **Metrikler:** NDCG, MAP gibi model metrikleri
+- **Etkinleştirme:** Modeli etkinleştirme (önceki model otomatik devre dışı kalır)
+- **Detaylar:** Model detaylarını görüntüleme
+- **Kayıt:** Yeni model kaydetme (data scientist için)
+
+**Type Definitions:**
+
+```typescript
+// types/cv-sharing/model.ts
+export type ModelType = 'LAMBDAMART' | 'NEURAL_RANKER' | 'LINEAR';
+export type ModelStatus = 'TRAINING' | 'READY' | 'ACTIVE' | 'DEPRECATED';
+
+export interface ModelRegistry {
+  id: string;
+  companyUuid?: string;
+  modelVersion: string;  // e.g., "v1.0.0"
+  modelType: ModelType;
+  modelPath: string;     // S3 path or local path
+  trainingConfig: Record<string, any>;  // Hyperparameters
+  metrics: {
+    'ndcg@10'?: number;
+    'ndcg@20'?: number;
+    'map'?: number;
+    'mrr'?: number;
+  };
+  trainingExamplesCount: number;
+  trainingDateFrom?: string;
+  trainingDateTo?: string;
+  status: ModelStatus;
+  isActive: boolean;
+  activatedAt?: string;
+  activatedBy?: string;
+  activatedByName?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ModelRegistryRequest {
+  modelVersion: string;
+  modelType: ModelType;
+  modelPath: string;
+  trainingConfig: Record<string, any>;
+  metrics: Record<string, number>;
+  trainingExamplesCount: number;
+  trainingDateFrom?: string;
+  trainingDateTo?: string;
+  notes?: string;
+}
+```
+
+**API Service Kullanımı:**
+
+```typescript
+// services/cv-sharing/modelRegistryService.ts
+import { modelRegistryService } from '@/services/cv-sharing/modelRegistryService';
+
+// 1. Modelleri listele
+const { data: models } = useQuery({
+  queryKey: ['models'],
+  queryFn: () => modelRegistryService.getModels()
+});
+
+// 2. Yeni model kaydet
+const registerMutation = useMutation({
+  mutationFn: (data: ModelRegistryRequest) =>
+    modelRegistryService.registerModel(data),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['models'] });
+    enqueueSnackbar('Model registered successfully', { variant: 'success' });
+  }
+});
+
+// Kullanım
+registerMutation.mutate({
+  modelVersion: 'v1.0.0',
+  modelType: 'LAMBDAMART',
+  modelPath: 's3://matching-models/company-uuid/lambdamart-v1.0.0.pkl',
+  trainingConfig: {
+    n_estimators: 100,
+    learning_rate: 0.1,
+    max_depth: 6
+  },
+  metrics: {
+    'ndcg@10': 0.85,
+    'map': 0.82
+  },
+  trainingExamplesCount: 2000,
+  trainingDateFrom: '2024-01-01',
+  trainingDateTo: '2024-01-31',
+  notes: 'First production model'
+});
+
+// 3. Modeli etkinleştir
+const activateMutation = useMutation({
+  mutationFn: (modelId: string) =>
+    modelRegistryService.activateModel(modelId),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['models'] });
+    queryClient.invalidateQueries({ queryKey: ['active-model'] });
+    enqueueSnackbar('Model activated successfully', { variant: 'success' });
+  }
+});
+
+// 4. Aktif modeli getir
+const { data: activeModel } = useQuery({
+  queryKey: ['active-model'],
+  queryFn: () => modelRegistryService.getActiveModel()
+});
+```
+
+**Component Örneği (Model Kayıt Formu):**
+
+```typescript
+// ModelRegistryForm.tsx
+const [formData, setFormData] = useState<ModelRegistryRequest>({
+  modelVersion: '',
+  modelType: 'LAMBDAMART',
+  modelPath: '',
+  trainingConfig: {},
+  metrics: {},
+  trainingExamplesCount: 0
+});
+
+// Model Version input
+<TextField
+  label="Model Version"
+  value={formData.modelVersion}
+  onChange={(e) => setFormData({ ...formData, modelVersion: e.target.value })}
+  placeholder="v1.0.0"
+  required
+  helperText="Version identifier (e.g., v1.0.0)"
+/>
+
+// Model Type select
+<FormControl fullWidth>
+  <InputLabel>Model Type</InputLabel>
+  <Select
+    value={formData.modelType}
+    onChange={(e) => setFormData({ ...formData, modelType: e.target.value as ModelType })}
+  >
+    <MenuItem value="LAMBDAMART">LambdaMART (Recommended)</MenuItem>
+    <MenuItem value="NEURAL_RANKER">Neural Ranker (Experimental)</MenuItem>
+    <MenuItem value="LINEAR">Linear (Baseline)</MenuItem>
+  </Select>
+</FormControl>
+
+// Metrics input (JSON)
+<TextField
+  label="Metrics (JSON)"
+  multiline
+  rows={4}
+  value={JSON.stringify(formData.metrics, null, 2)}
+  onChange={(e) => {
+    try {
+      setFormData({ ...formData, metrics: JSON.parse(e.target.value) });
+    } catch (err) {
+      // Invalid JSON
+    }
+  }}
+  helperText='Example: {"ndcg@10": 0.85, "map": 0.82}'
+/>
+```
+
+**Kullanım Senaryoları:**
+
+**Senaryo 1: Model Kaydı (Data Scientist)**
+1. Model Registry sayfasına gidin
+2. "Register New Model" butonuna tıklayın
+3. Model bilgilerini girin:
+   - Model Version (örn. "v1.0.0")
+   - Model Type (LambdaMART, Neural Ranker, etc.)
+   - Model Path (S3 veya local path)
+   - Training Config (JSON)
+   - Metrics (NDCG, MAP, etc.)
+4. Kaydedin
+
+**Senaryo 2: Model Etkinleştirme (HR Admin)**
+1. Model Registry sayfasına gidin
+2. Bir model seçin (durum: READY)
+3. Model detaylarını inceleyin
+4. Metrikleri kontrol edin
+5. "Activate" butonuna tıklayın
+6. Onaylayın
+7. Model etkinleştirilir, önceki model devre dışı kalır
+
+**Senaryo 3: Model Karşılaştırma**
+1. Model Registry sayfasına gidin
+2. Birden fazla modeli görüntüleyin
+3. Metrikleri karşılaştırın
+4. En iyi performans gösteren modeli seçin
+5. Etkinleştirin
+
+#### 4. A/B Tests (A/B Testleri) Sayfası
+
+**Rota:** `/cv-sharing/ab-tests`  
+**Dosya:** `src/pages/cv-sharing/ab-tests/AbTestList.tsx`
+
+**Amaç:**
+Farklı eşleştirme stratejilerini karşılaştırmak için A/B testleri oluşturma ve yönetme.
+
+**Özellikler:**
+- **Test Listesi:** Tüm A/B testleri
+- **Durum Yönetimi:** DRAFT, RUNNING, PAUSED, COMPLETED
+- **Varyant Yapılandırması:** Birden fazla varyant (baseline, model v1, model v2, etc.)
+- **Trafik Bölünmesi:** Varyantlar arası trafik yüzdesi (örn. 50/50, 33/33/34)
+- **Metrikler:** Test metrikleri (dönüşüm oranı, eşleşme kalitesi, etc.)
+- **Başlatma/Durdurma:** Testi başlatma, duraklatma, tamamlama
+
+**Type Definitions:**
+
+```typescript
+// types/cv-sharing/ab-test.ts
+export type AbTestStatus = 'DRAFT' | 'RUNNING' | 'PAUSED' | 'COMPLETED';
+
+export interface AbTestVariant {
+  name: string;              // e.g., "baseline", "lambdaMART-v1"
+  configId?: string;         // Matching config ID
+  modelId?: number;          // Model ID (if using ML model)
+  description?: string;
+}
+
+export interface TrafficSplit {
+  [variantName: string]: number;  // e.g., {"baseline": 50, "lambdaMART-v1": 50}
+}
+
+export interface AbTest {
+  id: string;
+  companyUuid?: string;
+  testName: string;
+  description?: string;
+  status: AbTestStatus;
+  startDate?: string;
+  endDate?: string;
+  variants: AbTestVariant[];
+  trafficSplit: TrafficSplit;
+  metrics?: {
+    [variantName: string]: {
+      totalMatches: number;
+      averageRelevanceLabel: number;
+      conversionRate: number;
+      averageTimeToFill: number;
+    };
+  };
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AbTestRequest {
+  testName: string;
+  description?: string;
+  startDate?: string;
+  endDate?: string;
+  variants: AbTestVariant[];
+  trafficSplit: TrafficSplit;
+}
+```
+
+**API Service Kullanımı:**
+
+```typescript
+// services/cv-sharing/abTestService.ts
+import { abTestService } from '@/services/cv-sharing/abTestService';
+
+// 1. A/B testlerini listele
+const { data: tests } = useQuery({
+  queryKey: ['ab-tests'],
+  queryFn: () => abTestService.getAbTests()
+});
+
+// 2. Yeni A/B testi oluştur
+const createMutation = useMutation({
+  mutationFn: (data: AbTestRequest) =>
+    abTestService.createAbTest(data),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['ab-tests'] });
+    enqueueSnackbar('A/B test created successfully', { variant: 'success' });
+  }
+});
+
+// Kullanım
+createMutation.mutate({
+  testName: 'baseline-vs-lambdamart-v1',
+  description: 'Compare baseline vs LambdaMART v1.0',
+  startDate: '2024-01-15',
+  endDate: '2024-01-29',
+  variants: [
+    {
+      name: 'baseline',
+      configId: 'config-uuid-1',
+      modelId: undefined,
+      description: 'Current baseline matching algorithm'
+    },
+    {
+      name: 'lambdaMART-v1',
+      configId: 'config-uuid-1',
+      modelId: 1,
+      description: 'LambdaMART v1.0.0 model'
+    }
+  ],
+  trafficSplit: {
+    'baseline': 50,
+    'lambdaMART-v1': 50
+  }
+});
+
+// 3. Testi başlat
+const startMutation = useMutation({
+  mutationFn: (testId: string) =>
+    abTestService.startAbTest(testId),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['ab-tests'] });
+    enqueueSnackbar('A/B test started', { variant: 'success' });
+  }
+});
+
+// 4. Testi tamamla
+const completeMutation = useMutation({
+  mutationFn: (testId: string) =>
+    abTestService.completeAbTest(testId),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['ab-tests'] });
+    enqueueSnackbar('A/B test completed', { variant: 'success' });
+  }
+});
+```
+
+**Component Örneği (A/B Test Oluşturma):**
+
+```typescript
+// AbTestForm.tsx
+const [variants, setVariants] = useState<AbTestVariant[]>([
+  { name: 'baseline', configId: '', modelId: undefined }
+]);
+const [trafficSplit, setTrafficSplit] = useState<TrafficSplit>({
+  'baseline': 50
+});
+
+// Varyant ekleme
+const addVariant = () => {
+  setVariants([...variants, { name: '', configId: '', modelId: undefined }]);
+  setTrafficSplit({ ...trafficSplit, '': 0 });
+};
+
+// Trafik bölünmesi validasyonu
+const totalTraffic = Object.values(trafficSplit).reduce((sum, v) => sum + v, 0);
+const isValid = totalTraffic === 100 && variants.length >= 2;
+
+// Trafik yüzdesi input
+{variants.map((variant, index) => (
+  <TextField
+    key={index}
+    label={`${variant.name} Traffic %`}
+    type="number"
+    value={trafficSplit[variant.name] || 0}
+    onChange={(e) => {
+      setTrafficSplit({
+        ...trafficSplit,
+        [variant.name]: Number(e.target.value)
+      });
+    }}
+    inputProps={{ min: 0, max: 100, step: 1 }}
+    helperText={`Total must equal 100 (Current: ${totalTraffic})`}
+  />
+))}
+```
+
+**Kullanım Senaryoları:**
+
+**Senaryo 1: Baseline vs. ML Model Testi**
+1. A/B Tests sayfasına gidin
+2. "Create A/B Test" butonuna tıklayın
+3. Test bilgilerini girin:
+   - Test Name (örn. "Baseline vs LambdaMART v1.0")
+   - Description
+   - Start Date / End Date
+4. Varyantları yapılandırın:
+   - Varyant 1: Baseline (mevcut eşleştirme)
+   - Varyant 2: LambdaMART model (yeni)
+5. Trafik bölünmesini ayarlayın (50/50)
+6. Kaydedin
+7. "Start Test" butonuna tıklayın
+8. Test çalışmaya başlar
+
+**Senaryo 2: Test Metriklerini İzleme**
+1. A/B Tests sayfasına gidin
+2. Çalışan bir testi seçin
+3. Test detaylarını görüntüleyin
+4. Metrikleri inceleyin:
+   - Match quality (ortalama ilgili skor)
+   - Conversion rate (eşleşmeler → başvurular)
+   - Time to fill position
+5. Varyantları karşılaştırın
+6. Kazanan varyantı belirleyin
+
+**Senaryo 3: Test Tamamlama ve Model Etkinleştirme**
+1. A/B Tests sayfasına gidin
+2. Tamamlanmış bir testi seçin
+3. Metrikleri analiz edin
+4. Kazanan varyantı belirleyin
+5. Eğer ML model kazandıysa:
+   - Model Registry'ye gidin
+   - Modeli etkinleştirin
+6. Testi "Complete" olarak işaretleyin
+
+### Frontend API Entegrasyonu
+
+**Kullanılan Servisler:**
+
+**Training Service:**
+- `trainingService.getTrainingExamples()` - Eğitim örneklerini listele
+- `trainingService.createTrainingExample()` - Yeni eğitim örneği oluştur
+- `trainingService.exportTrainingData()` - Eğitim verisini dışa aktar
+- `trainingService.getTrainingStats()` - İstatistikleri getir
+
+**Review Task Service:**
+- `reviewTaskService.getReviewTasks()` - İnceleme görevlerini listele
+- `reviewTaskService.generateReviewTasks()` - Yeni görevler oluştur
+- `reviewTaskService.completeReviewTask()` - Görevi tamamla (etiket ekle)
+- `reviewTaskService.assignReviewTask()` - Görevi kullanıcıya ata
+
+**Model Registry Service:**
+- `modelRegistryService.getModels()` - Modelleri listele
+- `modelRegistryService.registerModel()` - Yeni model kaydet
+- `modelRegistryService.activateModel()` - Modeli etkinleştir
+- `modelRegistryService.getActiveModel()` - Aktif modeli getir
+
+**A/B Test Service:**
+- `abTestService.getAbTests()` - A/B testlerini listele
+- `abTestService.createAbTest()` - Yeni A/B testi oluştur
+- `abTestService.startAbTest()` - Testi başlat
+- `abTestService.completeAbTest()` - Testi tamamla
+
+### UI Component Örnekleri
+
+**Training Example List Table:**
+
+```typescript
+// TrainingExampleList.tsx - DataGrid columns
+const columns = [
+  { field: 'poolCvName', headerName: 'CV Name', width: 200 },
+  { field: 'positionTitle', headerName: 'Position', width: 200 },
+  { field: 'relevanceLabel', headerName: 'Relevance', width: 120,
+    renderCell: (params) => (
+      <Chip 
+        label={params.value}
+        color={
+          params.value >= 4 ? 'success' : 
+          params.value >= 3 ? 'warning' : 
+          'default'
+        }
+      />
+    )
+  },
+  { field: 'matchScore', headerName: 'Match Score', width: 120 },
+  { field: 'labeledByName', headerName: 'Labeled By', width: 150 },
+  { field: 'labeledAt', headerName: 'Labeled At', width: 180,
+    renderCell: (params) => format(new Date(params.value), 'yyyy-MM-dd HH:mm')
+  }
+];
+```
+
+**Review Task Priority Badge:**
+
+```typescript
+// ReviewTaskList.tsx - Priority indicator
+const getPriorityColor = (priority: ReviewTaskPriority) => {
+  switch (priority) {
+    case 'HIGH': return 'error';
+    case 'MEDIUM': return 'warning';
+    case 'LOW': return 'info';
+    default: return 'default';
+  }
+};
+
+<Chip 
+  label={task.priority}
+  color={getPriorityColor(task.priority)}
+  size="small"
+/>
+
+// Uncertainty Score indicator
+<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+  <Typography variant="caption">Uncertainty:</Typography>
+  <LinearProgress 
+    variant="determinate" 
+    value={task.uncertaintyScore * 100} 
+    sx={{ width: 100, height: 8 }}
+  />
+  <Typography variant="caption">
+    {(task.uncertaintyScore * 100).toFixed(1)}%
+  </Typography>
+</Box>
+```
+
+**Model Metrics Display:**
+
+```typescript
+// ModelDetail.tsx - Metrics visualization
+<Grid container spacing={2}>
+  <Grid item xs={6}>
+    <Card>
+      <CardContent>
+        <Typography variant="h6">NDCG@10</Typography>
+        <Typography variant="h4" color="primary">
+          {model.metrics['ndcg@10']?.toFixed(3) || 'N/A'}
+        </Typography>
+      </CardContent>
+    </Card>
+  </Grid>
+  <Grid item xs={6}>
+    <Card>
+      <CardContent>
+        <Typography variant="h6">MAP</Typography>
+        <Typography variant="h4" color="primary">
+          {model.metrics['map']?.toFixed(3) || 'N/A'}
+        </Typography>
+      </CardContent>
+    </Card>
+  </Grid>
+</Grid>
+
+// Model status badge
+<Chip 
+  label={model.status}
+  color={
+    model.status === 'ACTIVE' ? 'success' :
+    model.status === 'READY' ? 'info' :
+    model.status === 'TRAINING' ? 'warning' :
+    'default'
+  }
+  icon={model.isActive ? <CheckCircleIcon /> : undefined}
+/>
+```
+
+**A/B Test Metrics Comparison:**
+
+```typescript
+// AbTestDetail.tsx - Metrics comparison chart
+<Box sx={{ mt: 3 }}>
+  <Typography variant="h6">Metrics Comparison</Typography>
+  <Table>
+    <TableHead>
+      <TableRow>
+        <TableCell>Metric</TableCell>
+        {abTest.variants.map(v => (
+          <TableCell key={v.name} align="right">{v.name}</TableCell>
+        ))}
+      </TableRow>
+    </TableHead>
+    <TableBody>
+      <TableRow>
+        <TableCell>Average Relevance Label</TableCell>
+        {abTest.variants.map(v => (
+          <TableCell key={v.name} align="right">
+            {abTest.metrics?.[v.name]?.averageRelevanceLabel.toFixed(2)}
+          </TableCell>
+        ))}
+      </TableRow>
+      <TableRow>
+        <TableCell>Conversion Rate</TableCell>
+        {abTest.variants.map(v => (
+          <TableCell key={v.name} align="right">
+            {(abTest.metrics?.[v.name]?.conversionRate * 100).toFixed(2)}%
+          </TableCell>
+        ))}
+      </TableRow>
+    </TableBody>
+  </Table>
+</Box>
+```
+
+### Menü Entegrasyonu
+
+**MainLayout.tsx'te Yeni Menü Öğeleri:**
+
+```typescript
+// CV Sharing alt menüsüne eklendi:
+{
+  text: 'Review Tasks',
+  icon: <TaskIcon />,
+  path: '/cv-sharing/review-tasks',
+  roles: ['HUMAN_RESOURCES', 'COMPANY_MANAGER']
+},
+{
+  text: 'Training',
+  icon: <SchoolIcon />,
+  path: '/cv-sharing/training',
+  roles: ['HUMAN_RESOURCES', 'COMPANY_MANAGER']
+},
+{
+  text: 'Models',
+  icon: <ModelTrainingIcon />,
+  path: '/cv-sharing/models',
+  roles: ['HUMAN_RESOURCES', 'COMPANY_MANAGER']
+},
+{
+  text: 'A/B Tests',
+  icon: <ScienceIcon />,
+  path: '/cv-sharing/ab-tests',
+  roles: ['HUMAN_RESOURCES', 'COMPANY_MANAGER']
+}
+```
+
+### Kullanım Senaryoları (Tam İş Akışı)
+
+#### Senaryo 1: Tam ML İş Akışı (HR + Data Scientist)
+
+1. **Veri Toplama (HR):**
+   - HR ekibi 1 ay boyunca eşleşmeleri etiketler (1000+ örnek)
+   - Review Tasks sayfasından günlük görevleri tamamlar
+   - Training Examples sayfasından manuel örnekler oluşturur
+
+2. **Veri Dışa Aktarma (HR):**
+   - Training Examples sayfasından "Export Training Data" butonuna tıklar
+   - CSV/JSON formatında indirir
+   - Data scientist'e gönderir
+
+3. **Model Eğitimi (Data Scientist):**
+   - Eğitim verisini alır
+   - LambdaMART modelini offline eğitir
+   - Modeli değerlendirir (NDCG, MAP metrikleri)
+
+4. **Model Kaydı (Data Scientist):**
+   - Model Registry sayfasına gider
+   - "Register New Model" butonuna tıklar
+   - Model bilgilerini ve metriklerini girer
+   - Model dosyasını S3'e yükler
+   - Modeli kaydeder
+
+5. **A/B Testi (HR Admin):**
+   - A/B Tests sayfasına gider
+   - "Create A/B Test" butonuna tıklar
+   - Baseline vs. LambdaMART testi oluşturur
+   - 50/50 trafik bölünmesi ayarlar
+   - Testi başlatır
+
+6. **İzleme (HR Admin):**
+   - 2 hafta boyunca test metriklerini izler
+   - Varyantları karşılaştırır
+   - LambdaMART'ın daha iyi performans gösterdiğini görür
+
+7. **Model Etkinleştirme (HR Admin):**
+   - Model Registry sayfasına gider
+   - LambdaMART modelini seçer
+   - "Activate" butonuna tıklar
+   - Model etkinleştirilir, tüm eşleşmeler yeni modeli kullanır
+
+#### Senaryo 2: Günlük Aktif Öğrenme İş Akışı (HR)
+
+1. **Günlük Görev Oluşturma (Otomatik):**
+   - Sistem her gece 2'de belirsiz çiftleri belirler
+   - Review Tasks oluşturulur
+
+2. **Görev İnceleme (HR):**
+   - HR ekibi Review Tasks sayfasına gider
+   - Pending görevleri görüntüler
+   - Her görevi açar ve inceler
+
+3. **Etiketleme (HR):**
+   - CV ve Position detaylarını görüntüler
+   - İlgili skor verir (0-5)
+   - Notlar ekler
+   - Görevi tamamlar
+
+4. **Sürekli İyileştirme:**
+   - Etiketler eğitim örneklerine dönüşür
+   - Aylık olarak veri dışa aktarılır
+   - Yeni model eğitilir ve dağıtılır
+
+### Performans ve Kullanılabilirlik
+
+**Frontend Optimizasyonları:**
+- **Lazy Loading:** Phase 3 sayfaları lazy load edilir
+- **Caching:** React Query ile 5 dakika cache
+- **Optimistic Updates:** İşlemlerde anlık UI güncellemesi
+- **Error Handling:** Kapsamlı hata yönetimi ve kullanıcı bildirimleri
+
+**Kullanıcı Deneyimi:**
+- **Loading States:** Tüm API çağrılarında loading göstergeleri
+- **Empty States:** Veri yoksa bilgilendirici mesajlar
+- **Success/Error Messages:** İşlem sonuçları için snackbar bildirimleri
+- **Form Validation:** Tüm formlarda client-side validasyon
+
+---
+
 ## Sürüm Geçmişi
 
 ### v1.0.0 (2024)
@@ -2111,3 +3524,5 @@ MIT
 - Çalışan, Şirket, Departman yönetimi
 - Masraf yönetimi
 - Raporlama modülü
+- **Phase 2: AI-Enhanced Matching** (Embeddings, ANN Search, Re-ranking)
+- **Phase 3: Machine Learning & Active Learning** (Training Examples, Review Tasks, Model Registry, A/B Testing)
