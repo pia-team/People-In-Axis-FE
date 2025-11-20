@@ -49,7 +49,7 @@ import { useSnackbar } from 'notistack';
 import { poolCVService } from '@/services/cv-sharing';
 import { PoolCV, PagedResponse } from '@/types/cv-sharing';
 import { MatchedPosition } from '@/types/cv-sharing/matched-position';
-import { useKeycloak } from '@/hooks/useKeycloak';
+import { useKeycloak } from '@/providers/KeycloakProvider';
 import PageContainer from '@/components/ui/PageContainer';
 import SectionCard from '@/components/ui/SectionCard';
 import { Tooltip as MuiTooltip } from '@mui/material';
@@ -67,6 +67,7 @@ const PoolCVList: React.FC = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { hasAnyRole } = useKeycloak();
   const canEdit = hasAnyRole(['COMPANY_MANAGER', 'ADMIN']);
+  // Note: COMPANY_MANAGER filtering is now handled server-side in the backend
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [experienceFilter, setExperienceFilter] = useState<string>('all');
@@ -101,7 +102,12 @@ const PoolCVList: React.FC = () => {
 
 
   const poolCVs = (data?.content || []);
-  const filteredPoolCVs = poolCVs.filter(cv =>
+  
+  // Backend now handles COMPANY_MANAGER filtering server-side
+  // No need for client-side filtering as backend returns only CVs created by COMPANY_MANAGER
+  const companyManagerFilteredCVs = poolCVs;
+  
+  const filteredPoolCVs = companyManagerFilteredCVs.filter(cv =>
     cv.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     cv.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     cv.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -132,6 +138,9 @@ const PoolCVList: React.FC = () => {
       // Refresh dialog data
       const positions = await poolCVService.matchPositionsForPoolCV(cvId);
       setMatchDialog(md => ({ ...md, positions }));
+      // Invalidate position caches to refresh applications count and list
+      await queryClient.invalidateQueries({ queryKey: ['position', positionId] });
+      await queryClient.invalidateQueries({ queryKey: ['position-matches', positionId] });
     } catch (error) {
       enqueueSnackbar('Failed to record match', { variant: 'error' });
     } finally {

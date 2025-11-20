@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Paper, Typography, TextField, Button, Stack, Divider, Rating, LinearProgress } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
+import { useQueryClient } from '@tanstack/react-query';
 import { applicationService } from '@/services/cv-sharing';
 import { ApplicationDetail, ApplicationStatus } from '@/types/cv-sharing';
 
@@ -9,6 +10,7 @@ const ApplicationReview: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [detail, setDetail] = useState<ApplicationDetail | null>(null);
   const [comment, setComment] = useState('');
@@ -70,7 +72,10 @@ const ApplicationReview: React.FC = () => {
       setSaving(true);
       await applicationService.updateApplicationStatus(id, { status });
       enqueueSnackbar(`Application ${status.toLowerCase()}`, { variant: 'success' });
-      navigate(`/applications/${id}`);
+      // Invalidate both detail and list caches
+      await queryClient.invalidateQueries({ queryKey: ['application', id] });
+      await queryClient.invalidateQueries({ queryKey: ['applications'] });
+      navigate(`/cv-sharing/applications/${id}`);
     } catch (e) {
       enqueueSnackbar('Failed to update status', { variant: 'error' });
     } finally {

@@ -230,6 +230,8 @@ export interface PoolCV {
   updatedAt: string;
   // Optional aggregate data for UI
   fileCount?: number;
+  createdById?: string;
+  createdByName?: string;
 }
 
 export interface PoolCVDetail extends PoolCV {

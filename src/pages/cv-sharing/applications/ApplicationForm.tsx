@@ -184,7 +184,7 @@ const ApplicationForm: React.FC = () => {
         await applicationService.uploadFiles(created.id, uploadedFiles);
       }
       enqueueSnackbar('Application submitted successfully!', { variant: 'success' });
-      navigate(`/applications/${created.id}`);
+      navigate(`/cv-sharing/applications/${created.id}`);
     } catch (error: any) {
       enqueueSnackbar(error.message || 'Failed to submit application', { variant: 'error' });
     } finally {

@@ -59,12 +59,29 @@ import AllMeetingsCalendar from '@/pages/meetings/AllMeetingsCalendar';
 const ApplicationDetail = lazy(() => import('@/pages/cv-sharing/applications/ApplicationDetail'));
 const ApplicationForm = lazy(() => import('@/pages/cv-sharing/applications/ApplicationForm'));
 const ForwardDialog = lazy(() => import('@/pages/cv-sharing/applications/ForwardDialog'));
-const ApplicationReview = lazy(() => import('@/pages/cv-sharing/applications/ApplicationReview'));
 const MeetingScheduler = lazy(() => import('@/pages/cv-sharing/applications/MeetingScheduler'));
 const PoolCVList = lazy(() => import('@/pages/cv-sharing/pool-cvs/PoolCVList'));
 const PoolCVDetail = lazy(() => import('@/pages/cv-sharing/pool-cvs/PoolCVDetail'));
 const PoolCVForm = lazy(() => import('@/pages/cv-sharing/pool-cvs/PoolCVForm'));
 const MatchingSettings = lazy(() => import('@/pages/cv-sharing/settings/MatchingSettings'));
+
+// Phase 3 - Training
+const TrainingExampleList = lazy(() => import('@/pages/cv-sharing/training/TrainingExampleList'));
+const TrainingExampleForm = lazy(() => import('@/pages/cv-sharing/training/TrainingExampleForm'));
+
+// Phase 3 - Review Tasks
+const ReviewTaskList = lazy(() => import('@/pages/cv-sharing/review-tasks/ReviewTaskList'));
+const ReviewTaskDetail = lazy(() => import('@/pages/cv-sharing/review-tasks/ReviewTaskDetail'));
+
+// Phase 3 - Model Registry
+const ModelRegistryList = lazy(() => import('@/pages/cv-sharing/models/ModelRegistryList'));
+const ModelRegistryForm = lazy(() => import('@/pages/cv-sharing/models/ModelRegistryForm'));
+const ModelDetail = lazy(() => import('@/pages/cv-sharing/models/ModelDetail'));
+
+// Phase 3 - A/B Tests
+const AbTestList = lazy(() => import('@/pages/cv-sharing/ab-tests/AbTestList'));
+const AbTestForm = lazy(() => import('@/pages/cv-sharing/ab-tests/AbTestForm'));
+const AbTestDetail = lazy(() => import('@/pages/cv-sharing/ab-tests/AbTestDetail'));
 
 // Reports pages
 const Reports = lazy(() => import('@/pages/reports/Reports'));
@@ -236,11 +253,13 @@ const App: React.FC = () => {
             </Route>
 
             {/* CV Sharing - Applications */}
-            <Route path="/cv-sharing/applications">
+            <Route
+              path="/cv-sharing/applications"
+              element={<PrivateRoute roles={["HUMAN_RESOURCES", "MANAGER"]} />}
+            >
               <Route index element={<ApplicationList />} />
               <Route path="new/:positionId" element={<ApplicationForm />} />
               <Route path=":id" element={<ApplicationDetail />} />
-              <Route path=":id/review" element={<ApplicationReview />} />
               <Route path=":id/forward" element={<ForwardDialog />} />
               <Route path=":id/meetings" element={<MeetingScheduler />} />
               <Route path=":id/scheduler" element={<MeetingScheduler />} />
@@ -262,9 +281,49 @@ const App: React.FC = () => {
             {/* CV Sharing - Settings (Matching) */}
             <Route
               path="/cv-sharing/settings"
-              element={<PrivateRoute roles={["HUMAN_RESOURCES", "COMPANY_MANAGER", "EMPLOYEE"]} />}
+              element={<PrivateRoute roles={["HUMAN_RESOURCES"]} />}
             >
               <Route path="matching" element={<MatchingSettings />} />
+            </Route>
+
+            {/* CV Sharing - Training Examples (Phase 3) */}
+            <Route
+              path="/cv-sharing/training"
+              element={<PrivateRoute roles={["HUMAN_RESOURCES", "SYSTEM_ADMIN"]} />}
+            >
+              <Route index element={<TrainingExampleList />} />
+              <Route path="new" element={<TrainingExampleForm />} />
+              <Route path=":id" element={<TrainingExampleForm />} />
+              <Route path=":id/edit" element={<TrainingExampleForm />} />
+            </Route>
+
+            {/* CV Sharing - Review Tasks (Phase 3) */}
+            <Route
+              path="/cv-sharing/review-tasks"
+              element={<PrivateRoute roles={["HUMAN_RESOURCES", "SYSTEM_ADMIN"]} />}
+            >
+              <Route index element={<ReviewTaskList />} />
+              <Route path=":id" element={<ReviewTaskDetail />} />
+            </Route>
+
+            {/* CV Sharing - Model Registry (Phase 3) */}
+            <Route
+              path="/cv-sharing/models"
+              element={<PrivateRoute roles={["HUMAN_RESOURCES", "SYSTEM_ADMIN"]} />}
+            >
+              <Route index element={<ModelRegistryList />} />
+              <Route path="new" element={<ModelRegistryForm />} />
+              <Route path=":id" element={<ModelDetail />} />
+            </Route>
+
+            {/* CV Sharing - A/B Tests (Phase 3) */}
+            <Route
+              path="/cv-sharing/ab-tests"
+              element={<PrivateRoute roles={["HUMAN_RESOURCES", "SYSTEM_ADMIN"]} />}
+            >
+              <Route index element={<AbTestList />} />
+              <Route path="new" element={<AbTestForm />} />
+              <Route path=":id" element={<AbTestDetail />} />
             </Route>
 
             {/* Admin */}
