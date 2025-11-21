@@ -6,7 +6,7 @@
     "realm": [
       { "name": "ADMIN", "description": "people-in-axis", "composite": false, "clientRole": false },
       { "name": "HUMAN_RESOURCES", "description": "people-in-axis", "composite": false, "clientRole": false },
-      { "name": "TEAM_MANAGER", "description": "people-in-axis", "composite": false, "clientRole": false },
+      { "name": "MANAGER", "description": "people-in-axis", "composite": false, "clientRole": false },
       { "name": "FINANCE", "description": "people-in-axis", "composite": false, "clientRole": false },
       { "name": "COMPANY_MANAGER", "description": "people-in-axis", "composite": false, "clientRole": false },
       { "name": "EMPLOYEE", "description": "people-in-axis", "composite": false, "clientRole": false }
@@ -82,7 +82,7 @@
       "credentials": [
         { "type": "password", "value": "ChangeMe123!", "temporary": true }
       ],
-      "realmRoles": ["TEAM_MANAGER", "EMPLOYEE"]
+      "realmRoles": ["MANAGER", "EMPLOYEE"]
     },
     {
       "username": "companymgr1@company.local",

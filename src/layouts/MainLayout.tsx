@@ -108,9 +108,9 @@ const getMenuItems = (t: (key: string) => string): MenuItemType[] => [
     icon: <AccessTime />,
     children: [
       { title: t('navigation.myTimesheets'), path: '/timesheets/my', icon: <ListAlt /> },
-      { title: t('navigation.allTimesheets'), path: '/timesheets', icon: <AssignmentInd />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES'] },
-      { title: t('navigation.assignedRows'), path: '/timesheets/assigned', icon: <AssignmentTurnedIn />, roles: ['TEAM_MANAGER'] },
-      { title: t('navigation.approval'), path: '/timesheets/approval', icon: <FactCheck />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES'] },
+      { title: t('navigation.allTimesheets'), path: '/timesheets', icon: <AssignmentInd />, roles: ['MANAGER', 'HUMAN_RESOURCES'] },
+      { title: t('navigation.assignedRows'), path: '/timesheets/assigned', icon: <AssignmentTurnedIn />, roles: ['MANAGER'] },
+      { title: t('navigation.approval'), path: '/timesheets/approval', icon: <FactCheck />, roles: ['MANAGER', 'HUMAN_RESOURCES'] },
       { title: t('navigation.adminApproval'), path: '/timesheets/admin-approval', icon: <AdminPanelSettings />, roles: ['ADMIN'] },
       { title: t('navigation.importTimesheets'), path: '/timesheets/import', icon: <UploadFile />, roles: ['HUMAN_RESOURCES', 'COMPANY_MANAGER'] },
     ],
@@ -120,8 +120,8 @@ const getMenuItems = (t: (key: string) => string): MenuItemType[] => [
     icon: <ReceiptLong />,
     children: [
       { title: t('navigation.myExpenses'), path: '/expenses/my', icon: <Receipt /> },
-      { title: t('navigation.allExpenses'), path: '/expenses', icon: <RequestQuote />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES', 'FINANCE'] },
-      { title: t('navigation.approval'), path: '/expenses/approval', icon: <FactCheck />, roles: ['TEAM_MANAGER', 'HUMAN_RESOURCES', 'FINANCE'] },
+      { title: t('navigation.allExpenses'), path: '/expenses', icon: <RequestQuote />, roles: ['MANAGER', 'HUMAN_RESOURCES', 'FINANCE'] },
+      { title: t('navigation.approval'), path: '/expenses/approval', icon: <FactCheck />, roles: ['MANAGER', 'HUMAN_RESOURCES', 'FINANCE'] },
     ],
   },
   {
@@ -213,10 +213,10 @@ const MainLayout: React.FC = () => {
   const dispatch = useDispatch();
   const { sidebarOpen } = useSelector((state: RootState) => state.ui);
   const { tokenParsed, logout, hasAnyRole } = useKeycloak();
-  
+
   // Get menu items with translations
   const menuItems = useMemo(() => getMenuItems(t), [t]);
-  const showManagerCounts = hasAnyRole(['TEAM_MANAGER', 'HUMAN_RESOURCES']);
+  const showManagerCounts = hasAnyRole(['MANAGER', 'HUMAN_RESOURCES']);
   const { data: managerPendingCount } = useQuery({
     queryKey: ['timesheets', 'manager-pending', 'count'],
     queryFn: timeSheetService.getManagerPendingCount,
@@ -228,7 +228,7 @@ const MainLayout: React.FC = () => {
     queryFn: timeSheetService.getAdminPendingCount,
     enabled: showAdminCounts,
   });
-  const showTeamLeadCounts = hasAnyRole(['TEAM_MANAGER']);
+  const showTeamLeadCounts = hasAnyRole(['MANAGER']);
   const { data: teamLeadAssignedCount } = useQuery({
     queryKey: ['timesheets', 'teamlead-assigned', 'count'],
     queryFn: timeSheetService.getTeamLeadAssignedCount,
@@ -301,13 +301,13 @@ const MainLayout: React.FC = () => {
   // Sync current language state with i18n
   useEffect(() => {
     setCurrentLang(i18n.language || 'en');
-    
+
     const handleLanguageChange = () => {
       setCurrentLang(i18n.language || 'en');
     };
-    
+
     i18n.on('languageChanged', handleLanguageChange);
-    
+
     return () => {
       i18n.off('languageChanged', handleLanguageChange);
     };
@@ -315,7 +315,7 @@ const MainLayout: React.FC = () => {
 
   const openLangMenu = (e: React.MouseEvent<HTMLElement>) => setLangAnchor(e.currentTarget);
   const closeLangMenu = () => setLangAnchor(null);
-  
+
   const changeLang = async (code: string) => {
     try {
       // Change language - this will trigger languageChanged event
@@ -323,7 +323,7 @@ const MainLayout: React.FC = () => {
       // Backend translations are loaded async if static file doesn't exist
       await i18n.changeLanguage(code);
       setCurrentLang(code);
-      
+
       // Trigger custom event to notify App.tsx about language change
       // This ensures the key prop in App.tsx updates and forces re-render
       window.dispatchEvent(new CustomEvent('i18n:languageChanged', { detail: { language: code } }));
@@ -577,12 +577,12 @@ const MainLayout: React.FC = () => {
               </MenuItem>
             )}
           </Menu>
-          <IconButton 
-            size="large" 
-            color="inherit" 
-            onClick={openLangMenu} 
-            aria-label="Change language" 
-            sx={{ 
+          <IconButton
+            size="large"
+            color="inherit"
+            onClick={openLangMenu}
+            aria-label="Change language"
+            sx={{
               ml: 0.5,
               '&:hover': {
                 backgroundColor: 'action.hover',
@@ -591,9 +591,9 @@ const MainLayout: React.FC = () => {
           >
             <LanguageIcon />
           </IconButton>
-          <Menu 
-            anchorEl={langAnchor} 
-            open={Boolean(langAnchor)} 
+          <Menu
+            anchorEl={langAnchor}
+            open={Boolean(langAnchor)}
             onClose={closeLangMenu}
             anchorOrigin={{
               vertical: 'bottom',
@@ -628,9 +628,9 @@ const MainLayout: React.FC = () => {
             {(availableLangs.length > 0 ? availableLangs : [{ code: 'en', name: 'English' }]).map(l => {
               const isSelected = currentLang === l.code || i18n.language === l.code;
               return (
-                <MenuItem 
-                  key={l.code} 
-                  selected={isSelected} 
+                <MenuItem
+                  key={l.code}
+                  selected={isSelected}
                   onClick={() => changeLang(l.code)}
                   sx={{
                     display: 'flex',
@@ -657,7 +657,7 @@ const MainLayout: React.FC = () => {
                     >
                       {l.code.toUpperCase()}
                     </Box>
-                    <ListItemText 
+                    <ListItemText
                       primary={l.name}
                       secondary={l.code.toUpperCase()}
                       primaryTypographyProps={{
@@ -671,12 +671,12 @@ const MainLayout: React.FC = () => {
                     />
                   </Box>
                   {isSelected && (
-                    <CheckIcon 
-                      sx={{ 
+                    <CheckIcon
+                      sx={{
                         color: 'primary.main',
                         fontSize: 20,
                         ml: 1,
-                      }} 
+                      }}
                     />
                   )}
                 </MenuItem>

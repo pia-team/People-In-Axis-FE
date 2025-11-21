@@ -46,17 +46,17 @@
   {
     "module": "Core - Timesheets",
     "endpoints": [
-      {"method": "GET", "path": "/api/timesheets", "description": "List timesheets", "roles": ["TEAM_MANAGER", "HUMAN_RESOURCES"]},
+      {"method": "GET", "path": "/api/timesheets", "description": "List timesheets", "roles": ["MANAGER", "HUMAN_RESOURCES"]},
       {"method": "POST", "path": "/api/timesheets", "description": "Create timesheet", "roles": ["EMPLOYEE"]},
-      {"method": "PUT", "path": "/api/timesheets/:id/status", "description": "Update status", "roles": ["TEAM_MANAGER", "HUMAN_RESOURCES"]}
+      {"method": "PUT", "path": "/api/timesheets/:id/status", "description": "Update status", "roles": ["MANAGER", "HUMAN_RESOURCES"]}
     ]
   },
   {
     "module": "Core - Expenses",
     "endpoints": [
-      {"method": "GET", "path": "/api/expenses", "description": "List expenses", "roles": ["TEAM_MANAGER", "FINANCE", "HUMAN_RESOURCES"]},
+      {"method": "GET", "path": "/api/expenses", "description": "List expenses", "roles": ["MANAGER", "FINANCE", "HUMAN_RESOURCES"]},
       {"method": "POST", "path": "/api/expenses", "description": "Create expense", "roles": ["EMPLOYEE"]},
-      {"method": "PUT", "path": "/api/expenses/:id/status", "description": "Update status", "roles": ["TEAM_MANAGER", "FINANCE", "HUMAN_RESOURCES"]}
+      {"method": "PUT", "path": "/api/expenses/:id/status", "description": "Update status", "roles": ["MANAGER", "FINANCE", "HUMAN_RESOURCES"]}
     ]
   }
 ]

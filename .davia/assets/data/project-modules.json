@@ -9,13 +9,13 @@
     "module": "Timesheet Tracking",
     "description": "Zaman çizelgesi takibi ve onay",
     "features": ["Weekly/monthly timesheets", "Project-based tracking", "Approval workflows", "History tracking"],
-    "access_roles": ["EMPLOYEE", "TEAM_MANAGER", "HUMAN_RESOURCES"]
+    "access_roles": ["EMPLOYEE", "MANAGER", "HUMAN_RESOURCES"]
   },
   {
     "module": "Expense Management",
     "description": "Gider yönetimi ve geri ödeme",
     "features": ["Expense recording", "File attachments", "Approval workflows", "Payment tracking"],
-    "access_roles": ["EMPLOYEE", "TEAM_MANAGER", "FINANCE", "HUMAN_RESOURCES"]
+    "access_roles": ["EMPLOYEE", "MANAGER", "FINANCE", "HUMAN_RESOURCES"]
   },
   {
     "module": "CV Sharing & Applications",
@@ -27,7 +27,7 @@
     "module": "Project Management",
     "description": "Proje takibi ve kaynak tahsisi",
     "features": ["Project CRUD", "Status tracking", "Resource allocation"],
-    "access_roles": ["TEAM_MANAGER", "HUMAN_RESOURCES"]
+    "access_roles": ["MANAGER", "HUMAN_RESOURCES"]
   },
   {
     "module": "Dashboard & Reporting",

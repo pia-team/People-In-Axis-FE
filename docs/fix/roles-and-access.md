@@ -9,14 +9,14 @@ This document summarizes roles, what they do, which frontend pages they can acce
   - System-level admin. `/system-admin/**` requires SYSTEM_ADMIN or ADMIN
 - HUMAN_RESOURCES
   - Can manage employees/companies/departments, approve timesheets/expenses, view reports
-- TEAM_MANAGER
+- MANAGER
   - Can approve timesheets/expenses at team level, can create/update projects
 - FINANCE
   - Can approve expenses and perform reimburse, can import/export expenses
 - COMPANY_MANAGER
   - Can access company module and reports in UI (backend changes limited by endpoint rules)
 - ACCOUNT_ADMIN
-  - Access to `/user/**` with TEAM_MANAGER
+  - Access to `/user/**` with MANAGER
 - Authenticated (any logged-in user)
   - Some pages and GET endpoints are available to any authenticated user
 
@@ -46,10 +46,10 @@ Sources: `src/App.tsx`, `src/layouts/MainLayout.tsx`, `src/components/auth/Priva
   - UI menu: Any authenticated user (create/update is enforced by backend roles)
 - Timesheets
   - List/Create: `/timesheets`, `/timesheets/new`, `/timesheets/:id`, `/timesheets/my` → Authenticated
-  - Approval: `/timesheets/approval` → TEAM_MANAGER or HUMAN_RESOURCES
+  - Approval: `/timesheets/approval` → MANAGER or HUMAN_RESOURCES
 - Expenses
   - List/Create: `/expenses`, `/expenses/new`, `/expenses/:id`, `/expenses/my` → Authenticated
-  - Approval: `/expenses/approval` → TEAM_MANAGER, HUMAN_RESOURCES, FINANCE
+  - Approval: `/expenses/approval` → MANAGER, HUMAN_RESOURCES, FINANCE
 - Reports
   - `/reports`, `/reports/timesheet`, `/reports/expense`
   - UI menu visible to: HUMAN_RESOURCES, ADMIN, COMPANY_MANAGER
@@ -65,24 +65,24 @@ Source: `src/main/java/com/pia/config/SecurityConfig.java`
   - `/system-admin/**` → SYSTEM_ADMIN or ADMIN
 - Management: `/management/**` → HUMAN_RESOURCES
 - Company: GET `/companies/**` → Auth; POST/PUT → HUMAN_RESOURCES or ADMIN; DELETE → ADMIN
-- User: `/user/**` → ACCOUNT_ADMIN or TEAM_MANAGER
+- User: `/user/**` → ACCOUNT_ADMIN or MANAGER
 - Employee: GET → Auth; POST/PUT → HUMAN_RESOURCES or ADMIN; DELETE → ADMIN
 - Department: GET → Auth; POST/PUT → HUMAN_RESOURCES or ADMIN; DELETE → ADMIN
-- Project: GET → Auth; POST/PUT → TEAM_MANAGER, HUMAN_RESOURCES, ADMIN; DELETE → ADMIN
+- Project: GET → Auth; POST/PUT → MANAGER, HUMAN_RESOURCES, ADMIN; DELETE → ADMIN
 - Timesheet:
   - GET `/timesheets/my/**` → Auth
-  - GET `/timesheets/pending` → TEAM_MANAGER, HUMAN_RESOURCES
-  - GET `/timesheets/export` → TEAM_MANAGER, HUMAN_RESOURCES
+  - GET `/timesheets/pending` → MANAGER, HUMAN_RESOURCES
+  - GET `/timesheets/export` → MANAGER, HUMAN_RESOURCES
   - POST `/timesheets/import` → HUMAN_RESOURCES
   - POST `/timesheets/**` → Auth
-  - POST `/timesheets/*/approve|reject` → TEAM_MANAGER, HUMAN_RESOURCES
+  - POST `/timesheets/*/approve|reject` → MANAGER, HUMAN_RESOURCES
 - Expense:
   - GET `/expenses/my/**` → Auth
-  - GET `/expenses/pending` → TEAM_MANAGER, HUMAN_RESOURCES, FINANCE
+  - GET `/expenses/pending` → MANAGER, HUMAN_RESOURCES, FINANCE
   - GET `/expenses/export` → HUMAN_RESOURCES, FINANCE
   - POST `/expenses/import` → HUMAN_RESOURCES, FINANCE
   - POST `/expenses/**` → Auth
-  - POST `/expenses/*/approve|reject` → TEAM_MANAGER, HUMAN_RESOURCES, FINANCE
+  - POST `/expenses/*/approve|reject` → MANAGER, HUMAN_RESOURCES, FINANCE
   - POST `/expenses/*/reimburse` → FINANCE
 
 Note: Backend JWT roles are derived from Keycloak `realm_access.roles` → `ROLE_<ROLE>`.

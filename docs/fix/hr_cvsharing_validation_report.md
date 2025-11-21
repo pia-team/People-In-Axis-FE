@@ -21,10 +21,10 @@ Scope: HUMAN_RESOURCES (HR) role functionality across CV Sharing module
 
 - File: src/main/java/com/pia/cvsharing/controller/ApplicationController.java
   - HR-access endpoints verified:
-    - POST /applications/{id}/comments (HUMAN_RESOURCES, EMPLOYEE, TEAM_MANAGER)
-    - POST /applications/{id}/forward (HUMAN_RESOURCES, TEAM_MANAGER)
+    - POST /applications/{id}/comments (HUMAN_RESOURCES, EMPLOYEE, MANAGER)
+    - POST /applications/{id}/forward (HUMAN_RESOURCES, MANAGER)
     - POST /applications/{id}/status (HUMAN_RESOURCES, COMPANY_MANAGER)
-    - POST /applications/{id}/ratings (HUMAN_RESOURCES, EMPLOYEE, TEAM_MANAGER)
+    - POST /applications/{id}/ratings (HUMAN_RESOURCES, EMPLOYEE, MANAGER)
   - Missing meetings controller led to FE 404s on /applications/{id}/meetings.
 
 - File: src/main/java/com/pia/cvsharing/controller/MeetingController.java (NEW)
