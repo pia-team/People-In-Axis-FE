@@ -91,7 +91,11 @@
     "settings": "Settings",
     "viewOnly": "View Only",
     "onlyHR": "Only HR can perform this action",
-    "setAs": "Set as"
+    "setAs": "Set as",
+    "changeStatus": "Change Status",
+    "education": "Education",
+    "visibility": "Visibility",
+    "id": "ID"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -228,7 +232,19 @@
     "timesheetSubmitted": "Timesheet submitted for approval",
     "timesheetApproved": "Timesheet approved successfully",
     "timesheetRejected": "Timesheet rejected",
-    "deleteConfirm": "Are you sure you want to delete this timesheet?"
+    "deleteConfirm": "Are you sure you want to delete this timesheet?",
+    "statusCreated": "Created",
+    "statusSubmitted": "Submitted",
+    "statusWaitingForManagerApproval": "Waiting For Manager Approval",
+    "statusProcessing": "Processing",
+    "statusWaitingForAdminApproval": "Waiting For Admin Approval",
+    "statusCompleted": "Completed",
+    "statusClosed": "Closed",
+    "statusCancelled": "Cancelled",
+    "statusRevisionRequested": "Revision Requested",
+    "statusCompanyRejected": "Company Rejected",
+    "statusManagerRejected": "Manager Rejected",
+    "statusAdminRejected": "Admin Rejected"
   },
   "expense": {
     "title": "Expense",
@@ -260,6 +276,13 @@
     "expenseSubmitted": "Expense submitted for approval",
     "expenseApproved": "Expense approved successfully",
     "expenseRejected": "Expense rejected",
+    "statusPending": "Pending",
+    "statusSubmitted": "Submitted",
+    "statusApproved": "Approved",
+    "statusRejected": "Rejected",
+    "statusReimbursed": "Reimbursed",
+    "statusCancelled": "Cancelled",
+    "statusOnHold": "On Hold",
     "deleteConfirm": "Are you sure you want to delete this expense?"
   },
   "project": {
@@ -415,6 +438,7 @@
     "commentPlaceholder": "Enter your comment...",
     "new": "New",
     "inReview": "In Review",
+    "inreview": "In Review",
     "forwarded": "Forwarded",
     "meetingScheduled": "Meeting Scheduled",
     "accepted": "Accepted",

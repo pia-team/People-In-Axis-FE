@@ -72,8 +72,10 @@
     "id": "ID",
     "modules": "Modüller",
     "upTo": "En fazla",
+    "changeStatus": "Durumu Değiştir",
     "education": "Eğitim",
-    "visibility": "Görünürlük"
+    "visibility": "Görünürlük",
+    "id": "ID"
   },
   "navigation": {
     "dashboard": "Pano",
@@ -201,7 +203,19 @@
     "timesheetSubmitted": "Zaman çizelgesi onaya gönderildi",
     "timesheetApproved": "Zaman çizelgesi başarıyla onaylandı",
     "timesheetRejected": "Zaman çizelgesi reddedildi",
-    "deleteConfirm": "Bu zaman çizelgesini silmek istediğinizden emin misiniz?"
+    "deleteConfirm": "Bu zaman çizelgesini silmek istediğinizden emin misiniz?",
+    "statusCreated": "Oluşturuldu",
+    "statusSubmitted": "Gönderildi",
+    "statusWaitingForManagerApproval": "Yönetici Onayı Bekleniyor",
+    "statusProcessing": "İşleniyor",
+    "statusWaitingForAdminApproval": "Admin Onayı Bekleniyor",
+    "statusCompleted": "Tamamlandı",
+    "statusClosed": "Kapatıldı",
+    "statusCancelled": "İptal Edildi",
+    "statusRevisionRequested": "Revizyon İstendi",
+    "statusCompanyRejected": "Şirket Tarafından Reddedildi",
+    "statusManagerRejected": "Yönetici Tarafından Reddedildi",
+    "statusAdminRejected": "Admin Tarafından Reddedildi"
   },
   "expense": {
     "title": "Gider",
@@ -233,7 +247,14 @@
     "expenseSubmitted": "Gider onaya gönderildi",
     "expenseApproved": "Gider başarıyla onaylandı",
     "expenseRejected": "Gider reddedildi",
-    "deleteConfirm": "Bu gideri silmek istediğinizden emin misiniz?"
+    "deleteConfirm": "Bu gideri silmek istediğinizden emin misiniz?",
+    "statusPending": "Beklemede",
+    "statusSubmitted": "Gönderildi",
+    "statusApproved": "Onaylandı",
+    "statusRejected": "Reddedildi",
+    "statusReimbursed": "Geri Ödendi",
+    "statusCancelled": "İptal Edildi",
+    "statusOnHold": "Bekletmede"
   },
   "project": {
     "title": "Proje",
@@ -358,6 +379,7 @@
     "commentPlaceholder": "Yorumunuzu girin...",
     "new": "Yeni",
     "inReview": "İncelemede",
+    "inreview": "İncelemede",
     "forwarded": "Yönlendirildi",
     "meetingScheduled": "Toplantı Planlandı",
     "accepted": "Kabul Edildi",
