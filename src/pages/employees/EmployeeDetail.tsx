@@ -2,11 +2,13 @@ import React from 'react';
 import { Typography, Stack, Divider, Button } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { employeeService } from '@/services/employeeService';
 import PageContainer from '@/components/ui/PageContainer';
 import SectionCard from '@/components/ui/SectionCard';
 
 const EmployeeDetail: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -18,33 +20,33 @@ const EmployeeDetail: React.FC = () => {
 
   return (
     <PageContainer
-      title="Employee Detail"
+      title={t('employee.employeeDetails')}
       actions={
         <Stack direction="row" spacing={1}>
-          <Button variant="outlined" onClick={() => navigate('/employees')}>Back</Button>
-          <Button variant="contained" onClick={() => navigate(`/employees/${id}/edit`)}>Edit</Button>
+          <Button variant="outlined" onClick={() => navigate('/employees')}>{t('common.back')}</Button>
+          <Button variant="contained" onClick={() => navigate(`/employees/${id}/edit`)}>{t('common.edit')}</Button>
         </Stack>
       }
     >
       <SectionCard>
         {isLoading && (
-          <Typography variant="body1">Loading...</Typography>
+          <Typography variant="body1">{t('common.loading')}</Typography>
         )}
         {isError && (
-          <Typography variant="body1" color="error">Failed to load employee.</Typography>
+          <Typography variant="body1" color="error">{t('error.loadFailed', { item: t('employee.title').toLowerCase() })}</Typography>
         )}
         {data && (
           <Stack spacing={1}>
             <Typography variant="h6">{data.fullName || `${data.firstName ?? ''} ${data.lastName ?? ''}`.trim()}</Typography>
             <Divider sx={{ my: 1 }} />
-            <Typography>Email: {data.email || '-'}</Typography>
-            <Typography>Code: {data.employeeCode || '-'}</Typography>
-            <Typography>Company: {data.companyName || '-'}</Typography>
-            <Typography>Department: {data.departmentName || '-'}</Typography>
-            <Typography>Status: {data.status || '-'}</Typography>
-            <Typography>Employment Type: {data.employmentType || '-'}</Typography>
-            <Typography>Start Date: {data.startDate || '-'}</Typography>
-            <Typography>End Date: {data.endDate || '-'}</Typography>
+            <Typography>{t('employee.email')}: {data.email || '-'}</Typography>
+            <Typography>{t('employee.employeeCode')}: {data.employeeCode || '-'}</Typography>
+            <Typography>{t('employee.company')}: {data.companyName || '-'}</Typography>
+            <Typography>{t('employee.department')}: {data.departmentName || '-'}</Typography>
+            <Typography>{t('common.status')}: {data.status || '-'}</Typography>
+            <Typography>{t('employee.employmentType')}: {data.employmentType || '-'}</Typography>
+            <Typography>{t('employee.hireDate')}: {data.startDate || '-'}</Typography>
+            <Typography>{t('employee.terminationDate')}: {data.endDate || '-'}</Typography>
           </Stack>
         )}
       </SectionCard>

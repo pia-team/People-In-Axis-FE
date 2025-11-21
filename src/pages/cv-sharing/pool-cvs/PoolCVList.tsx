@@ -55,6 +55,7 @@ import SectionCard from '@/components/ui/SectionCard';
 import { Tooltip as MuiTooltip } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
 interface MatchDialogData {
   open: boolean;
@@ -63,6 +64,7 @@ interface MatchDialogData {
 }
 
 const PoolCVList: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { hasAnyRole } = useKeycloak();
@@ -120,10 +122,10 @@ const PoolCVList: React.FC = () => {
       if (toggleBusyId === cvId) return;
       setToggleBusyId(cvId);
       await poolCVService.togglePoolCVStatus(cvId, !currentStatus);
-      enqueueSnackbar('Status updated successfully', { variant: 'success' });
+      enqueueSnackbar(t('success.updated'), { variant: 'success' });
       await queryClient.invalidateQueries({ queryKey: ['poolCVs'] });
     } catch (error) {
-      enqueueSnackbar('Failed to update status', { variant: 'error' });
+      enqueueSnackbar(t('error.updateFailed'), { variant: 'error' });
     } finally {
       setToggleBusyId(null);
     }
@@ -134,7 +136,7 @@ const PoolCVList: React.FC = () => {
       if (confirmBusyId === positionId) return;
       setConfirmBusyId(positionId);
       await poolCVService.matchPosition(cvId, positionId, matchScore ? { matchScore } : undefined);
-      enqueueSnackbar('Matched successfully!', { variant: 'success' });
+      enqueueSnackbar(t('poolCV.matchedSuccessfully'), { variant: 'success' });
       // Refresh dialog data
       const positions = await poolCVService.matchPositionsForPoolCV(cvId);
       setMatchDialog(md => ({ ...md, positions }));
@@ -142,7 +144,7 @@ const PoolCVList: React.FC = () => {
       await queryClient.invalidateQueries({ queryKey: ['position', positionId] });
       await queryClient.invalidateQueries({ queryKey: ['position-matches', positionId] });
     } catch (error) {
-      enqueueSnackbar('Failed to record match', { variant: 'error' });
+      enqueueSnackbar(t('error.createFailed'), { variant: 'error' });
     } finally {
       setConfirmBusyId(null);
     }
@@ -153,12 +155,12 @@ const PoolCVList: React.FC = () => {
     
     try {
       await poolCVService.deletePoolCV(selectedCV.id);
-      enqueueSnackbar('Pool CV deleted successfully', { variant: 'success' });
+      enqueueSnackbar(t('poolCV.poolCVDeleted'), { variant: 'success' });
       setDeleteDialogOpen(false);
       setSelectedCV(null);
       await queryClient.invalidateQueries({ queryKey: ['poolCVs'] });
     } catch (error) {
-      enqueueSnackbar('Failed to delete pool CV', { variant: 'error' });
+      enqueueSnackbar(t('error.deleteFailed'), { variant: 'error' });
     }
   };
 
@@ -173,7 +175,7 @@ const PoolCVList: React.FC = () => {
         positions: positions || []
       });
     } catch (error) {
-      enqueueSnackbar('Failed to match positions', { variant: 'error' });
+      enqueueSnackbar(t('error.loadFailed', { item: t('position.titlePlural').toLowerCase() }), { variant: 'error' });
     } finally {
       setMatchBusyId(null);
     }
@@ -184,7 +186,7 @@ const PoolCVList: React.FC = () => {
       const detail = await poolCVService.getPoolCVById(cvId);
       const files = detail.files;
       if (!files || files.length === 0) {
-        enqueueSnackbar('No files found for this CV', { variant: 'info' });
+        enqueueSnackbar(t('poolCV.noFiles'), { variant: 'info' });
         return;
       }
       const first = files[0];
@@ -198,7 +200,7 @@ const PoolCVList: React.FC = () => {
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      enqueueSnackbar('Failed to download CV', { variant: 'error' });
+      enqueueSnackbar(t('error.downloadFailed'), { variant: 'error' });
     }
   };
 
@@ -209,10 +211,10 @@ const PoolCVList: React.FC = () => {
     return 'success';
   };
 
-  const listColumns: GridColDef[] = [
+  const listColumns: GridColDef[] = React.useMemo(() => [
     {
       field: 'name',
-      headerName: 'Name',
+      headerName: t('common.name'),
       flex: 1,
       minWidth: 180,
       renderCell: (params: GridRenderCellParams) => (
@@ -227,60 +229,60 @@ const PoolCVList: React.FC = () => {
         </Box>
       )
     },
-    { field: 'email', headerName: 'Email', flex: 1, minWidth: 200 },
-    { field: 'phone', headerName: 'Phone', width: 140, valueGetter: (p) => (p.row as PoolCV).phone || '-' },
+    { field: 'email', headerName: t('poolCV.email'), flex: 1, minWidth: 200 },
+    { field: 'phone', headerName: t('poolCV.phone'), width: 140, valueGetter: (p) => (p.row as PoolCV).phone || t('common.notAvailable') },
     {
-      field: 'role', headerName: 'Position', flex: 1, minWidth: 180,
+      field: 'role', headerName: t('position.title'), flex: 1, minWidth: 180,
       valueGetter: (p) => {
         const r = p.row as PoolCV;
-        return r.currentPosition ? `${r.currentPosition}${r.currentCompany ? ' • ' + r.currentCompany : ''}` : '-';
+        return r.currentPosition ? `${r.currentPosition}${r.currentCompany ? ' • ' + r.currentCompany : ''}` : t('common.notAvailable');
       }
     },
     {
-      field: 'active', headerName: 'Status', width: 120,
+      field: 'active', headerName: t('common.status'), width: 120,
       renderCell: (params: GridRenderCellParams) => {
         const r = params.row as PoolCV;
         return (
           <Chip
             size="small"
             icon={r.isActive ? <ActiveIcon /> : <InactiveIcon />}
-            label={r.isActive ? 'Active' : 'Inactive'}
+            label={r.isActive ? t('poolCV.active') : t('poolCV.inactive')}
             color={r.isActive ? 'success' : 'default'}
           />
         );
       }
     },
-    { field: 'fileCount', headerName: 'Files', width: 90, valueGetter: (p) => (p.row as PoolCV).fileCount ?? 0 },
+    { field: 'fileCount', headerName: t('poolCV.files'), width: 90, valueGetter: (p) => (p.row as PoolCV).fileCount ?? 0 },
     {
-      field: 'actions', headerName: 'Actions', width: 220, sortable: false,
+      field: 'actions', headerName: t('common.actions'), width: 220, sortable: false,
       renderCell: (params: GridRenderCellParams) => {
         const cv = params.row as PoolCV;
         return (
           <Box>
-            <Tooltip title="View Details">
+            <Tooltip title={t('common.view')}>
               <IconButton size="small" onClick={() => navigate(`/cv-sharing/pool-cvs/${cv.id}`)}>
                 <ViewIcon fontSize="small" />
               </IconButton>
             </Tooltip>
             {canEdit && (
-              <Tooltip title="Edit">
+              <Tooltip title={t('common.edit')}>
                 <IconButton size="small" onClick={() => navigate(`/cv-sharing/pool-cvs/${cv.id}/edit`)}>
                   <EditIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
             )}
-            <Tooltip title="Match">
+            <Tooltip title={t('poolCV.matchPositions')}>
               <IconButton size="small" onClick={() => handleMatchPositions(cv.id)} disabled={matchBusyId === cv.id}>
                 <WorkIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Download CV">
+            <Tooltip title={t('poolCV.downloadCV')}>
               <IconButton size="small" onClick={() => handleDownload(cv.id)}>
                 <DownloadIcon fontSize="small" />
               </IconButton>
             </Tooltip>
             {canEdit && (
-              <Tooltip title={cv.isActive ? 'Deactivate' : 'Activate'}>
+              <Tooltip title={cv.isActive ? t('common.deactivate') : t('common.activate')}>
                 <IconButton size="small" onClick={() => handleToggleStatus(cv.id, cv.isActive)} disabled={toggleBusyId === cv.id}>
                   {cv.isActive ? <InactiveIcon fontSize="small" /> : <ActiveIcon fontSize="small" />}
                 </IconButton>
@@ -290,21 +292,21 @@ const PoolCVList: React.FC = () => {
         );
       }
     }
-  ];
+  ], [t, navigate, canEdit, handleMatchPositions, handleDownload, handleToggleStatus, matchBusyId, toggleBusyId, setSelectedCV, setDeleteDialogOpen]);
 
 
   return (
     <PageContainer
-      title="Pool CVs"
+      title={t('poolCV.titlePlural')}
       actions={
         <Stack direction="row" spacing={1}>
-          <Button variant="outlined" onClick={() => refetch()}>Refresh</Button>
+          <Button variant="outlined" onClick={() => refetch()}>{t('common.refresh')}</Button>
           <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => navigate('/cv-sharing/pool-cvs/new')}
           >
-            Add Pool CV
+            {t('poolCV.createPoolCV')}
           </Button>
         </Stack>
       }
@@ -314,7 +316,7 @@ const PoolCVList: React.FC = () => {
           <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
             <TextField
               size="small"
-              placeholder="Search pool CVs..."
+              placeholder={t('poolCV.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               sx={{ flexGrow: 1 }}
@@ -327,29 +329,29 @@ const PoolCVList: React.FC = () => {
               }}
             />
           <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Experience</InputLabel>
+            <InputLabel>{t('poolCV.experienceYears')}</InputLabel>
             <Select
               value={experienceFilter}
               onChange={(e) => setExperienceFilter(e.target.value)}
-              label="Experience"
+              label={t('poolCV.experienceYears')}
             >
-              <MenuItem value="all">All</MenuItem>
-              <MenuItem value="0-2">0-2 years</MenuItem>
-              <MenuItem value="2-5">2-5 years</MenuItem>
-              <MenuItem value="5-10">5-10 years</MenuItem>
-              <MenuItem value="10-99">10+ years</MenuItem>
+              <MenuItem value="all">{t('common.all')}</MenuItem>
+              <MenuItem value="0-2">0-2 {t('common.years')}</MenuItem>
+              <MenuItem value="2-5">2-5 {t('common.years')}</MenuItem>
+              <MenuItem value="5-10">5-10 {t('common.years')}</MenuItem>
+              <MenuItem value="10-99">10+ {t('common.years')}</MenuItem>
             </Select>
           </FormControl>
           <FormControl size="small" sx={{ minWidth: 120 }}>
-            <InputLabel>Status</InputLabel>
+            <InputLabel>{t('common.status')}</InputLabel>
             <Select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
-              label="Status"
+              label={t('common.status')}
             >
-              <MenuItem value="all">All</MenuItem>
-              <MenuItem value="active">Active</MenuItem>
-              <MenuItem value="inactive">Inactive</MenuItem>
+              <MenuItem value="all">{t('common.all')}</MenuItem>
+              <MenuItem value="active">{t('poolCV.active')}</MenuItem>
+              <MenuItem value="inactive">{t('poolCV.inactive')}</MenuItem>
             </Select>
           </FormControl>
           <ToggleButtonGroup
@@ -384,7 +386,7 @@ const PoolCVList: React.FC = () => {
                           <Chip
                             size="small"
                             icon={cv.isActive ? <ActiveIcon /> : <InactiveIcon />}
-                            label={cv.isActive ? 'Active' : 'Inactive'}
+                            label={cv.isActive ? t('poolCV.active') : t('poolCV.inactive')}
                             color={cv.isActive ? 'success' : 'default'}
                           />
                           {(cv.fileCount ?? 0) > 0 && (
@@ -422,7 +424,7 @@ const PoolCVList: React.FC = () => {
                         <ListItemText>
                           <Chip
                             size="small"
-                            label={`${cv.experienceYears} years experience`}
+                            label={`${cv.experienceYears} ${t('common.years')} ${t('poolCV.experience')}`}
                             color={getExperienceColor(cv.experienceYears)}
                           />
                         </ListItemText>
@@ -435,7 +437,7 @@ const PoolCVList: React.FC = () => {
 
                 <CardActions sx={{ justifyContent: 'space-between', px: 2 }}>
                   <Box>
-                    <Tooltip title="View Details">
+                    <Tooltip title={t('common.view')}>
                       <IconButton
                         size="small"
                         onClick={() => navigate(`/cv-sharing/pool-cvs/${cv.id}`)}
@@ -444,7 +446,7 @@ const PoolCVList: React.FC = () => {
                       </IconButton>
                     </Tooltip>
                     {canEdit && (
-                      <Tooltip title="Edit">
+                      <Tooltip title={t('common.edit')}>
                         <IconButton
                           size="small"
                           onClick={() => navigate(`/cv-sharing/pool-cvs/${cv.id}/edit`)}
@@ -453,7 +455,7 @@ const PoolCVList: React.FC = () => {
                         </IconButton>
                       </Tooltip>
                     )}
-                    <Tooltip title="Download CV">
+                    <Tooltip title={t('poolCV.downloadCV')}>
                       <IconButton size="small" onClick={() => handleDownload(cv.id)}>
                         <DownloadIcon />
                       </IconButton>
@@ -465,7 +467,7 @@ const PoolCVList: React.FC = () => {
                       onClick={() => handleMatchPositions(cv.id)}
                       disabled={matchBusyId === cv.id}
                     >
-                      Match
+                      {t('poolCV.matchPositions')}
                     </Button>
                     {canEdit && (
                       <>
@@ -515,7 +517,7 @@ const PoolCVList: React.FC = () => {
               {filteredPoolCVs.map((cv) => (
                 <ListItem key={cv.id}
                   secondaryAction={
-                    <Button size="small" onClick={() => navigate(`/cv-sharing/pool-cvs/${cv.id}`)}>View</Button>
+                    <Button size="small" onClick={() => navigate(`/cv-sharing/pool-cvs/${cv.id}`)}>{t('common.view')}</Button>
                   }
                 >
                   <ListItemAvatar>
@@ -533,10 +535,10 @@ const PoolCVList: React.FC = () => {
           {filteredPoolCVs.length === 0 && !isPending && (
             <Box sx={{ textAlign: 'center', py: 8 }}>
               <Typography variant="h6" color="text.secondary">
-                No CVs found in the talent pool
+                {t('poolCV.noCVsFound')}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                Try adjusting your filters or add new CVs to the pool
+                {t('poolCV.tryAdjustingFilters')}
               </Typography>
             </Box>
           )}
@@ -548,17 +550,16 @@ const PoolCVList: React.FC = () => {
           open={deleteDialogOpen}
           onClose={() => setDeleteDialogOpen(false)}
         >
-          <DialogTitle>Delete Pool CV</DialogTitle>
+          <DialogTitle>{t('poolCV.deletePoolCV')}</DialogTitle>
           <DialogContent>
             <Typography>
-              Are you sure you want to delete this CV from the talent pool?
-              This action cannot be undone.
+              {t('poolCV.deleteConfirm')}
             </Typography>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+            <Button onClick={() => setDeleteDialogOpen(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleDelete} color="error" variant="contained">
-              Delete
+              {t('common.delete')}
             </Button>
           </DialogActions>
         </Dialog>
@@ -570,7 +571,7 @@ const PoolCVList: React.FC = () => {
           maxWidth="sm"
           fullWidth
         >
-          <DialogTitle>Matching Positions</DialogTitle>
+          <DialogTitle>{t('poolCV.matchedPositions')}</DialogTitle>
           <DialogContent>
             {matchDialog.positions.length > 0 ? (
               <List>
@@ -589,7 +590,7 @@ const PoolCVList: React.FC = () => {
                           {matched.position.title}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          {matched.position.department || 'No department'} • {matched.position.location || 'No location'}
+                          {matched.position.department || t('position.noDepartment')} • {matched.position.location || t('position.noLocation')}
                         </Typography>
                         
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
@@ -597,23 +598,23 @@ const PoolCVList: React.FC = () => {
                             title={
                               <Box>
                                 <Typography variant="caption" display="block">
-                                  Skills: {Math.round(matched.breakdown.skillsScore * 100)}%
+                                  {t('position.skills')}: {Math.round(matched.breakdown.skillsScore * 100)}%
                                 </Typography>
                                 <Typography variant="caption" display="block">
-                                  Experience: {Math.round(matched.breakdown.experienceScore * 100)}%
+                                  {t('position.experienceYears')}: {Math.round(matched.breakdown.experienceScore * 100)}%
                                 </Typography>
                                 <Typography variant="caption" display="block">
-                                  Languages: {Math.round(matched.breakdown.languageScore * 100)}%
+                                  {t('position.languages')}: {Math.round(matched.breakdown.languageScore * 100)}%
                                 </Typography>
                                 <Typography variant="caption" display="block">
-                                  AI Similarity: {Math.round(matched.breakdown.semanticScore * 100)}%
+                                  {t('poolCV.aiSimilarity')}: {Math.round(matched.breakdown.semanticScore * 100)}%
                                 </Typography>
                               </Box>
                             }
                           >
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               <Typography variant="body2" fontWeight="bold">
-                                Match Score:
+                                {t('common.score')}:
                               </Typography>
                               <Chip
                                 label={`${matched.matchScore ?? '--'}%`}
@@ -624,7 +625,7 @@ const PoolCVList: React.FC = () => {
                           </MuiTooltip>
                           
                           <Chip
-                            label={matched.matchLevel}
+                            label={t(`poolCV.matchLevel.${matched.matchLevel?.toUpperCase() || 'UNKNOWN'}`) || matched.matchLevel}
                             variant="outlined"
                             size="small"
                             color={getMatchColor(matched.matchScore ?? 0)}
@@ -634,7 +635,7 @@ const PoolCVList: React.FC = () => {
                         {matched.missingRequiredSkills && matched.missingRequiredSkills.length > 0 && (
                           <Box sx={{ mt: 1 }}>
                             <Typography variant="caption" color="error">
-                              Missing: {matched.missingRequiredSkills.join(', ')}
+                              {t('poolCV.missing')}: {matched.missingRequiredSkills.join(', ')}
                             </Typography>
                           </Box>
                         )}
@@ -650,7 +651,7 @@ const PoolCVList: React.FC = () => {
                           variant="outlined"
                           onClick={() => navigate(`/cv-sharing/positions/${matched.position.id}`)}
                         >
-                          View Position
+                          {t('position.viewPosition')}
                         </Button>
                         <Button
                           size="small"
@@ -658,7 +659,7 @@ const PoolCVList: React.FC = () => {
                           onClick={() => handleConfirmMatch(matchDialog.poolCVId!, matched.position.id, matched.matchScore)}
                           disabled={confirmBusyId === matched.position.id}
                         >
-                          {confirmBusyId === matched.position.id ? 'Matching...' : 'Match'}
+                          {confirmBusyId === matched.position.id ? t('common.matching') : t('poolCV.confirmMatch')}
                         </Button>
                       </Stack>
                     </ListItem>
@@ -666,12 +667,12 @@ const PoolCVList: React.FC = () => {
                 })}
               </List>
             ) : (
-              <Typography>No matching positions found</Typography>
+              <Typography>{t('poolCV.noMatchingPositions')}</Typography>
             )}
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setMatchDialog({ open: false, poolCVId: null, positions: [] })}>
-              Close
+              {t('common.close')}
             </Button>
           </DialogActions>
         </Dialog>

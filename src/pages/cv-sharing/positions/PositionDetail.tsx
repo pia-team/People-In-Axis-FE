@@ -52,6 +52,7 @@ import PageContainer from '@/components/ui/PageContainer';
 import SectionCard from '@/components/ui/SectionCard';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useKeycloak } from '@/providers/KeycloakProvider';
+import { useTranslation } from 'react-i18next';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -76,6 +77,7 @@ function TabPanel(props: TabPanelProps) {
 }
 
 const PositionDetail: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
@@ -122,11 +124,11 @@ const PositionDetail: React.FC = () => {
       const updated = await positionService.updatePositionStatus(id, newStatus);
       // Update detail cache for instant UI reflection
       queryClient.setQueryData(['position', id], updated);
-      enqueueSnackbar(`Position status updated to ${newStatus}`, { variant: 'success' });
+      enqueueSnackbar(t('position.positionUpdated'), { variant: 'success' });
       // Sync lists
       queryClient.invalidateQueries({ queryKey: ['positions'] });
     } catch (error) {
-      enqueueSnackbar('Failed to update position status', { variant: 'error' });
+      enqueueSnackbar(t('error.updateFailed'), { variant: 'error' });
     } finally {
       handleCloseStatusMenu();
     }
@@ -141,11 +143,11 @@ const PositionDetail: React.FC = () => {
       const updated = await positionService.updatePositionStatus(id!, PositionStatus.ACTIVE);
       // Update detail cache for instant UI reflection
       queryClient.setQueryData(['position', id], updated);
-      enqueueSnackbar('Position activated successfully', { variant: 'success' });
+      enqueueSnackbar(t('position.positionActivated'), { variant: 'success' });
       // Sync lists
       queryClient.invalidateQueries({ queryKey: ['positions'] });
     } catch (error) {
-      enqueueSnackbar('Failed to activate position', { variant: 'error' });
+      enqueueSnackbar(t('error.updateFailed'), { variant: 'error' });
     } finally {
       setIsActivating(false);
     }
@@ -159,13 +161,13 @@ const PositionDetail: React.FC = () => {
     try {
       setIsDeleting(true);
       await positionService.deletePosition(id!);
-      enqueueSnackbar('Position deleted successfully', { variant: 'success' });
+      enqueueSnackbar(t('position.positionDeleted'), { variant: 'success' });
       // Invalidate positions list cache to refresh the list
       queryClient.invalidateQueries({ queryKey: ['positions'] });
       queryClient.invalidateQueries({ queryKey: ['position', id] });
       navigate('/cv-sharing/positions');
     } catch (error) {
-      enqueueSnackbar('Failed to delete position', { variant: 'error' });
+      enqueueSnackbar(t('error.deleteFailed'), { variant: 'error' });
     } finally {
       setIsDeleting(false);
       setDeleteDialogOpen(false);
@@ -185,11 +187,11 @@ const PositionDetail: React.FC = () => {
       const updated = await positionService.updatePositionStatus(id!, PositionStatus.ARCHIVED);
       // Update the detail cache immediately for instant UI feedback
       queryClient.setQueryData(['position', id], updated);
-      enqueueSnackbar('Position archived successfully', { variant: 'success' });
+      enqueueSnackbar(t('position.positionArchived'), { variant: 'success' });
       // Keep list views in sync
       queryClient.invalidateQueries({ queryKey: ['positions'] });
     } catch (error) {
-      enqueueSnackbar('Failed to archive position', { variant: 'error' });
+      enqueueSnackbar(t('error.updateFailed'), { variant: 'error' });
     } finally {
       setIsArchiving(false);
     }
@@ -236,7 +238,7 @@ const PositionDetail: React.FC = () => {
   if (!position) {
     return (
       <PageContainer>
-        <Alert severity="error">Position not found</Alert>
+        <Alert severity="error">{t('error.notFound', { item: t('position.title').toLowerCase() })}</Alert>
       </PageContainer>
     );
   }
@@ -245,7 +247,7 @@ const PositionDetail: React.FC = () => {
   if (!isHR && position.status !== PositionStatus.ACTIVE) {
     return (
       <PageContainer>
-        <Alert severity="warning">You can only view active positions.</Alert>
+        <Alert severity="warning">{t('error.onlyActivePositions')}</Alert>
       </PageContainer>
     );
   }
@@ -260,19 +262,19 @@ const PositionDetail: React.FC = () => {
             startIcon={<BackIcon />}
             onClick={() => navigate('/cv-sharing/positions')}
           >
-            Back
+            {t('common.back')}
           </Button>
           <Button
             variant="outlined"
             startIcon={<ShareIcon />}
             onClick={() => {
               navigator.clipboard.writeText(window.location.href);
-              enqueueSnackbar('Link copied to clipboard', { variant: 'success' });
+              enqueueSnackbar(t('common.linkCopied'), { variant: 'success' });
             }}
           >
-            Share
+            {t('common.share')}
           </Button>
-          <Tooltip title={isCompanyManager ? 'Company Manager sadece görüntüleme yapabilir' : (isHR ? 'Duplicate' : 'Yalnızca İnsan Kaynakları kopyalayabilir')}>
+          <Tooltip title={isCompanyManager ? t('common.viewOnly') : (isHR ? t('position.duplicatePosition') : t('common.onlyHR'))}>
             <span>
               <Button
                 variant="outlined"
@@ -280,11 +282,11 @@ const PositionDetail: React.FC = () => {
                 onClick={handleDuplicate}
                 disabled={!isHR || isCompanyManager}
               >
-                Duplicate
+                {t('common.duplicate')}
               </Button>
             </span>
           </Tooltip>
-          <Tooltip title={isCompanyManager ? 'Company Manager sadece görüntüleme yapabilir' : (isHR ? 'Change Status' : 'Yalnızca İnsan Kaynakları durumu değiştirebilir')}>
+          <Tooltip title={isCompanyManager ? t('common.viewOnly') : (isHR ? t('common.changeStatus') : t('common.onlyHR'))}>
             <span>
               <IconButton
                 size="small"
@@ -296,7 +298,7 @@ const PositionDetail: React.FC = () => {
             </span>
           </Tooltip>
           {position.status === PositionStatus.ARCHIVED ? (
-            <Tooltip title={isCompanyManager ? 'Company Manager sadece görüntüleme yapabilir' : (isHR ? 'Activate' : 'Yalnızca İnsan Kaynakları aktive edebilir')}>
+            <Tooltip title={isCompanyManager ? t('common.viewOnly') : (isHR ? t('common.activate') : t('common.onlyHR'))}>
               <span>
                 <Button
                   variant="outlined"
@@ -304,12 +306,12 @@ const PositionDetail: React.FC = () => {
                   onClick={handleActivate}
                   disabled={!isHR || isCompanyManager || isActivating}
                 >
-                  Activate
+                  {t('common.activate')}
                 </Button>
               </span>
             </Tooltip>
           ) : (
-            <Tooltip title={isCompanyManager ? 'Company Manager sadece görüntüleme yapabilir' : (isHR ? 'Archive' : 'Yalnızca İnsan Kaynakları arşivleyebilir')}>
+            <Tooltip title={isCompanyManager ? t('common.viewOnly') : (isHR ? t('common.archive') : t('common.onlyHR'))}>
               <span>
                 <Button
                   variant="outlined"
@@ -317,12 +319,12 @@ const PositionDetail: React.FC = () => {
                   onClick={handleArchive}
                   disabled={!isHR || isCompanyManager || isArchiving}
                 >
-                  Archive
+                  {t('common.archive')}
                 </Button>
               </span>
             </Tooltip>
           )}
-          <Tooltip title={isCompanyManager ? 'Company Manager sadece görüntüleme yapabilir' : (isHR ? 'Edit' : 'Yalnızca İnsan Kaynakları düzenleyebilir')}>
+          <Tooltip title={isCompanyManager ? t('common.viewOnly') : (isHR ? t('common.edit') : t('common.onlyHR'))}>
             <span>
               <Button
                 variant="outlined"
@@ -330,11 +332,11 @@ const PositionDetail: React.FC = () => {
                 onClick={handleEdit}
                 disabled={!isHR || isCompanyManager}
               >
-                Edit
+                {t('common.edit')}
               </Button>
             </span>
           </Tooltip>
-          <Tooltip title={isCompanyManager ? 'Company Manager sadece görüntüleme yapabilir' : (isHR ? 'Delete' : 'Yalnızca İnsan Kaynakları silebilir')}>
+          <Tooltip title={isCompanyManager ? t('common.viewOnly') : (isHR ? t('common.delete') : t('common.onlyHR'))}>
             <span>
               <Button
                 variant="outlined"
@@ -343,7 +345,7 @@ const PositionDetail: React.FC = () => {
                 onClick={() => setDeleteDialogOpen(true)}
                 disabled={!isHR || isCompanyManager}
               >
-                Delete
+                {t('common.delete')}
               </Button>
             </span>
           </Tooltip>
@@ -362,18 +364,18 @@ const PositionDetail: React.FC = () => {
                   </Typography>
                   <Stack direction="row" spacing={2} alignItems="center">
                     <Chip
-                      label={position.status}
+                      label={t(`position.${position.status?.toLowerCase() || ''}`) || position.status}
                       color={getStatusColor(position.status)}
                       size="small"
                     />
                     <Chip
-                      label={position.workType}
+                      label={t(`position.${(position.workType as WorkType)?.toLowerCase().replace(/\s+/g, '') || ''}`) || position.workType}
                       color={getWorkTypeColor(position.workType as WorkType)}
                       size="small"
                       icon={<WorkIcon />}
                     />
                     <Chip
-                      label={`${applicationsCount} Applications`}
+                      label={`${applicationsCount} ${t('position.applications')}`}
                       color="info"
                       size="small"
                       icon={<ApplicantsIcon />}
@@ -390,31 +392,31 @@ const PositionDetail: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <DepartmentIcon color="action" />
                   <Typography variant="body2">
-                    <strong>Department:</strong> {position.department}
+                    <strong>{t('position.department')}:</strong> {position.department}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <LocationIcon color="action" />
                   <Typography variant="body2">
-                    <strong>Location:</strong> {position.location}
+                    <strong>{t('position.location')}:</strong> {position.location}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <CalendarIcon color="action" />
                   <Typography variant="body2">
-                    <strong>Deadline:</strong> {position.applicationDeadline ? format(new Date(position.applicationDeadline), 'dd/MM/yyyy') : 'No deadline'}
+                    <strong>{t('position.applicationDeadline')}:</strong> {position.applicationDeadline ? format(new Date(position.applicationDeadline), 'dd/MM/yyyy') : t('position.noDeadline')}
                   </Typography>
                 </Box>
                 {(position.salaryRangeMin != null || position.salaryRangeMax != null) && (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <SalaryIcon color="action" />
                     <Typography variant="body2">
-                      <strong>Salary:</strong> {
+                      <strong>{t('position.salaryRange')}:</strong> {
                         position.salaryRangeMin != null && position.salaryRangeMax != null
                           ? `$${position.salaryRangeMin.toLocaleString()} - $${position.salaryRangeMax.toLocaleString()}`
                           : position.salaryRangeMin != null
                             ? `$${position.salaryRangeMin.toLocaleString()} +`
-                            : `up to $${position.salaryRangeMax!.toLocaleString()}`
+                            : `${t('common.upTo')} $${position.salaryRangeMax!.toLocaleString()}`
                       }
                     </Typography>
                   </Box>
@@ -427,9 +429,9 @@ const PositionDetail: React.FC = () => {
         {/* Tabs */}
         <Paper sx={{ width: '100%' }}>
           <Tabs value={tabValue} onChange={handleTabChange} aria-label="position tabs">
-            <Tab label="Requirements" />
-            <Tab label="Applications" />
-            <Tab label="Details" />
+            <Tab label={t('position.requirements')} />
+            <Tab label={t('position.applications')} />
+            <Tab label={t('common.details')} />
           </Tabs>
         </Paper>
 
@@ -441,7 +443,7 @@ const PositionDetail: React.FC = () => {
               <Grid item xs={12}>
                 <SectionCard>
                   <Typography variant="h6" gutterBottom>
-                    Requirements
+                    {t('position.requirements')}
                   </Typography>
                   <Divider sx={{ my: 2 }} />
                   <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>
@@ -456,7 +458,7 @@ const PositionDetail: React.FC = () => {
                 <SectionCard>
                   <Typography variant="h6" gutterBottom>
                     <SkillIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                    Required Skills
+                    {t('position.requiredSkills')}
                   </Typography>
                   <Divider sx={{ my: 2 }} />
                   <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
@@ -483,7 +485,7 @@ const PositionDetail: React.FC = () => {
                 <SectionCard>
                   <Typography variant="h6" gutterBottom>
                     <LanguageIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                    Required Languages
+                    {t('position.requiredLanguages')}
                   </Typography>
                   <Divider sx={{ my: 2 }} />
                   <List dense>
@@ -494,7 +496,7 @@ const PositionDetail: React.FC = () => {
                         </ListItemIcon>
                         <ListItemText
                           primary={lang.code}
-                          secondary={`Level: ${lang.proficiencyLevel}`}
+                          secondary={`${t('common.level')}: ${lang.proficiencyLevel}`}
                         />
                       </ListItem>
                     ))}
@@ -509,7 +511,7 @@ const PositionDetail: React.FC = () => {
                 <SectionCard>
                   <Typography variant="h6" gutterBottom>
                     <EducationIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                    Education Requirements
+                    {t('position.educationRequirements')}
                   </Typography>
                   <Divider sx={{ my: 2 }} />
                   <Typography variant="body1">
@@ -525,11 +527,11 @@ const PositionDetail: React.FC = () => {
                 <SectionCard>
                   <Typography variant="h6" gutterBottom>
                     <WorkIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                    Experience Required
+                    {t('position.experienceRequired')}
                   </Typography>
                   <Divider sx={{ my: 2 }} />
                   <Typography variant="h4" color="primary">
-                    {position.minExperience}+ years
+                    {position.minExperience}+ {t('common.years')}
                   </Typography>
                 </SectionCard>
               </Grid>
@@ -540,7 +542,7 @@ const PositionDetail: React.FC = () => {
         <TabPanel value={tabValue} index={1}>
           <SectionCard>
             <Typography variant="h6" gutterBottom>
-              Applications ({applicationsCount})
+              {t('position.applications')} ({applicationsCount})
             </Typography>
             <Divider sx={{ my: 2 }} />
             {matchesPage && (matchesPage.content?.length ?? 0) > 0 ? (
@@ -551,12 +553,12 @@ const PositionDetail: React.FC = () => {
                     secondaryAction={
                       <Stack direction="row" spacing={1} alignItems="center">
                         {m.matchScore != null && (
-                          <Chip label={`Score: ${m.matchScore}`} size="small" color="primary" />
+                          <Chip label={`${t('common.score')}: ${m.matchScore}`} size="small" color="primary" />
                         )}
                         {m.matchedAt ? (
                           <Chip label={format(new Date(m.matchedAt), 'dd/MM/yyyy')} size="small" />
                         ) : (
-                          <Chip label="N/A" size="small" variant="outlined" />
+                          <Chip label={t('common.notAvailable')} size="small" variant="outlined" />
                         )}
                         {!isCompanyManager && (
                           <IconButton
@@ -584,7 +586,7 @@ const PositionDetail: React.FC = () => {
               </List>
             ) : (
               <Typography variant="body2" color="text.secondary">
-                No matches found
+                {t('common.noResults')}
               </Typography>
             )}
             <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
@@ -593,17 +595,17 @@ const PositionDetail: React.FC = () => {
                 disabled={!matchesPage || appsPage <= 0}
                 onClick={() => setAppsPage((p) => Math.max(0, p - 1))}
               >
-                Previous
+                {t('common.previous')}
               </Button>
               <Typography variant="body2" color="text.secondary">
-                Page {appsPage + 1} of {matchesPage?.pageInfo?.totalPages ?? 1}
+                {t('common.page')} {appsPage + 1} {t('common.of')} {matchesPage?.pageInfo?.totalPages ?? 1}
               </Typography>
               <Button
                 variant="outlined"
                 disabled={!matchesPage || (appsPage + 1) >= (matchesPage.pageInfo?.totalPages ?? 1)}
                 onClick={() => setAppsPage((p) => p + 1)}
               >
-                Next
+                {t('common.next')}
               </Button>
             </Box>
           </SectionCard>
@@ -612,61 +614,61 @@ const PositionDetail: React.FC = () => {
         <TabPanel value={tabValue} index={2}>
           <SectionCard>
             <Typography variant="h6" gutterBottom>
-              Additional Details
+              {t('position.additionalDetails')}
             </Typography>
             <Divider sx={{ my: 2 }} />
             <Grid container spacing={2}>
               <Grid item xs={12} md={6}>
                 <Typography variant="body2" color="text.secondary">
-                  Created At
+                  {t('common.createdAt')}
                 </Typography>
                 <Typography variant="body1">
-                  {position.createdAt ? format(new Date(position.createdAt), 'dd/MM/yyyy HH:mm') : 'N/A'}
+                  {position.createdAt ? format(new Date(position.createdAt), 'dd/MM/yyyy HH:mm') : t('common.notAvailable')}
                 </Typography>
               </Grid>
               <Grid item xs={12} md={6}>
                 <Typography variant="body2" color="text.secondary">
-                  Updated At
+                  {t('common.updatedAt')}
                 </Typography>
                 <Typography variant="body1">
-                  {position.updatedAt ? format(new Date(position.updatedAt), 'dd/MM/yyyy HH:mm') : 'N/A'}
+                  {position.updatedAt ? format(new Date(position.updatedAt), 'dd/MM/yyyy HH:mm') : t('common.notAvailable')}
                 </Typography>
               </Grid>
               <Grid item xs={12} md={6}>
                 <Typography variant="body2" color="text.secondary">
-                  Internal Name
+                  {t('position.name')}
                 </Typography>
                 <Typography variant="body1">
-                  {position.name || 'N/A'}
+                  {position.name || t('common.notAvailable')}
                 </Typography>
               </Grid>
               <Grid item xs={12} md={6}>
                 <Typography variant="body2" color="text.secondary">
-                  Created By
+                  {t('common.createdBy')}
                 </Typography>
                 <Typography variant="body1">
-                  {position.createdBy || 'System'}
+                  {position.createdBy || t('common.system')}
                 </Typography>
               </Grid>
               <Grid item xs={12} md={6}>
                 <Typography variant="body2" color="text.secondary">
-                  Created By ID
+                  {t('common.createdBy')} ID
                 </Typography>
                 <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
-                  {position.createdById || 'N/A'}
+                  {position.createdById || t('common.notAvailable')}
                 </Typography>
               </Grid>
               <Grid item xs={12} md={6}>
                 <Typography variant="body2" color="text.secondary">
-                  Visibility
+                  {t('common.visibility')}
                 </Typography>
                 <Typography variant="body1">
-                  {position.visibility || 'N/A'}
+                  {position.visibility || t('common.notAvailable')}
                 </Typography>
               </Grid>
               <Grid item xs={12} md={6}>
                 <Typography variant="body2" color="text.secondary">
-                  Position ID
+                  {t('position.title')} ID
                 </Typography>
                 <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
                   {position.id}
@@ -686,16 +688,16 @@ const PositionDetail: React.FC = () => {
           .filter((s) => s !== position.status && s !== PositionStatus.ARCHIVED)
           .map((status) => (
             <MenuItem key={status} onClick={() => handleStatusChange(status)}>
-              Set as {status}
+              {t('common.setAs')} {t(`position.${status.toLowerCase()}`) || status}
             </MenuItem>
           ))}
       </Menu>
       <ConfirmDialog
         open={deleteDialogOpen}
-        title="Delete Position"
-        description="Are you sure you want to delete this position? This action cannot be undone."
-        confirmLabel="Delete"
-        cancelLabel="Cancel"
+        title={t('position.deletePosition')}
+        description={t('position.deleteConfirm')}
+        confirmLabel={t('common.delete')}
+        cancelLabel={t('common.cancel')}
         confirmColor="error"
         loading={isDeleting}
         onClose={() => setDeleteDialogOpen(false)}

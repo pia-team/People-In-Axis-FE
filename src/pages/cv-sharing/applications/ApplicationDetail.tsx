@@ -48,6 +48,7 @@ import { ApplicationDetail as ApplicationDetailType, ApplicationStatus, CreateMe
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useKeycloak } from '@/hooks/useKeycloak';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { useTranslation } from 'react-i18next';
 
 const statusOptions: ApplicationStatus[] = [
   ApplicationStatus.NEW,
@@ -82,6 +83,7 @@ const statusColor = (status: ApplicationStatus): 'default' | 'primary' | 'second
 };
 
 const ApplicationDetail: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
@@ -122,13 +124,15 @@ const ApplicationDetail: React.FC = () => {
   const [deleteFileDialogOpen, setDeleteFileDialogOpen] = useState(false);
   const [fileToDelete, setFileToDelete] = useState<string | null>(null);
   const [isDeletingFile, setIsDeletingFile] = useState(false);
+  const [cancelMeetingDialogOpen, setCancelMeetingDialogOpen] = useState(false);
+  const [meetingToCancel, setMeetingToCancel] = useState<string | null>(null);
 
   useEffect(() => {
     if (detail) setNewStatus(detail.status);
   }, [detail?.id]);
   useEffect(() => {
     if (isError) {
-      enqueueSnackbar('Failed to load application', { variant: 'error' });
+      enqueueSnackbar(t('error.loadFailed', { item: t('application.title').toLowerCase() }), { variant: 'error' });
       navigate('/cv-sharing/applications');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -139,26 +143,32 @@ const ApplicationDetail: React.FC = () => {
     try {
       setSaving(true);
       await applicationService.updateApplicationStatus(detail.id, { status: newStatus });
-      enqueueSnackbar('Status updated', { variant: 'success' });
+      enqueueSnackbar(t('success.updated'), { variant: 'success' });
       // Invalidate both detail and list caches
       await queryClient.invalidateQueries({ queryKey: ['application', id] });
       await queryClient.invalidateQueries({ queryKey: ['applications'] });
     } catch (error) {
-      enqueueSnackbar('Failed to update status', { variant: 'error' });
+      enqueueSnackbar(t('error.updateFailed'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
   };
 
-  const handleCancelMeeting = async (meetingId: string) => {
-    if (!detail) return;
-    if (!window.confirm('Cancel this meeting?')) return;
+  const handleCancelMeetingClick = (meetingId: string) => {
+    setMeetingToCancel(meetingId);
+    setCancelMeetingDialogOpen(true);
+  };
+
+  const handleCancelMeeting = async () => {
+    if (!detail || !meetingToCancel) return;
     try {
-      await applicationService.updateMeeting(detail.id, meetingId, { status: MeetingStatus.CANCELLED });
-      enqueueSnackbar('Meeting cancelled', { variant: 'success' });
+      await applicationService.updateMeeting(detail.id, meetingToCancel, { status: MeetingStatus.CANCELLED });
+      enqueueSnackbar(t('meeting.meetingCancelled'), { variant: 'success' });
       await queryClient.invalidateQueries({ queryKey: ['application', id] });
+      setCancelMeetingDialogOpen(false);
+      setMeetingToCancel(null);
     } catch (error) {
-      enqueueSnackbar('Failed to cancel meeting', { variant: 'error' });
+      enqueueSnackbar(t('error.updateFailed'), { variant: 'error' });
     }
   };
 
@@ -206,10 +216,10 @@ const ApplicationDetail: React.FC = () => {
       setRatingSaving(true);
       await applicationService.addRating(detail.id, { score: ratingScore });
       setRatingScore(null);
-      enqueueSnackbar('Rating added', { variant: 'success' });
+      enqueueSnackbar(t('application.ratingAdded'), { variant: 'success' });
       await queryClient.invalidateQueries({ queryKey: ['application', id] });
     } catch (error) {
-      enqueueSnackbar('Failed to add rating', { variant: 'error' });
+      enqueueSnackbar(t('error.createFailed'), { variant: 'error' });
     } finally {
       setRatingSaving(false);
     }
@@ -221,7 +231,7 @@ const ApplicationDetail: React.FC = () => {
     const arr = Array.from(files);
     const valid = arr.filter(f => f.size <= 10 * 1024 * 1024);
     if (valid.length !== arr.length) {
-      enqueueSnackbar('Some files exceed 10MB limit and were skipped', { variant: 'error' });
+      enqueueSnackbar(t('error.fileTooLarge'), { variant: 'error' });
     }
     setFilesToUpload(valid);
   };
@@ -232,10 +242,10 @@ const ApplicationDetail: React.FC = () => {
       setUploading(true);
       await applicationService.uploadFiles(detail.id, filesToUpload);
       setFilesToUpload([]);
-      enqueueSnackbar('Files uploaded', { variant: 'success' });
+      enqueueSnackbar(t('application.fileUploaded'), { variant: 'success' });
       await queryClient.invalidateQueries({ queryKey: ['application', id] });
     } catch (error) {
-      enqueueSnackbar('Failed to upload files', { variant: 'error' });
+      enqueueSnackbar(t('error.uploadFailed'), { variant: 'error' });
     } finally {
       setUploading(false);
     }
@@ -254,7 +264,7 @@ const ApplicationDetail: React.FC = () => {
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      enqueueSnackbar('Failed to download file', { variant: 'error' });
+      enqueueSnackbar(t('error.downloadFailed'), { variant: 'error' });
     }
   };
 
@@ -267,12 +277,12 @@ const ApplicationDetail: React.FC = () => {
       if (meetingSaving) return;
       setMeetingSaving(true);
       await applicationService.scheduleMeeting(detail.id, meeting as CreateMeetingRequest);
-      enqueueSnackbar('Meeting scheduled', { variant: 'success' });
+      enqueueSnackbar(t('application.meetingScheduled'), { variant: 'success' });
       setMeeting({ title: '', startTime: '', durationMinutes: 30, participants: [] });
       closeMeetingDialog();
       await queryClient.invalidateQueries({ queryKey: ['application', id] });
     } catch (error) {
-      enqueueSnackbar('Failed to schedule meeting', { variant: 'error' });
+      enqueueSnackbar(t('error.createFailed'), { variant: 'error' });
     } finally {
       setMeetingSaving(false);
     }
@@ -301,16 +311,16 @@ const ApplicationDetail: React.FC = () => {
                     {detail.firstName} {detail.lastName}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Applying for: {detail.positionTitle || detail.positionId}
+                    {t('application.applyingFor')}: {detail.positionTitle || detail.positionId}
                   </Typography>
                 </Box>
               </Box>
-              <Chip label={detail.status.replace('_', ' ')} color={statusColor(detail.status)} />
+              <Chip label={t(`application.${detail.status?.toLowerCase().replace(/_/g, '') || ''}`) || detail.status.replace('_', ' ')} color={statusColor(detail.status)} />
             </Box>
           </Grid>
 
           <Grid item xs={12} md={8}>
-            <Typography variant="h6">Contact</Typography>
+            <Typography variant="h6">{t('application.contact')}</Typography>
             <Divider sx={{ mb: 2 }} />
             <List>
               <ListItem>
@@ -326,18 +336,18 @@ const ApplicationDetail: React.FC = () => {
               {detail.tckn && (
                 <ListItem>
                   <ListItemIcon><IdIcon /></ListItemIcon>
-                  <ListItemText primary={`TCKN: ${detail.tckn}`} />
+                  <ListItemText primary={`${t('application.tckn')}: ${detail.tckn}`} />
                 </ListItem>
               )}
               {detail.availableStartDate && (
                 <ListItem>
                   <ListItemIcon><CalendarIcon /></ListItemIcon>
-                  <ListItemText primary={`Available from ${new Date(detail.availableStartDate).toLocaleDateString()}`} />
+                  <ListItemText primary={`${t('application.availableFrom')} ${new Date(detail.availableStartDate).toLocaleDateString()}`} />
                 </ListItem>
               )}
             </List>
 
-            <Typography variant="h6" sx={{ mt: 3 }}>Files</Typography>
+            <Typography variant="h6" sx={{ mt: 3 }}>{t('application.files')}</Typography>
             <Divider sx={{ mb: 2 }} />
             <Box>
               <input
@@ -349,7 +359,7 @@ const ApplicationDetail: React.FC = () => {
                 accept=".pdf,.doc,.docx"
               />
               <label htmlFor="upload-files">
-                <Button variant="outlined" component="span" startIcon={<FileIcon />}>Select Files</Button>
+                <Button variant="outlined" component="span" startIcon={<FileIcon />}>{t('common.select')} {t('application.files')}</Button>
               </label>
               <Button
                 sx={{ ml: 2 }}
@@ -358,7 +368,7 @@ const ApplicationDetail: React.FC = () => {
                 onClick={handleUploadFiles}
                 disabled={filesToUpload.length === 0 || uploading}
               >
-                {uploading ? 'Uploading...' : 'Upload'}
+                {uploading ? t('common.uploading') : t('common.upload')}
               </Button>
             </Box>
             {detail.files && detail.files.length > 0 && (
@@ -383,19 +393,19 @@ const ApplicationDetail: React.FC = () => {
               </List>
             )}
 
-            <Typography variant="h6" sx={{ mt: 3 }}>Meetings</Typography>
+            <Typography variant="h6" sx={{ mt: 3 }}>{t('application.meetings')}</Typography>
             <Divider sx={{ mb: 2 }} />
             <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-              <Button startIcon={<ScheduleIcon />} variant="outlined" onClick={openMeetingDialog}>Schedule Meeting</Button>
-              <Button startIcon={<CalendarIcon />} variant="outlined" onClick={() => navigate(`/applications/${detail.id}/meetings`)}>Open Scheduler</Button>
+              <Button startIcon={<ScheduleIcon />} variant="outlined" onClick={openMeetingDialog}>{t('application.scheduleMeeting')}</Button>
+              <Button startIcon={<CalendarIcon />} variant="outlined" onClick={() => navigate(`/applications/${detail.id}/meetings`)}>{t('application.openScheduler')}</Button>
             </Box>
             {detail.meetings && detail.meetings.length > 0 && (
               <List>
                 {detail.meetings.map(m => (
                   <ListItem key={m.id}
                     secondaryAction={
-                      <Button size="small" color="warning" onClick={() => handleCancelMeeting(m.id)} disabled={m.status === 'CANCELLED'}>
-                        {m.status === 'CANCELLED' ? 'Cancelled' : 'Cancel Meeting'}
+                      <Button size="small" color="warning" onClick={() => handleCancelMeetingClick(m.id)} disabled={m.status === 'CANCELLED'}>
+                        {m.status === 'CANCELLED' ? t('meeting.cancelled') : t('meeting.cancelMeeting')}
                       </Button>
                     }
                   >
@@ -411,19 +421,22 @@ const ApplicationDetail: React.FC = () => {
           </Grid>
 
           <Grid item xs={12} md={4}>
-            <Typography variant="h6">Status</Typography>
+            <Typography variant="h6">{t('common.status')}</Typography>
             <Divider sx={{ mb: 2 }} />
             {/* Status selector */}
             <FormControl fullWidth size="small">
-              <InputLabel>Status</InputLabel>
-              <Select value={newStatus} label="Status" onChange={(e) => setNewStatus(e.target.value as ApplicationStatus)}>
-                {statusOptions.map(s => (
-                  <MenuItem key={s} value={s}>{s.replace('_', ' ')}</MenuItem>
-                ))}
+              <InputLabel>{t('common.status')}</InputLabel>
+              <Select value={newStatus} label={t('common.status')} onChange={(e) => setNewStatus(e.target.value as ApplicationStatus)}>
+                {statusOptions.map(s => {
+                  const statusKey = s?.toLowerCase().replace(/_/g, '') || '';
+                  return (
+                    <MenuItem key={s} value={s}>{t(`application.${statusKey}`) || s.replace('_', ' ')}</MenuItem>
+                  );
+                })}
               </Select>
             </FormControl>
             <Button sx={{ mt: 2 }} fullWidth variant="contained" onClick={handleStatusChange} disabled={saving}>
-              Update Status
+              {t('common.update')} {t('common.status')}
             </Button>
             <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
               {detail.poolCvId && (
@@ -433,17 +446,17 @@ const ApplicationDetail: React.FC = () => {
                   onClick={() => navigate(`/cv-sharing/pool-cvs/${detail.poolCvId}`)}
                   variant="outlined"
                 >
-                  View Applicant Details
+                  {t('application.viewApplicantDetails')}
                 </Button>
               )}
-              <Button size="small" startIcon={<ForwardIcon />} onClick={() => navigate(`/cv-sharing/applications/${detail.id}/forward`)}>Forward</Button>
+              <Button size="small" startIcon={<ForwardIcon />} onClick={() => navigate(`/cv-sharing/applications/${detail.id}/forward`)}>{t('application.forwardToReviewer')}</Button>
             </Box>
 
-            <Typography variant="h6" sx={{ mt: 3 }}>Ratings</Typography>
+            <Typography variant="h6" sx={{ mt: 3 }}>{t('application.ratings')}</Typography>
             <Divider sx={{ mb: 2 }} />
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Rating value={ratingScore || 0} onChange={(_, v) => setRatingScore(v)} />
-              <Button size="small" variant="outlined" startIcon={<StarIcon />} onClick={handleAddRating} disabled={isCompanyManager || !ratingScore || ratingSaving}>Rate</Button>
+              <Button size="small" variant="outlined" startIcon={<StarIcon />} onClick={handleAddRating} disabled={isCompanyManager || !ratingScore || ratingSaving}>{t('application.rate')}</Button>
             </Box>
             {detail.ratings && detail.ratings.length > 0 && (
               <List>
@@ -460,12 +473,12 @@ const ApplicationDetail: React.FC = () => {
                     try {
                       setRatingSaving(true);
                       await applicationService.addRating(detail.id, { score: editScore });
-                      enqueueSnackbar('Rating updated', { variant: 'success' });
+                      enqueueSnackbar(t('application.ratingUpdated'), { variant: 'success' });
                       setEditingRating(null);
                       setEditScore(null);
                       await queryClient.invalidateQueries({ queryKey: ['application', id] });
                     } catch (e) {
-                      enqueueSnackbar('Failed to update rating', { variant: 'error' });
+                      enqueueSnackbar(t('error.updateFailed'), { variant: 'error' });
                     } finally {
                       setRatingSaving(false);
                     }
@@ -518,7 +531,7 @@ const ApplicationDetail: React.FC = () => {
                     >
                       <ListItemIcon><StarIcon /></ListItemIcon>
                       <ListItemText 
-                        primary={editingRating === r.id ? 'Editing...' : `${r.score}/5 by ${r.userName || r.userId}`} 
+                        primary={editingRating === r.id ? t('common.editing') : `${r.score}/5 ${t('common.by')} ${r.userName || r.userId}`} 
                         secondary={new Date(r.createdAt).toLocaleString()} 
                       />
                     </ListItem>
@@ -529,7 +542,7 @@ const ApplicationDetail: React.FC = () => {
 
             {detail.recentComments && detail.recentComments.length > 0 && (
               <>
-                <Typography variant="h6" sx={{ mt: 3 }}>Recent Comments</Typography>
+                <Typography variant="h6" sx={{ mt: 3 }}>{t('application.recentComments')}</Typography>
                 <Divider sx={{ mb: 2 }} />
                 <List>
                   {detail.recentComments.map(c => (
@@ -542,12 +555,12 @@ const ApplicationDetail: React.FC = () => {
               </>
             )}
 
-            <Typography variant="h6" sx={{ mt: 3 }}>Comments</Typography>
+            <Typography variant="h6" sx={{ mt: 3 }}>{t('application.comments')}</Typography>
             <Divider sx={{ mb: 2 }} />
             <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-              <TextField fullWidth size="small" placeholder="Add a comment..." value={commentText} onChange={(e) => setCommentText(e.target.value)} />
+              <TextField fullWidth size="small" placeholder={t('application.commentPlaceholder')} value={commentText} onChange={(e) => setCommentText(e.target.value)} />
               <Button variant="outlined" startIcon={<CommentIcon />} onClick={handleAddComment} disabled={commentSaving || !commentText.trim()}>
-                Add
+                {t('common.add')}
               </Button>
             </Box>
             {detail.comments && detail.comments.length > 0 && (
@@ -566,19 +579,19 @@ const ApplicationDetail: React.FC = () => {
 
       {/* Meeting Dialog */}
       <Dialog open={meetingOpen} onClose={closeMeetingDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>Schedule Meeting</DialogTitle>
+        <DialogTitle>{t('application.scheduleMeeting')}</DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
-            label="Title"
+            label={t('meeting.meetingTitle')}
             sx={{ mt: 1 }}
             value={meeting.title || ''}
             onChange={(e) => setMeeting(m => ({ ...m, title: e.target.value }))}
           />
           <FormControl fullWidth size="small" sx={{ mt: 2 }}>
-            <InputLabel>Provider</InputLabel>
+            <InputLabel>{t('meeting.provider')}</InputLabel>
             <Select
-              label="Provider"
+              label={t('meeting.provider')}
               value={meeting.provider || MeetingProvider.TEAMS}
               onChange={(e) => setMeeting(m => ({ ...m, provider: e.target.value as MeetingProvider }))}
             >
@@ -591,7 +604,7 @@ const ApplicationDetail: React.FC = () => {
           <TextField
             fullWidth
             type="datetime-local"
-            label="Start Time"
+            label={t('meeting.startTime')}
             InputLabelProps={{ shrink: true }}
             sx={{ mt: 2 }}
             value={meeting.startTime || ''}
@@ -600,7 +613,7 @@ const ApplicationDetail: React.FC = () => {
           <TextField
             fullWidth
             type="number"
-            label="Duration (minutes)"
+            label={t('meeting.duration')}
             sx={{ mt: 2 }}
             InputProps={{ inputProps: { min: 15 } }}
             value={meeting.durationMinutes || 30}
@@ -608,32 +621,32 @@ const ApplicationDetail: React.FC = () => {
           />
           <TextField
             fullWidth
-            label="Meeting Link"
+            label={t('meeting.meetingLink')}
             sx={{ mt: 2 }}
             value={meeting.meetingLink || ''}
             onChange={(e) => setMeeting(m => ({ ...m, meetingLink: e.target.value }))}
           />
           <TextField
             fullWidth
-            label="Location or Link"
+            label={t('meeting.location')}
             sx={{ mt: 2 }}
             value={meeting.location || ''}
             onChange={(e) => setMeeting(m => ({ ...m, location: e.target.value }))}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={closeMeetingDialog}>Cancel</Button>
-          <Button variant="contained" onClick={handleScheduleMeeting} disabled={meetingSaving}>Schedule</Button>
+          <Button onClick={closeMeetingDialog}>{t('common.cancel')}</Button>
+          <Button variant="contained" onClick={handleScheduleMeeting} disabled={meetingSaving}>{t('application.scheduleMeeting')}</Button>
         </DialogActions>
       </Dialog>
 
       {/* Delete File Confirmation Dialog */}
       <ConfirmDialog
         open={deleteFileDialogOpen}
-        title="Delete File"
-        description="Are you sure you want to delete this file? This action cannot be undone."
-        confirmLabel="Delete"
-        cancelLabel="Cancel"
+        title={t('application.deleteFile')}
+        description={t('application.deleteFileConfirm')}
+        confirmLabel={t('common.delete')}
+        cancelLabel={t('common.cancel')}
         confirmColor="error"
         loading={isDeletingFile}
         onClose={() => {
@@ -641,6 +654,21 @@ const ApplicationDetail: React.FC = () => {
           setFileToDelete(null);
         }}
         onConfirm={handleDeleteFile}
+      />
+
+      {/* Cancel Meeting Confirmation Dialog */}
+      <ConfirmDialog
+        open={cancelMeetingDialogOpen}
+        title={t('meeting.cancelMeeting')}
+        description={t('meeting.cancelConfirm')}
+        confirmLabel={t('meeting.cancelMeeting')}
+        cancelLabel={t('common.cancel')}
+        confirmColor="warning"
+        onClose={() => {
+          setCancelMeetingDialogOpen(false);
+          setMeetingToCancel(null);
+        }}
+        onConfirm={handleCancelMeeting}
       />
     </Box>
   );

@@ -37,8 +37,10 @@ import SectionCard from '@/components/ui/SectionCard';
 // import { standardDataGridSx } from '@/components/ui/dataGridStyles';
 import EmptyState from '@/components/ui/EmptyState';
 import { useKeycloak } from '@/providers/KeycloakProvider';
+import { useTranslation } from 'react-i18next';
 
 const PositionList: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { hasRole } = useKeycloak();
@@ -91,10 +93,10 @@ const PositionList: React.FC = () => {
   const handleArchive = async (id: string) => {
     try {
       await positionService.archivePosition(id);
-      enqueueSnackbar('Position archived successfully', { variant: 'success' });
+      enqueueSnackbar(t('position.positionArchived'), { variant: 'success' });
       refetch();
     } catch (error) {
-      enqueueSnackbar('Failed to archive position', { variant: 'error' });
+      enqueueSnackbar(t('error.updateFailed'), { variant: 'error' });
     }
   };
 
@@ -113,10 +115,10 @@ const PositionList: React.FC = () => {
 
     try {
       await positionService.updatePositionStatus(selectedPosition.id, newStatus);
-      enqueueSnackbar(`Position status updated to ${newStatus}`, { variant: 'success' });
+      enqueueSnackbar(t('position.positionUpdated'), { variant: 'success' });
       refetch();
     } catch (error) {
-      enqueueSnackbar('Failed to update position status', { variant: 'error' });
+      enqueueSnackbar(t('error.updateFailed'), { variant: 'error' });
     } finally {
       handleMenuClose();
     }
@@ -139,84 +141,86 @@ const PositionList: React.FC = () => {
     }
   };
 
-  const columns: GridColDef[] = [
-    { field: 'title', headerName: 'Position Title', flex: 1, minWidth: 200 },
-    { field: 'name', headerName: 'Internal Name', width: 180 },
+  const columns: GridColDef[] = React.useMemo(() => [
+    { field: 'title', headerName: t('position.jobTitle'), flex: 1, minWidth: 200 },
+    { field: 'name', headerName: t('position.name'), width: 180 },
     {
       field: 'requirements',
-      headerName: 'Requirements',
+      headerName: t('position.requirements'),
       flex: 1.2,
       minWidth: 220,
       renderCell: (params: GridRenderCellParams) => (
         <Typography noWrap sx={{ maxWidth: '100%' }}>{params.value || '-'}</Typography>
       )
     },
-    { field: 'department', headerName: 'Department', width: 150 },
-    { field: 'location', headerName: 'Location', width: 150 },
+    { field: 'department', headerName: t('position.department'), width: 150 },
+    { field: 'location', headerName: t('position.location'), width: 150 },
     {
       field: 'workType',
-      headerName: 'Work Type',
+      headerName: t('position.workType'),
       width: 120,
       renderCell: (params: GridRenderCellParams) => {
         const workType = params.value as WorkType;
-        return <Chip label={workType} size="small" variant="outlined" />;
+        const workTypeKey = workType?.toLowerCase().replace(/\s+/g, '') || '';
+        return <Chip label={t(`position.${workTypeKey}`) || workType} size="small" variant="outlined" />;
       }
     },
-    { field: 'minExperience', headerName: 'Min Exp (yrs)', width: 120, valueFormatter: (p) => p.value ?? '-' },
-    { field: 'educationLevel', headerName: 'Education', width: 140, valueFormatter: (p) => p.value ?? '-' },
-    { field: 'visibility', headerName: 'Visibility', width: 120 },
+    { field: 'minExperience', headerName: t('position.experienceYears'), width: 120, valueFormatter: (p) => p.value ?? t('common.notAvailable') },
+    { field: 'educationLevel', headerName: t('common.education'), width: 140, valueFormatter: (p) => p.value ?? t('common.notAvailable') },
+    { field: 'visibility', headerName: t('common.visibility'), width: 120 },
     {
       field: 'salaryRange',
-      headerName: 'Salary Range',
+      headerName: t('position.salaryRange'),
       width: 160,
       valueGetter: (params) => {
         const min = params.row.salaryRangeMin;
         const max = params.row.salaryRangeMax;
-        if (min == null && max == null) return '-';
+        if (min == null && max == null) return t('common.notAvailable');
         if (min != null && max != null) return `${min} - ${max}`;
         if (min != null) return `${min} +`;
-        return `up to ${max}`;
+        return `${t('common.upTo')} ${max}`;
       }
     },
     {
       field: 'status',
-      headerName: 'Status',
+      headerName: t('common.status'),
       width: 120,
       renderCell: (params: GridRenderCellParams) => {
         const status = params.value as PositionStatus;
-        return <Chip label={status} color={getStatusColor(status)} size="small" />;
+        const statusKey = status?.toLowerCase() || '';
+        return <Chip label={t(`position.${statusKey}`) || status} color={getStatusColor(status)} size="small" />;
       }
     },
-    { field: 'applicationCount', headerName: 'Applications', width: 110, align: 'center' },
+    { field: 'applicationCount', headerName: t('position.applications'), width: 110, align: 'center' },
     {
       field: 'applicationDeadline',
-      headerName: 'Deadline',
+      headerName: t('position.applicationDeadline'),
       width: 120,
-      valueFormatter: (params) => (params.value ? format(new Date(params.value), 'dd/MM/yyyy') : '-')
+      valueFormatter: (params) => (params.value ? format(new Date(params.value), 'dd/MM/yyyy') : t('common.notAvailable'))
     },
-    { field: 'createdBy', headerName: 'Created By', width: 160, valueFormatter: (p) => p.value || 'System' },
+    { field: 'createdBy', headerName: t('common.createdBy'), width: 160, valueFormatter: (p) => p.value || t('common.system') },
     {
       field: 'createdAt',
-      headerName: 'Created At',
+      headerName: t('common.createdAt'),
       width: 140,
-      valueFormatter: (params) => (params.value ? format(new Date(params.value), 'dd/MM/yyyy HH:mm') : '-')
+      valueFormatter: (params) => (params.value ? format(new Date(params.value), 'dd/MM/yyyy HH:mm') : t('common.notAvailable'))
     },
     {
       field: 'updatedAt',
-      headerName: 'Updated At',
+      headerName: t('common.updatedAt'),
       width: 140,
-      valueFormatter: (params) => (params.value ? format(new Date(params.value), 'dd/MM/yyyy HH:mm') : '-')
+      valueFormatter: (params) => (params.value ? format(new Date(params.value), 'dd/MM/yyyy HH:mm') : t('common.notAvailable'))
     },
     {
       field: 'actions',
-      headerName: 'Actions',
+      headerName: t('common.actions'),
       width: 200,
       sortable: false,
       renderCell: (params: GridRenderCellParams) => {
         const position = params.row as Position;
         return (
           <Box>
-            <Tooltip title="View">
+            <Tooltip title={t('common.view')}>
               <IconButton
                 size="small"
                 onClick={(e) => {
@@ -227,7 +231,7 @@ const PositionList: React.FC = () => {
                 <ViewIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-            <Tooltip title={isCompanyManager ? 'Company Manager sadece görüntüleme yapabilir' : (isHR ? 'Edit' : 'Yalnızca İnsan Kaynakları düzenleyebilir')}>
+            <Tooltip title={isCompanyManager ? t('common.viewOnly') : (isHR ? t('common.edit') : t('common.onlyHR'))}>
               <span>
                 <IconButton
                   size="small"
@@ -241,7 +245,7 @@ const PositionList: React.FC = () => {
                 </IconButton>
               </span>
             </Tooltip>
-            <Tooltip title={isCompanyManager ? 'Company Manager sadece görüntüleme yapabilir' : (isHR ? 'Duplicate' : 'Yalnızca İnsan Kaynakları kopyalayabilir')}>
+            <Tooltip title={isCompanyManager ? t('common.viewOnly') : (isHR ? t('position.duplicatePosition') : t('common.onlyHR'))}>
               <span>
                 <IconButton
                   size="small"
@@ -255,7 +259,7 @@ const PositionList: React.FC = () => {
                 </IconButton>
               </span>
             </Tooltip>
-            <Tooltip title={isCompanyManager ? 'Company Manager sadece görüntüleme yapabilir' : (isHR ? 'Archive' : 'Yalnızca İnsan Kaynakları arşivleyebilir')}>
+            <Tooltip title={isCompanyManager ? t('common.viewOnly') : (isHR ? t('position.archivePosition') : t('common.onlyHR'))}>
               <span>
                 <IconButton
                   size="small"
@@ -269,7 +273,7 @@ const PositionList: React.FC = () => {
                 </IconButton>
               </span>
             </Tooltip>
-            <Tooltip title={isCompanyManager ? 'Company Manager sadece görüntüleme yapabilir' : (isHR ? 'Change Status' : 'Yalnızca İnsan Kaynakları durumu değiştirebilir')}>
+            <Tooltip title={isCompanyManager ? t('common.viewOnly') : (isHR ? t('common.changeStatus') : t('common.onlyHR'))}>
               <span>
                 <IconButton
                   size="small"
@@ -287,22 +291,22 @@ const PositionList: React.FC = () => {
         );
       }
     }
-  ];
+  ], [t, isHR, isCompanyManager, navigate]);
 
   const NoPositionsOverlay = React.useCallback(() => (
     <EmptyState
-      title="No positions"
-      description="There are no positions to display."
+      title={t('common.noData')}
+      description={t('common.noResults')}
     />
-  ), []);
+  ), [t]);
 
   return (
     <PageContainer
-      title="Positions"
+      title={t('position.titlePlural')}
       actions={
         <Stack direction="row" spacing={1}>
-          <Button variant="outlined" onClick={() => refetch()}>Refresh</Button>
-          <Tooltip title={isHR ? '' : 'Yalnızca İnsan Kaynakları pozisyon oluşturabilir'}>
+          <Button variant="outlined" onClick={() => refetch()}>{t('common.refresh')}</Button>
+          <Tooltip title={isHR ? '' : t('common.onlyHR')}>
             <span>
               <Button
                 variant="contained"
@@ -310,7 +314,7 @@ const PositionList: React.FC = () => {
                 onClick={() => navigate('/cv-sharing/positions/new')}
                 disabled={!isHR}
               >
-                Create Position
+                {t('position.createPosition')}
               </Button>
             </span>
           </Tooltip>
@@ -322,7 +326,7 @@ const PositionList: React.FC = () => {
           <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
             <TextField
               variant="outlined"
-              placeholder="Search positions..."
+              placeholder={t('common.search') + '...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               sx={{ flex: { xs: '1 1 100%', md: '1 1 auto' } }}
@@ -335,35 +339,35 @@ const PositionList: React.FC = () => {
               }}
             />
             <FormControl sx={{ minWidth: { xs: '100%', sm: 180 } }}>
-              <InputLabel>Status</InputLabel>
+              <InputLabel>{t('common.status')}</InputLabel>
               <Select
                 value={isHR ? (statusFilter as any) : PositionStatus.ACTIVE}
-                label="Status"
+                label={t('common.status')}
                 onChange={(e) => setStatusFilter(e.target.value as PositionStatus | '')}
                 disabled={!isHR}
               >
                 {isHR ? (
                   [
-                    <MenuItem key="all" value="">All</MenuItem>,
-                    <MenuItem key="draft" value={PositionStatus.DRAFT}>Draft</MenuItem>,
-                    <MenuItem key="active" value={PositionStatus.ACTIVE}>Active</MenuItem>,
-                    <MenuItem key="passive" value={PositionStatus.PASSIVE}>Passive</MenuItem>,
-                    <MenuItem key="closed" value={PositionStatus.CLOSED}>Closed</MenuItem>,
-                    <MenuItem key="archived" value={PositionStatus.ARCHIVED}>Archived</MenuItem>,
+                    <MenuItem key="all" value="">{t('common.all')}</MenuItem>,
+                    <MenuItem key="draft" value={PositionStatus.DRAFT}>{t('position.draft')}</MenuItem>,
+                    <MenuItem key="active" value={PositionStatus.ACTIVE}>{t('position.active')}</MenuItem>,
+                    <MenuItem key="passive" value={PositionStatus.PASSIVE}>{t('position.passive')}</MenuItem>,
+                    <MenuItem key="closed" value={PositionStatus.CLOSED}>{t('position.closed')}</MenuItem>,
+                    <MenuItem key="archived" value={PositionStatus.ARCHIVED}>{t('position.archived')}</MenuItem>,
                   ]
                 ) : (
-                  <MenuItem value={PositionStatus.ACTIVE}>Active</MenuItem>
+                  <MenuItem value={PositionStatus.ACTIVE}>{t('position.active')}</MenuItem>
                 )}
               </Select>
             </FormControl>
             <FormControl sx={{ minWidth: { xs: '100%', sm: 200 } }}>
-              <InputLabel>Department</InputLabel>
+              <InputLabel>{t('position.department')}</InputLabel>
               <Select
                 value={departmentFilter}
-                label="Department"
+                label={t('position.department')}
                 onChange={(e) => setDepartmentFilter(e.target.value as string)}
               >
-                <MenuItem value="">All</MenuItem>
+                <MenuItem value="">{t('common.all')}</MenuItem>
                 {departments.map((name) => (
                   <MenuItem key={name} value={name}>{name}</MenuItem>
                 ))}
@@ -375,7 +379,7 @@ const PositionList: React.FC = () => {
               onClick={() => refetch()}
               sx={{ minWidth: { xs: '100%', sm: 'auto' } }}
             >
-              Apply Filters
+{t('common.apply')}
             </Button>
           </Box>
         </SectionCard>
@@ -430,7 +434,7 @@ const PositionList: React.FC = () => {
         </SectionCard>
         {isError && (
           <Typography variant="body2" color="error" sx={{ mt: -1 }}>
-            Failed to load positions.
+{t('error.loadFailed', { item: t('position.titlePlural').toLowerCase() })}
           </Typography>
         )}
       </Stack>
@@ -444,7 +448,7 @@ const PositionList: React.FC = () => {
           .filter(s => s !== selectedPosition?.status && s !== PositionStatus.ARCHIVED)
           .map((status) => (
             <MenuItem key={status} onClick={() => handleStatusChange(status)}>
-              Set as {status}
+{t('common.setAs')} {t(`position.${status.toLowerCase()}`)}
             </MenuItem>
           ))}
       </Menu>

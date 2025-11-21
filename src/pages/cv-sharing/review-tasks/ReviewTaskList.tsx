@@ -30,6 +30,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { reviewTaskService } from '@/services/cv-sharing/reviewTaskService';
 import { ReviewTask, ReviewTaskStatus } from '@/types/cv-sharing/review-task';
@@ -38,6 +39,7 @@ import PageContainer from '@/components/ui/PageContainer';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 
 const ReviewTaskList: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { hasAnyRole } = useKeycloak();
@@ -227,7 +229,7 @@ const ReviewTaskList: React.FC = () => {
     <PageContainer>
       <Box sx={{ mb: 3 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-          <Typography variant="h4">Review Tasks</Typography>
+          <Typography variant="h4">{t('reviewTask.titlePlural')}</Typography>
           {canEdit && (
             <Button
               variant="contained"

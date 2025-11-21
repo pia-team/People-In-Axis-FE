@@ -26,8 +26,10 @@ import { AbTest, AbTestStatus } from '@/types/cv-sharing/ab-test';
 import { useKeycloak } from '@/hooks/useKeycloak';
 import PageContainer from '@/components/ui/PageContainer';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import { useTranslation } from 'react-i18next';
 
 const AbTestList: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { hasAnyRole } = useKeycloak();
@@ -209,7 +211,7 @@ const AbTestList: React.FC = () => {
     <PageContainer>
       <Box sx={{ mb: 3 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-          <Typography variant="h4">A/B Tests</Typography>
+          <Typography variant="h4">{t('abTest.titlePlural')}</Typography>
           {canEdit && (
             <Button
               variant="contained"

@@ -27,6 +27,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { positionService } from '@/services/cv-sharing';
 import { WorkType, LanguageProficiency } from '@/types/cv-sharing';
 import { useKeycloak } from '@/providers/KeycloakProvider';
+import { useTranslation } from 'react-i18next';
 
 interface PositionFormData {
   name: string;
@@ -47,6 +48,7 @@ interface PositionFormData {
 }
 
 const PositionForm: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
@@ -117,7 +119,7 @@ const PositionForm: React.FC = () => {
       setSkills((position.skills || []).map((s: any) => s.name || s.skillName || ''));
       setLanguages((position.languages || []).map((l: any) => ({ code: l.code, level: l.proficiencyLevel })));
     } catch (error) {
-      enqueueSnackbar('Failed to load position', { variant: 'error' });
+      enqueueSnackbar(t('error.loadFailed', { item: t('position.title').toLowerCase() }), { variant: 'error' });
     } finally {
       setLoading(false);
     }
@@ -147,7 +149,7 @@ const PositionForm: React.FC = () => {
       setSkills((position.skills || []).map((s: any) => s.name || s.skillName || ''));
       setLanguages((position.languages || []).map((l: any) => ({ code: l.code, level: l.proficiencyLevel })));
     } catch (error) {
-      enqueueSnackbar('Failed to load position for duplication', { variant: 'error' });
+      enqueueSnackbar(t('error.loadFailed', { item: t('position.title').toLowerCase() }), { variant: 'error' });
     } finally {
       setLoading(false);
     }
@@ -159,7 +161,7 @@ const PositionForm: React.FC = () => {
         ? positionService.updatePosition(id, positionData) 
         : positionService.createPosition(positionData),
     onSuccess: (data: any) => {
-      enqueueSnackbar(`Position ${id ? 'updated' : 'created'} successfully`, { variant: 'success' });
+      enqueueSnackbar(id ? t('position.positionUpdated') : t('position.positionCreated'), { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['positions'] });
       if (id) {
         queryClient.invalidateQueries({ queryKey: ['position', id] });
@@ -167,13 +169,13 @@ const PositionForm: React.FC = () => {
       navigate(`/cv-sharing/positions/${data.id}`);
     },
     onError: () => {
-      enqueueSnackbar('Failed to save position', { variant: 'error' });
+      enqueueSnackbar(t('error.saveFailed'), { variant: 'error' });
     }
   });
 
   const onSubmit = (data: PositionFormData) => {
     if (!isHR) {
-      enqueueSnackbar('Yalnızca İnsan Kaynakları kaydedebilir', { variant: 'warning' });
+      enqueueSnackbar(t('common.onlyHR'), { variant: 'warning' });
       return;
     }
     const positionData = {
@@ -200,11 +202,11 @@ const PositionForm: React.FC = () => {
     <Box sx={{ p: 3 }}>
       <Paper sx={{ p: 3 }}>
         <Typography variant="h4" gutterBottom>
-          {id ? 'Edit Position' : 'Create New Position'}
+          {id ? t('position.editPosition') : t('position.createPosition')}
         </Typography>
         {!isHR && (
           <Alert severity="info" sx={{ mb: 2 }}>
-            Bu ekran yalnızca görüntüleme içindir. Pozisyon {id ? 'düzenlemek' : 'oluşturmak'} için İnsan Kaynakları rolü gerekir.
+            {t('common.viewOnly')}. {t('common.onlyHR')}
           </Alert>
         )}
 
@@ -214,7 +216,7 @@ const PositionForm: React.FC = () => {
             {/* Basic Information */}
             <Grid item xs={12}>
               <Typography variant="h6" gutterBottom>
-                Basic Information
+                {t('position.basicInformation')}
               </Typography>
               <Divider sx={{ mb: 2 }} />
             </Grid>
@@ -223,12 +225,12 @@ const PositionForm: React.FC = () => {
               <Controller
                 name="name"
                 control={control}
-                rules={{ required: 'Position name is required' }}
+                rules={{ required: t('validation.required') }}
                 render={({ field }) => (
                   <TextField
                     {...field}
                     fullWidth
-                    label="Position Name"
+                    label={t('position.name')}
                     error={!!errors.name}
                     helperText={errors.name?.message}
                   />
@@ -240,12 +242,12 @@ const PositionForm: React.FC = () => {
               <Controller
                 name="title"
                 control={control}
-                rules={{ required: 'Position title is required' }}
+                rules={{ required: t('validation.required') }}
                 render={({ field }) => (
                   <TextField
                     {...field}
                     fullWidth
-                    label="Position Title"
+                    label={t('position.jobTitle')}
                     error={!!errors.title}
                     helperText={errors.title?.message}
                   />
@@ -261,7 +263,7 @@ const PositionForm: React.FC = () => {
                   <TextField
                     {...field}
                     fullWidth
-                    label="Department"
+                    label={t('position.department')}
                   />
                 )}
               />
@@ -275,7 +277,7 @@ const PositionForm: React.FC = () => {
                   <TextField
                     {...field}
                     fullWidth
-                    label="Location"
+                    label={t('position.location')}
                   />
                 )}
               />
@@ -287,11 +289,11 @@ const PositionForm: React.FC = () => {
                 control={control}
                 render={({ field }) => (
                   <FormControl fullWidth>
-                    <InputLabel>Work Type</InputLabel>
-                    <Select {...field} label="Work Type">
-                      <MenuItem value={WorkType.ONSITE}>Onsite</MenuItem>
-                      <MenuItem value={WorkType.REMOTE}>Remote</MenuItem>
-                      <MenuItem value={WorkType.HYBRID}>Hybrid</MenuItem>
+                    <InputLabel>{t('position.workType')}</InputLabel>
+                    <Select {...field} label={t('position.workType')}>
+                      <MenuItem value={WorkType.ONSITE}>{t('position.onsite')}</MenuItem>
+                      <MenuItem value={WorkType.REMOTE}>{t('position.remote')}</MenuItem>
+                      <MenuItem value={WorkType.HYBRID}>{t('position.hybrid')}</MenuItem>
                     </Select>
                   </FormControl>
                 )}
@@ -301,7 +303,7 @@ const PositionForm: React.FC = () => {
             {/* Requirements */}
             <Grid item xs={12}>
               <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-                Requirements
+                {t('position.requirements')}
               </Typography>
               <Divider sx={{ mb: 2 }} />
             </Grid>
@@ -315,7 +317,7 @@ const PositionForm: React.FC = () => {
                     {...field}
                     fullWidth
                     type="number"
-                    label="Minimum Experience (years)"
+                    label={t('position.minExperienceYears')}
                     InputProps={{ inputProps: { min: 0 } }}
                   />
                 )}
@@ -330,7 +332,7 @@ const PositionForm: React.FC = () => {
                   <TextField
                     {...field}
                     fullWidth
-                    label="Education Level"
+                    label={t('common.education')}
                   />
                 )}
               />
@@ -339,13 +341,13 @@ const PositionForm: React.FC = () => {
             {/* Skills */}
             <Grid item xs={12}>
               <Typography variant="subtitle1" gutterBottom>
-                Required Skills
+                {t('position.requiredSkills')}
               </Typography>
               <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
                 <TextField
                   value={newSkill}
                   onChange={(e) => setNewSkill(e.target.value)}
-                  placeholder="Add skill"
+                  placeholder={t('position.addSkill')}
                   size="small"
                   onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
                 />
@@ -355,7 +357,7 @@ const PositionForm: React.FC = () => {
                   onClick={addSkill}
                   startIcon={<AddIcon />}
                 >
-                  Add
+                  {t('common.add')}
                 </Button>
               </Box>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -380,7 +382,7 @@ const PositionForm: React.FC = () => {
                     fullWidth
                     multiline
                     rows={4}
-                    label="Description"
+                    label={t('position.description')}
                   />
                 )}
               />
@@ -396,7 +398,7 @@ const PositionForm: React.FC = () => {
                     fullWidth
                     multiline
                     rows={4}
-                    label="Requirements"
+                    label={t('position.requirements')}
                   />
                 )}
               />
@@ -405,7 +407,7 @@ const PositionForm: React.FC = () => {
             {/* Settings */}
             <Grid item xs={12}>
               <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-                Settings
+                {t('common.settings')}
               </Typography>
               <Divider sx={{ mb: 2 }} />
             </Grid>
@@ -416,10 +418,10 @@ const PositionForm: React.FC = () => {
                 control={control}
                 render={({ field }) => (
                   <FormControl fullWidth>
-                    <InputLabel>Visibility</InputLabel>
-                    <Select {...field} label="Visibility">
-                      <MenuItem value={'PUBLIC'}>Public</MenuItem>
-                      <MenuItem value={'INTERNAL'}>Internal</MenuItem>
+                    <InputLabel>{t('common.visibility')}</InputLabel>
+                    <Select {...field} label={t('common.visibility')}>
+                      <MenuItem value={'PUBLIC'}>{t('common.public')}</MenuItem>
+                      <MenuItem value={'INTERNAL'}>{t('common.internal')}</MenuItem>
                     </Select>
                   </FormControl>
                 )}
@@ -435,7 +437,7 @@ const PositionForm: React.FC = () => {
                     {...field}
                     fullWidth
                     type="datetime-local"
-                    label="Application Deadline"
+                    label={t('position.applicationDeadline')}
                     InputLabelProps={{ shrink: true }}
                   />
                 )}
@@ -452,7 +454,7 @@ const PositionForm: React.FC = () => {
                     {...field}
                     fullWidth
                     type="number"
-                    label="Min Salary"
+                    label={t('position.minSalary')}
                     InputProps={{ inputProps: { min: 0 } }}
                   />
                 )}
@@ -468,7 +470,7 @@ const PositionForm: React.FC = () => {
                     {...field}
                     fullWidth
                     type="number"
-                    label="Max Salary"
+                    label={t('position.maxSalary')}
                     InputProps={{ inputProps: { min: 0 } }}
                   />
                 )}
@@ -484,9 +486,9 @@ const PositionForm: React.FC = () => {
                   onClick={() => navigate('/cv-sharing/positions')}
                   disabled={isSaving || loading}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
-                <Tooltip title={isHR ? '' : 'Yalnızca İnsan Kaynakları kaydedebilir'}>
+                <Tooltip title={isHR ? '' : t('common.onlyHR')}>
                   <span>
                     <Button
                       type="submit"
@@ -494,7 +496,7 @@ const PositionForm: React.FC = () => {
                       startIcon={<SaveIcon />}
                       disabled={!isHR || isSaving || loading}
                     >
-                      {id ? 'Update' : 'Create'} Position
+                      {id ? t('common.update') : t('common.create')} {t('position.title')}
                     </Button>
                   </span>
                 </Tooltip>
