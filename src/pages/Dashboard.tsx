@@ -33,6 +33,39 @@ const Dashboard: React.FC = () => {
     isPending ? <Skeleton variant="text" width={56} height={42} /> : <Typography variant="h3" sx={{ fontWeight: 700 }}>{formatNumber(n)}</Typography>
   );
 
+  const translateTimesheetStatus = (status?: string) => {
+    if (!status) return '';
+    const statusMap: Record<string, string> = {
+      'CREATED': t('timesheet.statusCreated'),
+      'SUBMITTED': t('timesheet.statusSubmitted'),
+      'WAITING_FOR_MANAGER_APPROVAL': t('timesheet.statusWaitingForManagerApproval'),
+      'PROCESSING': t('timesheet.statusProcessing'),
+      'WAITING_FOR_ADMIN_APPROVAL': t('timesheet.statusWaitingForAdminApproval'),
+      'COMPLETED': t('timesheet.statusCompleted'),
+      'CLOSED': t('timesheet.statusClosed'),
+      'CANCELLED': t('timesheet.statusCancelled'),
+      'REVISION_REQUESTED': t('timesheet.statusRevisionRequested'),
+      'COMPANY_REJECTED': t('timesheet.statusCompanyRejected'),
+      'MANAGER_REJECTED': t('timesheet.statusManagerRejected'),
+      'ADMIN_REJECTED': t('timesheet.statusAdminRejected'),
+    };
+    return statusMap[status] || status;
+  };
+
+  const translateExpenseStatus = (status?: string) => {
+    if (!status) return '';
+    const statusMap: Record<string, string> = {
+      'PENDING': t('expense.statusPending'),
+      'SUBMITTED': t('expense.statusSubmitted'),
+      'APPROVED': t('expense.statusApproved'),
+      'REJECTED': t('expense.statusRejected'),
+      'REIMBURSED': t('expense.statusReimbursed'),
+      'CANCELLED': t('expense.statusCancelled'),
+      'ON_HOLD': t('expense.statusOnHold'),
+    };
+    return statusMap[status] || status;
+  };
+
   const toChartData = (m?: Record<string, number>, top: number = 6) => {
     const entries = Object.entries(m ?? {})
       .map(([name, value]) => ({ name, value }))
@@ -223,9 +256,9 @@ const Dashboard: React.FC = () => {
                     onClick={() => navigate(`/timesheets/${r.id}`)} 
                     sx={{ cursor: 'pointer' }}>
                     <TableCell>{r.id}</TableCell>
-                    <TableCell>{r.employeeName}</TableCell>
-                    <TableCell>{r.projectName}</TableCell>
-                    <TableCell>{r.baseStatus}</TableCell>
+                    <TableCell>{r.employeeName || t('common.notAvailable')}</TableCell>
+                    <TableCell>{r.projectName || t('common.notAvailable')}</TableCell>
+                    <TableCell>{translateTimesheetStatus(r.baseStatus)}</TableCell>
                     <TableCell>{r.createdAt?.slice(0, 19).replace('T', ' ')}</TableCell>
                   </TableRow>
                 ))}
@@ -254,9 +287,9 @@ const Dashboard: React.FC = () => {
                     onClick={() => navigate(`/expenses/${r.id}`)} 
                     sx={{ cursor: 'pointer' }}>
                     <TableCell>{r.id}</TableCell>
-                    <TableCell>{r.employeeName}</TableCell>
+                    <TableCell>{r.employeeName || t('common.notAvailable')}</TableCell>
                     <TableCell>{(r.amount ?? 0).toLocaleString()} {r.currency}</TableCell>
-                    <TableCell>{r.status}</TableCell>
+                    <TableCell>{translateExpenseStatus(r.status)}</TableCell>
                     <TableCell>{r.createdAt?.slice(0, 19).replace('T', ' ')}</TableCell>
                   </TableRow>
                 ))}
