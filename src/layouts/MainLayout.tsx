@@ -138,13 +138,13 @@ const getMenuItems = (t: (key: string) => string): MenuItemType[] => [
         title: t('navigation.positions'),
         path: '/cv-sharing/positions',
         icon: <BusinessCenter />,
-        roles: ['HUMAN_RESOURCES', 'MANAGER', 'COMPANY_MANAGER']
+        roles: ['HUMAN_RESOURCES', 'MANAGER', 'COMPANY_MANAGER','EMPLOYEE']
       },
       {
         title: t('navigation.applications'),
         path: '/cv-sharing/applications',
         icon: <GroupAdd />,
-        roles: ['HUMAN_RESOURCES', 'MANAGER']
+        roles: ['HUMAN_RESOURCES', 'MANAGER','EMPLOYEE']
       },
       {
         title: t('navigation.poolCVs'),
@@ -156,31 +156,31 @@ const getMenuItems = (t: (key: string) => string): MenuItemType[] => [
         title: t('navigation.reviewTasks'),
         path: '/cv-sharing/review-tasks',
         icon: <AssignmentInd />,
-        roles: ['HUMAN_RESOURCES', 'SYSTEM_ADMIN']
+        roles: ['HUMAN_RESOURCES', 'ADMIN']
       },
       {
         title: t('navigation.training'),
         path: '/cv-sharing/training',
         icon: <QueryStats />,
-        roles: ['HUMAN_RESOURCES', 'SYSTEM_ADMIN']
+        roles: ['HUMAN_RESOURCES', 'ADMIN']
       },
       {
         title: t('navigation.settings'),
         path: '/cv-sharing/settings/matching',
         icon: <Settings />,
-        roles: ['HUMAN_RESOURCES']
+        roles: ['HUMAN_RESOURCES','MANAGER']
       },
       {
         title: t('navigation.models'),
         path: '/cv-sharing/models',
         icon: <InsertChartOutlined />,
-        roles: ['HUMAN_RESOURCES', 'SYSTEM_ADMIN']
+        roles: ['HUMAN_RESOURCES', 'ADMIN']
       },
       {
         title: t('navigation.abTests'),
         path: '/cv-sharing/ab-tests',
         icon: <BarChart />,
-        roles: ['HUMAN_RESOURCES', 'SYSTEM_ADMIN']
+        roles: ['HUMAN_RESOURCES', 'ADMIN']
       },
     ],
   },
@@ -197,7 +197,7 @@ const getMenuItems = (t: (key: string) => string): MenuItemType[] => [
   {
     title: t('navigation.admin'),
     icon: <Settings />,
-    roles: ['ADMIN', 'SYSTEM_ADMIN'],
+    roles: ['ADMIN', 'ADMIN'],
     children: [
       { title: t('navigation.users'), path: '/admin/users', icon: <ManageAccounts /> },
       { title: t('navigation.roles'), path: '/admin/roles', icon: <Settings /> },
