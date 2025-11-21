@@ -60,3 +60,7 @@ desktop.ini
 *.pid
 *.seed
 *.pid.lock
+
+# Translation cache
+cache.json
+src/cache.json

@@ -3,6 +3,7 @@ import { Typography, Stack, TextField, Button } from '@mui/material';
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { projectService } from '@/services/projectService';
 import { Project, PaginatedResponse } from '@/types';
 import PageContainer from '@/components/ui/PageContainer';
@@ -11,6 +12,7 @@ import { standardDataGridSx } from '@/components/ui/dataGridStyles';
 import EmptyState from '@/components/ui/EmptyState';
 
 const ProjectList: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [search, setSearch] = React.useState('');
   const [companyId, setCompanyId] = React.useState<number | ''>('');
@@ -33,15 +35,15 @@ const ProjectList: React.FC = () => {
 
   const columns = React.useMemo<GridColDef<Project>[]>(
     () => [
-      { field: 'code', headerName: 'Code', width: 140 },
-      { field: 'name', headerName: 'Name', flex: 1.2, minWidth: 180 },
-      { field: 'companyName', headerName: 'Company', flex: 1, minWidth: 160 },
-      { field: 'projectManagerName', headerName: 'Manager', flex: 1, minWidth: 160 },
-      { field: 'status', headerName: 'Status', width: 140 },
-      { field: 'startDate', headerName: 'Start', width: 120 },
-      { field: 'deadline', headerName: 'Deadline', width: 120 },
+      { field: 'code', headerName: t('project.code'), width: 140 },
+      { field: 'name', headerName: t('project.name'), flex: 1.2, minWidth: 180 },
+      { field: 'companyName', headerName: t('employee.company'), flex: 1, minWidth: 160 },
+      { field: 'projectManagerName', headerName: t('project.manager'), flex: 1, minWidth: 160 },
+      { field: 'status', headerName: t('common.status'), width: 140 },
+      { field: 'startDate', headerName: t('project.startDate'), width: 120 },
+      { field: 'deadline', headerName: t('project.deadline'), width: 120 },
     ],
-    []
+    [t]
   );
 
   const handlePaginationChange = (model: GridPaginationModel) => {
@@ -50,27 +52,27 @@ const ProjectList: React.FC = () => {
 
   const NoProjectsOverlay = React.useCallback(() => (
     <EmptyState
-      title="No projects"
-      description="There are no projects to display."
+      title={t('common.noData')}
+      description={t('common.noResults')}
     />
-  ), [refetch]);
+  ), [t, refetch]);
 
   return (
     <PageContainer
-      title="Projects"
+      title={t('project.titlePlural')}
       actions={
         <Stack direction="row" spacing={1}>
-          <Button variant="outlined" onClick={() => refetch()}>Refresh</Button>
-          <Button variant="contained" onClick={() => navigate('/projects/new')}>New</Button>
+          <Button variant="outlined" onClick={() => refetch()}>{t('common.refresh')}</Button>
+          <Button variant="contained" onClick={() => navigate('/projects/new')}>{t('common.add')}</Button>
         </Stack>
       }
     >
       <Stack spacing={2}>
         <SectionCard>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }}>
-            <TextField size="small" label="Search" value={search} onChange={(e) => setSearch(e.target.value)} />
-            <TextField size="small" label="Company ID" type="number" value={companyId} onChange={(e) => setCompanyId(e.target.value === '' ? '' : Number(e.target.value))} sx={{ width: { xs: '100%', sm: 160 } }} />
-            <Button variant="contained" onClick={() => refetch()}>Search</Button>
+            <TextField size="small" label={t('common.search')} value={search} onChange={(e) => setSearch(e.target.value)} />
+            <TextField size="small" label={t('employee.company') + ' ID'} type="number" value={companyId} onChange={(e) => setCompanyId(e.target.value === '' ? '' : Number(e.target.value))} sx={{ width: { xs: '100%', sm: 160 } }} />
+            <Button variant="contained" onClick={() => refetch()}>{t('common.search')}</Button>
           </Stack>
         </SectionCard>
         <SectionCard>
@@ -93,7 +95,7 @@ const ProjectList: React.FC = () => {
           </div>
           {isError && (
             <Typography variant="body2" color="error" sx={{ mt: 2 }}>
-              Failed to load projects.
+              {t('error.loadFailed', { item: t('project.titlePlural').toLowerCase() })}
             </Typography>
           )}
         </SectionCard>

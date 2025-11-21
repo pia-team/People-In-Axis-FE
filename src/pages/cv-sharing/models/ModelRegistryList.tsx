@@ -24,8 +24,10 @@ import { ModelRegistry } from '@/types/cv-sharing/model';
 import { useKeycloak } from '@/hooks/useKeycloak';
 import PageContainer from '@/components/ui/PageContainer';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import { useTranslation } from 'react-i18next';
 
 const ModelRegistryList: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { hasAnyRole } = useKeycloak();
@@ -176,7 +178,7 @@ const ModelRegistryList: React.FC = () => {
     <PageContainer>
       <Box sx={{ mb: 3 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-          <Typography variant="h4">Model Registry</Typography>
+          <Typography variant="h4">{t('model.titlePlural')}</Typography>
           {canEdit && (
             <Button
               variant="contained"

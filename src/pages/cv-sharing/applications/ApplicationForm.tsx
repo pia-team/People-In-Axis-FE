@@ -34,6 +34,7 @@ import { positionService } from '@/services/cv-sharing';
 import PoolCVSelector from '@/components/cv-sharing/PoolCVSelector';
 import { Position, PoolCV, CreateApplicationRequest } from '@/types/cv-sharing';
 import { isValidTCKN } from '@/utils/tckn';
+import { useTranslation } from 'react-i18next';
 
 interface ApplicationFormData {
   firstName: string;
@@ -51,9 +52,14 @@ interface ApplicationFormData {
   kvkkConsent: boolean;
 }
 
-const steps = ['Personal Information', 'Professional Details', 'Documents & Consent'];
+const getSteps = (t: (key: string) => string) => [
+  t('application.personalInformation'),
+  t('application.professionalDetails'),
+  t('application.documentsAndConsent')
+];
 
 const ApplicationForm: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { positionId } = useParams<{ positionId: string }>();
   const { enqueueSnackbar } = useSnackbar();
@@ -62,6 +68,7 @@ const ApplicationForm: React.FC = () => {
   const [position, setPosition] = useState<Position | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const steps = getSteps(t);
   const [selectorOpen, setSelectorOpen] = useState(false);
   const [selectedPoolCV, setSelectedPoolCV] = useState<PoolCV | null>(null);
 
@@ -135,7 +142,7 @@ const ApplicationForm: React.FC = () => {
       const newFiles = Array.from(files).filter(file => {
         const isValid = file.size <= 10 * 1024 * 1024; // 10MB per plan.md
         if (!isValid) {
-          enqueueSnackbar(`File ${file.name} exceeds 10MB limit`, { variant: 'error' });
+          enqueueSnackbar(t('error.fileTooLarge'), { variant: 'error' });
         }
         return isValid;
       });
@@ -149,12 +156,12 @@ const ApplicationForm: React.FC = () => {
 
   const onSubmit = async (data: ApplicationFormData) => {
     if (!kvkkConsent) {
-      enqueueSnackbar('Please accept KVKK consent to proceed', { variant: 'error' });
+      enqueueSnackbar(t('application.kvkkConsentRequired'), { variant: 'error' });
       return;
     }
 
     if (uploadedFiles.length === 0) {
-      enqueueSnackbar('Please upload at least one document', { variant: 'error' });
+      enqueueSnackbar(t('application.uploadAtLeastOneDocument'), { variant: 'error' });
       return;
     }
 
@@ -183,10 +190,10 @@ const ApplicationForm: React.FC = () => {
       if (uploadedFiles.length > 0) {
         await applicationService.uploadFiles(created.id, uploadedFiles);
       }
-      enqueueSnackbar('Application submitted successfully!', { variant: 'success' });
+      enqueueSnackbar(t('application.applicationCreated'), { variant: 'success' });
       navigate(`/cv-sharing/applications/${created.id}`);
     } catch (error: any) {
-      enqueueSnackbar(error.message || 'Failed to submit application', { variant: 'error' });
+      enqueueSnackbar(error.message || t('error.createFailed'), { variant: 'error' });
     } finally {
       setSubmitting(false);
     }
@@ -217,7 +224,7 @@ const ApplicationForm: React.FC = () => {
 
       <Paper sx={{ p: 3 }}>
         <Typography variant="h4" gutterBottom>
-          Job Application
+          {t('application.createApplication')}
         </Typography>
 
         <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
@@ -233,7 +240,7 @@ const ApplicationForm: React.FC = () => {
             <Grid container spacing={3}>
               <Grid item xs={12}>
                 <Typography variant="h6" gutterBottom>
-                  Personal Information
+                  {t('application.personalInformation')}
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
               </Grid>
@@ -242,12 +249,12 @@ const ApplicationForm: React.FC = () => {
                 <Controller
                   name="firstName"
                   control={control}
-                  rules={{ required: 'First name is required' }}
+                  rules={{ required: t('validation.required') }}
                   render={({ field }) => (
                     <TextField
                       {...field}
                       fullWidth
-                      label="First Name"
+                      label={t('application.firstName')}
                       error={!!errors.firstName}
                       helperText={errors.firstName?.message}
                     />
@@ -259,12 +266,12 @@ const ApplicationForm: React.FC = () => {
                 <Controller
                   name="lastName"
                   control={control}
-                  rules={{ required: 'Last name is required' }}
+                  rules={{ required: t('validation.required') }}
                   render={({ field }) => (
                     <TextField
                       {...field}
                       fullWidth
-                      label="Last Name"
+                      label={t('application.lastName')}
                       error={!!errors.lastName}
                       helperText={errors.lastName?.message}
                     />
@@ -277,17 +284,17 @@ const ApplicationForm: React.FC = () => {
                   name="email"
                   control={control}
                   rules={{
-                    required: 'Email is required',
+                    required: t('validation.required'),
                     pattern: {
                       value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: 'Invalid email address'
+                      message: t('validation.invalidEmail')
                     }
                   }}
                   render={({ field }) => (
                     <TextField
                       {...field}
                       fullWidth
-                      label="Email"
+                      label={t('application.email')}
                       type="email"
                       error={!!errors.email}
                       helperText={errors.email?.message}
@@ -300,12 +307,12 @@ const ApplicationForm: React.FC = () => {
                 <Controller
                   name="phone"
                   control={control}
-                  rules={{ required: 'Phone number is required' }}
+                  rules={{ required: t('validation.required') }}
                   render={({ field }) => (
                     <TextField
                       {...field}
                       fullWidth
-                      label="Phone Number"
+                      label={t('application.phone')}
                       error={!!errors.phone}
                       helperText={errors.phone?.message}
                     />
@@ -318,18 +325,18 @@ const ApplicationForm: React.FC = () => {
                   name="tckn"
                   control={control}
                   rules={{
-                    required: 'TCKN is required',
+                    required: t('validation.required'),
                     pattern: {
                       value: /^[0-9]{11}$/,
-                      message: 'TCKN must be 11 digits'
+                      message: t('validation.tcknMustBe11Digits')
                     },
-                    validate: (v) => isValidTCKN(v) || 'Invalid TCKN checksum'
+                    validate: (v) => isValidTCKN(v) || t('validation.invalidTCKN')
                   }}
                   render={({ field }) => (
                     <TextField
                       {...field}
                       fullWidth
-                      label="TCKN"
+                      label={t('application.tckn')}
                       error={!!errors.tckn}
                       helperText={errors.tckn?.message}
                     />
@@ -341,13 +348,13 @@ const ApplicationForm: React.FC = () => {
                 <Controller
                   name="birthDate"
                   control={control}
-                  rules={{ required: 'Birth date is required' }}
+                  rules={{ required: t('validation.required') }}
                   render={({ field }) => (
                     <TextField
                       {...field}
                       fullWidth
                       type="date"
-                      label="Birth Date"
+                      label={t('application.birthDate')}
                       InputLabelProps={{ shrink: true }}
                       error={!!errors.birthDate}
                       helperText={errors.birthDate?.message}
@@ -360,14 +367,14 @@ const ApplicationForm: React.FC = () => {
                 <Controller
                   name="address"
                   control={control}
-                  rules={{ required: 'Address is required' }}
+                  rules={{ required: t('validation.required') }}
                   render={({ field }) => (
                     <TextField
                       {...field}
                       fullWidth
                       multiline
                       rows={2}
-                      label="Address"
+                      label={t('application.address')}
                       error={!!errors.address}
                       helperText={errors.address?.message}
                     />
@@ -381,7 +388,7 @@ const ApplicationForm: React.FC = () => {
             <Grid container spacing={3}>
               <Grid item xs={12}>
                 <Typography variant="h6" gutterBottom>
-                  Professional Details
+                  {t('application.professionalDetails')}
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
               </Grid>
@@ -390,13 +397,13 @@ const ApplicationForm: React.FC = () => {
                 <Controller
                   name="experienceYears"
                   control={control}
-                  rules={{ required: 'Experience is required', min: 0 }}
+                  rules={{ required: t('validation.required'), min: 0 }}
                   render={({ field }) => (
                     <TextField
                       {...field}
                       fullWidth
                       type="number"
-                      label="Years of Experience"
+                      label={t('application.experienceYears')}
                       InputProps={{ inputProps: { min: 0 } }}
                       error={!!errors.experienceYears}
                       helperText={errors.experienceYears?.message}
@@ -409,13 +416,13 @@ const ApplicationForm: React.FC = () => {
                 <Controller
                   name="expectedSalary"
                   control={control}
-                  rules={{ required: 'Expected salary is required', min: 0 }}
+                  rules={{ required: t('validation.required'), min: 0 }}
                   render={({ field }) => (
                     <TextField
                       {...field}
                       fullWidth
                       type="number"
-                      label="Expected Salary (Monthly)"
+                      label={t('application.expectedSalary')}
                       InputProps={{ inputProps: { min: 0 } }}
                       error={!!errors.expectedSalary}
                       helperText={errors.expectedSalary?.message}
@@ -428,13 +435,13 @@ const ApplicationForm: React.FC = () => {
                 <Controller
                   name="availableStartDate"
                   control={control}
-                  rules={{ required: 'Start date is required' }}
+                  rules={{ required: t('validation.required') }}
                   render={({ field }) => (
                     <TextField
                       {...field}
                       fullWidth
                       type="date"
-                      label="Available Start Date"
+                      label={t('application.availableStartDate')}
                       InputLabelProps={{ shrink: true }}
                       error={!!errors.availableStartDate}
                       helperText={errors.availableStartDate?.message}
@@ -447,13 +454,13 @@ const ApplicationForm: React.FC = () => {
                 <Controller
                   name="noticePeriodDays"
                   control={control}
-                  rules={{ required: 'Notice period is required', min: 0 }}
+                  rules={{ required: t('validation.required'), min: 0 }}
                   render={({ field }) => (
                     <TextField
                       {...field}
                       fullWidth
                       type="number"
-                      label="Notice Period (Days)"
+                      label={t('application.noticePeriodDays')}
                       InputProps={{ inputProps: { min: 0 } }}
                       error={!!errors.noticePeriodDays}
                       helperText={errors.noticePeriodDays?.message}
@@ -472,8 +479,8 @@ const ApplicationForm: React.FC = () => {
                       fullWidth
                       multiline
                       rows={6}
-                      label="Cover Letter (Optional)"
-                      placeholder="Tell us why you're interested in this position..."
+                      label={t('application.coverLetter')}
+                      placeholder={t('application.coverLetterPlaceholder')}
                     />
                   )}
                 />
@@ -481,20 +488,20 @@ const ApplicationForm: React.FC = () => {
 
               <Grid item xs={12}>
                 <Typography variant="h6" gutterBottom>
-                  Attach Pool CV (Optional)
+                  {t('application.attachPoolCV')}
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
                 <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
                   {selectedPoolCV ? (
                     <>
                       <Typography variant="body2">
-                        Selected: {selectedPoolCV.firstName} {selectedPoolCV.lastName} • {selectedPoolCV.email}
+                        {t('common.selected')}: {selectedPoolCV.firstName} {selectedPoolCV.lastName} • {selectedPoolCV.email}
                       </Typography>
-                      <Button size="small" variant="outlined" onClick={() => setSelectorOpen(true)}>Change</Button>
-                      <Button size="small" onClick={() => setSelectedPoolCV(null)}>Clear</Button>
+                      <Button size="small" variant="outlined" onClick={() => setSelectorOpen(true)}>{t('common.change')}</Button>
+                      <Button size="small" onClick={() => setSelectedPoolCV(null)}>{t('common.clear')}</Button>
                     </>
                   ) : (
-                    <Button variant="outlined" onClick={() => setSelectorOpen(true)}>Select from Pool CVs</Button>
+                    <Button variant="outlined" onClick={() => setSelectorOpen(true)}>{t('application.selectFromPoolCVs')}</Button>
                   )}
                 </Box>
               </Grid>
@@ -505,7 +512,7 @@ const ApplicationForm: React.FC = () => {
             <Grid container spacing={3}>
               <Grid item xs={12}>
                 <Typography variant="h6" gutterBottom>
-                  Upload Documents
+                  {t('application.uploadDocuments')}
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
               </Grid>
@@ -526,11 +533,11 @@ const ApplicationForm: React.FC = () => {
                       component="span"
                       startIcon={<UploadIcon />}
                     >
-                      Upload CV and Documents
+                      {t('application.uploadCVAndDocuments')}
                     </Button>
                   </label>
                   <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                    Accepted formats: PDF, DOC, DOCX (Max 10MB per file)
+                    {t('application.acceptedFormats')}
                   </Typography>
                 </Box>
 
@@ -558,7 +565,7 @@ const ApplicationForm: React.FC = () => {
 
               <Grid item xs={12}>
                 <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-                  KVKK Consent
+                  {t('application.kvkkConsent')}
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
               </Grid>
@@ -566,16 +573,14 @@ const ApplicationForm: React.FC = () => {
               <Grid item xs={12}>
                 <Alert severity="info" sx={{ mb: 2 }}>
                   <Typography variant="body2">
-                    Your personal data will be processed in accordance with KVKK/GDPR regulations
-                    for the purposes of evaluating your job application. Your data will be stored
-                    securely and will only be accessed by authorized personnel.
+                    {t('application.kvkkConsentInfo')}
                   </Typography>
                 </Alert>
 
                 <Controller
                   name="kvkkConsent"
                   control={control}
-                  rules={{ required: 'You must accept KVKK consent to proceed' }}
+                  rules={{ required: t('application.kvkkConsentRequired') }}
                   render={({ field }) => (
                     <FormControlLabel
                       control={
@@ -585,7 +590,7 @@ const ApplicationForm: React.FC = () => {
                           color="primary"
                         />
                       }
-                      label="I consent to the processing of my personal data for recruitment purposes"
+                      label={t('application.kvkkConsentLabel')}
                     />
                   )}
                 />
@@ -604,7 +609,7 @@ const ApplicationForm: React.FC = () => {
               onClick={handleBack}
               startIcon={<BackIcon />}
             >
-              Back
+              {t('common.back')}
             </Button>
 
             {activeStep === steps.length - 1 ? (
@@ -614,7 +619,7 @@ const ApplicationForm: React.FC = () => {
                 disabled={!kvkkConsent || uploadedFiles.length === 0 || submitting}
                 startIcon={submitting ? null : <SendIcon />}
               >
-                {submitting ? 'Submitting...' : 'Submit Application'}
+                {submitting ? t('common.submitting') : t('application.submitApplication')}
               </Button>
             ) : (
               <Button
@@ -622,7 +627,7 @@ const ApplicationForm: React.FC = () => {
                 onClick={handleNext}
                 endIcon={<NextIcon />}
               >
-                Next
+                {t('common.next')}
               </Button>
             )}
           </Box>

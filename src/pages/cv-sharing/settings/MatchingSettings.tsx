@@ -34,6 +34,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { useKeycloak } from '@/hooks/useKeycloak';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 
 type WeightKey =
   | 'weightSkills'
@@ -45,6 +46,7 @@ type WeightKey =
   | 'weightSemantic';
 
 const MatchingSettings: React.FC = () => {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
   const { data: cfg } = useQuery({ 
@@ -208,7 +210,7 @@ const MatchingSettings: React.FC = () => {
 
   return (
     <Box display="flex" flexDirection="column" gap={3}>
-      <Typography variant="h5">Matching Settings</Typography>
+      <Typography variant="h5">{t('matching.title')}</Typography>
 
       <Paper sx={{ p: 3 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center">

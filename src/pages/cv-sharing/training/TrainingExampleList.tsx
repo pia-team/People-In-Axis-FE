@@ -28,6 +28,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { trainingService } from '@/services/cv-sharing/trainingService';
 import { TrainingExample } from '@/types/cv-sharing/training';
@@ -37,6 +38,7 @@ import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import TrainingStats from './TrainingStats';
 
 const TrainingExampleList: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { hasAnyRole } = useKeycloak();
@@ -244,7 +246,7 @@ const TrainingExampleList: React.FC = () => {
     <PageContainer>
       <Box sx={{ mb: 3 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-          <Typography variant="h4">Training Examples</Typography>
+          <Typography variant="h4">{t('training.titlePlural')}</Typography>
           <Stack direction="row" spacing={2}>
             {canEdit && (
               <>

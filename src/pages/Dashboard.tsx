@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { dashboardService } from '@/services/dashboardService';
 import { useNavigate } from 'react-router-dom';
 import { useKeycloak } from '@/hooks/useKeycloak';
+import { useTranslation } from 'react-i18next';
 import { ResponsiveContainer, PieChart, Pie, Cell, Legend, Tooltip as RTooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import WorkOutlineIcon from '@mui/icons-material/WorkOutline';
@@ -18,6 +19,7 @@ import FolderOpenOutlinedIcon from '@mui/icons-material/FolderOpenOutlined';
 import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
 
 const Dashboard: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { hasRole, hasAnyRole } = useKeycloak();
   const { data, isPending } = useQuery({
@@ -59,7 +61,7 @@ const Dashboard: React.FC = () => {
     = ({ title, value: v, loading, to, icon }) => (
       <CardBase
         title={title}
-        action={to ? <Button size="small" onClick={() => navigate(to)}>View</Button> : undefined}
+        action={to ? <Button size="small" onClick={() => navigate(to)}>{t('common.view')}</Button> : undefined}
       >
         <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 0.5 }}>
           {icon}
@@ -75,53 +77,53 @@ const Dashboard: React.FC = () => {
   );
 
   return (
-    <PageContainer title="Dashboard">
+    <PageContainer title={t('navigation.dashboard')}>
       <Grid container spacing={2.5}>
         <Grid item xs={12} sm={6} md={3}>
-          <MetricCard title="Total Employees" value={data?.totalEmployees} loading={isPending} to="/employees" icon={<PeopleAltIcon color="primary" />} />
+          <MetricCard title={t('dashboard.totalEmployees')} value={data?.totalEmployees} loading={isPending} to="/employees" icon={<PeopleAltIcon color="primary" />} />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <MetricCard title="Active Projects" value={data?.activeProjects} loading={isPending} to="/projects" icon={<WorkOutlineIcon color="primary" />} />
+          <MetricCard title={t('dashboard.activeProjects')} value={data?.activeProjects} loading={isPending} to="/projects" icon={<WorkOutlineIcon color="primary" />} />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <MetricCard title="Pending Timesheets (Manager)" value={data?.pendingTimesheetsManager} loading={isPending}
+          <MetricCard title={t('dashboard.pendingTimesheetsManager')} value={data?.pendingTimesheetsManager} loading={isPending}
             to={hasAnyRole(['TEAM_MANAGER', 'HUMAN_RESOURCES']) ? '/timesheets/approval' : undefined}
             icon={<AssignmentTurnedInIcon color="primary" />} />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <MetricCard title="Pending Timesheets (Admin)" value={data?.pendingTimesheetsAdmin} loading={isPending}
+          <MetricCard title={t('dashboard.pendingTimesheetsAdmin')} value={data?.pendingTimesheetsAdmin} loading={isPending}
             to={hasRole('ADMIN') ? '/timesheets/admin-approval' : undefined}
             icon={<AdminPanelSettingsOutlinedIcon color="primary" />} />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <MetricCard title="Pending Expenses" value={data?.pendingExpenses} loading={isPending}
+          <MetricCard title={t('dashboard.pendingExpenses')} value={data?.pendingExpenses} loading={isPending}
             to={hasAnyRole(['TEAM_MANAGER', 'HUMAN_RESOURCES', 'FINANCE']) ? '/expenses/approval' : undefined}
             icon={<ReceiptLongOutlinedIcon color="primary" />} />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <MetricCard title="Assigned Rows (Team Lead)" value={data?.teamLeadAssignedRows} loading={isPending}
+          <MetricCard title={t('dashboard.assignedRowsTeamLead')} value={data?.teamLeadAssignedRows} loading={isPending}
             to={hasRole('TEAM_MANAGER') ? '/timesheets/assigned' : undefined}
             icon={<PlaylistAddCheckOutlinedIcon color="primary" />} />
         </Grid>
 
         {/* HR Metrics (CV Sharing) */}
         <Grid item xs={12} sm={6} md={3}>
-          <MetricCard title="Total Positions" value={data?.totalPositions} loading={isPending}
+          <MetricCard title={t('dashboard.totalPositions')} value={data?.totalPositions} loading={isPending}
             to="/cv-sharing/positions"
             icon={<BusinessCenterOutlinedIcon sx={{ color: 'primary.main' }} />} />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <MetricCard title="Total Applications" value={data?.totalApplications} loading={isPending}
+          <MetricCard title={t('dashboard.totalApplications')} value={data?.totalApplications} loading={isPending}
             to="/cv-sharing/applications"
             icon={<DescriptionOutlinedIcon sx={{ color: 'success.main' }} />} />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <MetricCard title="Pool CVs" value={data?.totalPoolCVs} loading={isPending}
+          <MetricCard title={t('dashboard.poolCVs')} value={data?.totalPoolCVs} loading={isPending}
             to="/cv-sharing/pool-cvs"
             icon={<FolderOpenOutlinedIcon sx={{ color: 'secondary.main' }} />} />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <MetricCard title="Active Meetings" value={data?.activeMeetings} loading={isPending}
+          <MetricCard title={t('dashboard.activeMeetings')} value={data?.activeMeetings} loading={isPending}
             to="/meetings"
             icon={<CalendarMonthOutlinedIcon sx={{ color: 'warning.main' }} />} />
         </Grid>
@@ -130,13 +132,13 @@ const Dashboard: React.FC = () => {
         {data?.companyId && (
           <>
             <Grid item xs={12}>
-              <Typography variant="h6" sx={{ mt: 1 }}>Company ({data.companyName})</Typography>
+              <Typography variant="h6" sx={{ mt: 1 }}>{t('dashboard.company', { name: data.companyName })}</Typography>
               <Divider sx={{ mb: 1 }} />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
               <Paper sx={{ p: 2 }}>
                 <Stack spacing={1}>
-                  <Typography variant="body2">Employees (Company)</Typography>
+                  <Typography variant="body2">{t('dashboard.employeesCompany')}</Typography>
                   {value(data.companyTotalEmployees)}
                 </Stack>
               </Paper>
@@ -144,7 +146,7 @@ const Dashboard: React.FC = () => {
             <Grid item xs={12} sm={6} md={3}>
               <Paper sx={{ p: 2 }}>
                 <Stack spacing={1}>
-                  <Typography variant="body2">Active Projects (Company)</Typography>
+                  <Typography variant="body2">{t('dashboard.activeProjectsCompany')}</Typography>
                   {value(data.companyActiveProjects)}
                 </Stack>
               </Paper>
@@ -152,7 +154,7 @@ const Dashboard: React.FC = () => {
             <Grid item xs={12} sm={6} md={3}>
               <Paper sx={{ p: 2 }}>
                 <Stack spacing={1}>
-                  <Typography variant="body2">Pending Timesheets (Company)</Typography>
+                  <Typography variant="body2">{t('dashboard.pendingTimesheetsCompany')}</Typography>
                   {value(data.companyPendingTimesheets)}
                 </Stack>
               </Paper>
@@ -160,7 +162,7 @@ const Dashboard: React.FC = () => {
             <Grid item xs={12} sm={6} md={3}>
               <Paper sx={{ p: 2 }}>
                 <Stack spacing={1}>
-                  <Typography variant="body2">Pending Expenses (Company)</Typography>
+                  <Typography variant="body2">{t('dashboard.pendingExpensesCompany')}</Typography>
                   {value(data.companyPendingExpenses)}
                 </Stack>
               </Paper>
@@ -170,7 +172,7 @@ const Dashboard: React.FC = () => {
 
         {/* Charts */}
         <Grid item xs={12} md={6}>
-          <ChartCard title="Timesheet Base Status">
+          <ChartCard title={t('dashboard.timesheetBaseStatus')}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie data={toChartData(data?.timesheetBaseStatusCounts)} dataKey="value" nameKey="name" cx="45%" cy="50%" outerRadius={105} label>
@@ -185,7 +187,7 @@ const Dashboard: React.FC = () => {
           </ChartCard>
         </Grid>
         <Grid item xs={12} md={6}>
-          <ChartCard title="Expense Status">
+          <ChartCard title={t('dashboard.expenseStatus')}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={toChartData(data?.expenseStatusCounts)} margin={{ left: 8, right: 8, top: 8, bottom: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -202,15 +204,15 @@ const Dashboard: React.FC = () => {
         {/* Recent lists */}
         <Grid item xs={12} md={6}>
           <Paper sx={{ p: 2 }}>
-            <Typography variant="subtitle1" gutterBottom>Recent Timesheets</Typography>
+            <Typography variant="subtitle1" gutterBottom>{t('dashboard.recentTimesheets')}</Typography>
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>ID</TableCell>
-                  <TableCell>Employee</TableCell>
-                  <TableCell>Project</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Created</TableCell>
+                  <TableCell>{t('common.id')}</TableCell>
+                  <TableCell>{t('employee.employee')}</TableCell>
+                  <TableCell>{t('project.project')}</TableCell>
+                  <TableCell>{t('common.status')}</TableCell>
+                  <TableCell>{t('common.createdAt')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -233,15 +235,15 @@ const Dashboard: React.FC = () => {
         </Grid>
         <Grid item xs={12} md={6}>
           <Paper sx={{ p: 2 }}>
-            <Typography variant="subtitle1" gutterBottom>Recent Expenses</Typography>
+            <Typography variant="subtitle1" gutterBottom>{t('dashboard.recentExpenses')}</Typography>
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>ID</TableCell>
-                  <TableCell>Employee</TableCell>
-                  <TableCell>Amount</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Created</TableCell>
+                  <TableCell>{t('common.id')}</TableCell>
+                  <TableCell>{t('employee.employee')}</TableCell>
+                  <TableCell>{t('expense.amount')}</TableCell>
+                  <TableCell>{t('common.status')}</TableCell>
+                  <TableCell>{t('common.createdAt')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>

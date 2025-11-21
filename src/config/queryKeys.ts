@@ -113,12 +113,6 @@ export const queryKeys = {
     aliases: () => [...queryKeys.matching.all, 'aliases'] as const,
   },
 
-  // Languages
-  languages: {
-    all: ['languages'] as const,
-    active: () => [...queryKeys.languages.all, 'active'] as const,
-    list: () => [...queryKeys.languages.all, 'list'] as const,
-  },
 
   // Reports
   reports: {

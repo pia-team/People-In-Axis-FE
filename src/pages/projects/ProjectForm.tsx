@@ -2,12 +2,14 @@ import React from 'react';
 import { Stack, TextField, Button } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { projectService } from '@/services/projectService';
 import { Project, ProjectCreateDTO, ProjectUpdateDTO } from '@/types';
 import PageContainer from '@/components/ui/PageContainer';
 import SectionCard from '@/components/ui/SectionCard';
 
 const ProjectForm: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams();
   const isEdit = Boolean(id);
   const navigate = useNavigate();
@@ -63,7 +65,7 @@ const ProjectForm: React.FC = () => {
   const { mutateAsync: save, isPending } = useMutation({
     mutationFn: async () => {
       const payload = form as ProjectCreateDTO;
-      if (!payload.name || !payload.companyId) throw new Error('Name and Company ID are required');
+      if (!payload.name || !payload.companyId) throw new Error(t('validation.required'));
       if (isEdit) {
         return projectService.update(Number(id), payload as ProjectUpdateDTO);
       }
@@ -103,35 +105,35 @@ const ProjectForm: React.FC = () => {
   };
 
   return (
-    <PageContainer title={isEdit ? 'Edit Project' : 'New Project'}>
+    <PageContainer title={isEdit ? t('project.editProject') : t('project.createProject')}>
       <SectionCard>
         <Stack spacing={2}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <TextField label="Name" value={form.name || ''} onChange={handleChange('name')} fullWidth required />
-            <TextField label="Company ID" type="number" value={form.companyId ?? ''} onChange={handleNumber('companyId')} sx={{ minWidth: 200 }} required />
-            <TextField label="Manager ID" type="number" value={form.projectManagerId ?? ''} onChange={handleNumber('projectManagerId')} sx={{ minWidth: 200 }} />
+            <TextField label={t('project.name')} value={form.name || ''} onChange={handleChange('name')} fullWidth required />
+            <TextField label={t('employee.company') + ' ID'} type="number" value={form.companyId ?? ''} onChange={handleNumber('companyId')} sx={{ minWidth: 200 }} required />
+            <TextField label={t('project.manager') + ' ID'} type="number" value={form.projectManagerId ?? ''} onChange={handleNumber('projectManagerId')} sx={{ minWidth: 200 }} />
           </Stack>
-          <TextField label="Description" value={form.description || ''} onChange={handleChange('description')} multiline minRows={3} />
+          <TextField label={t('common.description')} value={form.description || ''} onChange={handleChange('description')} multiline minRows={3} />
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <TextField label="Start Date" type="date" value={form.startDate || ''} onChange={handleChange('startDate')} InputLabelProps={{ shrink: true }} />
-            <TextField label="End Date" type="date" value={form.endDate || ''} onChange={handleChange('endDate')} InputLabelProps={{ shrink: true }} />
-            <TextField label="Deadline" type="date" value={form.deadline || ''} onChange={handleChange('deadline')} InputLabelProps={{ shrink: true }} />
-          </Stack>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <TextField label="Status" value={form.status || ''} onChange={handleChange('status')} sx={{ minWidth: 200 }} />
-            <TextField label="Budget" type="number" value={form.budget ?? ''} onChange={handleNumber('budget')} sx={{ minWidth: 200 }} />
-            <TextField label="Spent" type="number" value={form.spentAmount ?? ''} onChange={handleNumber('spentAmount')} sx={{ minWidth: 200 }} />
-            <TextField label="Currency" value={form.currency || ''} onChange={handleChange('currency')} sx={{ minWidth: 140 }} />
+            <TextField label={t('project.startDate')} type="date" value={form.startDate || ''} onChange={handleChange('startDate')} InputLabelProps={{ shrink: true }} />
+            <TextField label={t('project.endDate')} type="date" value={form.endDate || ''} onChange={handleChange('endDate')} InputLabelProps={{ shrink: true }} />
+            <TextField label={t('project.deadline')} type="date" value={form.deadline || ''} onChange={handleChange('deadline')} InputLabelProps={{ shrink: true }} />
           </Stack>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <TextField label="Completion %" type="number" value={form.completionPercentage ?? ''} onChange={handleNumber('completionPercentage')} sx={{ minWidth: 200 }} />
-            <TextField label="Priority" value={form.priority || ''} onChange={handleChange('priority')} sx={{ minWidth: 200 }} />
-            <TextField label="Client" value={form.clientName || ''} onChange={handleChange('clientName')} sx={{ minWidth: 200 }} />
-            <TextField label="Contact" value={form.clientContact || ''} onChange={handleChange('clientContact')} sx={{ minWidth: 200 }} />
+            <TextField label={t('common.status')} value={form.status || ''} onChange={handleChange('status')} sx={{ minWidth: 200 }} />
+            <TextField label={t('project.budget')} type="number" value={form.budget ?? ''} onChange={handleNumber('budget')} sx={{ minWidth: 200 }} />
+            <TextField label={t('project.spent')} type="number" value={form.spentAmount ?? ''} onChange={handleNumber('spentAmount')} sx={{ minWidth: 200 }} />
+            <TextField label={t('expense.currency')} value={form.currency || ''} onChange={handleChange('currency')} sx={{ minWidth: 140 }} />
+          </Stack>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+            <TextField label={t('project.completionPercentage')} type="number" value={form.completionPercentage ?? ''} onChange={handleNumber('completionPercentage')} sx={{ minWidth: 200 }} />
+            <TextField label={t('project.priority')} value={form.priority || ''} onChange={handleChange('priority')} sx={{ minWidth: 200 }} />
+            <TextField label={t('project.client')} value={form.clientName || ''} onChange={handleChange('clientName')} sx={{ minWidth: 200 }} />
+            <TextField label={t('project.contact')} value={form.clientContact || ''} onChange={handleChange('clientContact')} sx={{ minWidth: 200 }} />
           </Stack>
           <Stack direction="row" spacing={2}>
-            <Button variant="outlined" onClick={() => navigate('/projects')}>Cancel</Button>
-            <Button variant="contained" onClick={onSubmit} disabled={isPending}>{isEdit ? 'Save' : 'Create'}</Button>
+            <Button variant="outlined" onClick={() => navigate('/projects')}>{t('common.cancel')}</Button>
+            <Button variant="contained" onClick={onSubmit} disabled={isPending}>{isEdit ? t('common.save') : t('common.create')}</Button>
           </Stack>
         </Stack>
       </SectionCard>

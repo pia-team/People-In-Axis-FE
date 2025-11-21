@@ -43,8 +43,10 @@ import { useKeycloak } from '@/hooks/useKeycloak';
 import { Fingerprint as IdIcon } from '@mui/icons-material';
 import { MatchedPosition } from '@/types/cv-sharing/matched-position';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
 const PoolCVDetail: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
@@ -71,7 +73,7 @@ const PoolCVDetail: React.FC = () => {
   useEffect(() => {
     // Handle error side-effect
     if (isError) {
-      enqueueSnackbar('Failed to load CV', { variant: 'error' });
+      enqueueSnackbar(t('error.loadFailed', { item: t('poolCV.title').toLowerCase() }), { variant: 'error' });
       navigate('/cv-sharing/pool-cvs');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -83,10 +85,10 @@ const PoolCVDetail: React.FC = () => {
       if (toggling) return;
       setToggling(true);
       await poolCVService.togglePoolCVStatus(detail.id, !detail.isActive);
-      enqueueSnackbar('Status updated', { variant: 'success' });
+      enqueueSnackbar(t('success.updated'), { variant: 'success' });
       await queryClient.invalidateQueries({ queryKey: ['poolCV', id] });
     } catch (e) {
-      enqueueSnackbar('Failed to update status', { variant: 'error' });
+      enqueueSnackbar(t('error.updateFailed'), { variant: 'error' });
     } finally {
       setToggling(false);
     }
@@ -98,10 +100,10 @@ const PoolCVDetail: React.FC = () => {
       setUploading(true);
       await poolCVService.uploadFiles(detail.id, files);
       setFiles([]);
-      enqueueSnackbar('Files uploaded', { variant: 'success' });
+      enqueueSnackbar(t('poolCV.fileUploaded'), { variant: 'success' });
       await queryClient.invalidateQueries({ queryKey: ['poolCV', id] });
     } catch (e) {
-      enqueueSnackbar('Failed to upload files', { variant: 'error' });
+      enqueueSnackbar(t('error.uploadFailed'), { variant: 'error' });
     } finally {
       setUploading(false);
     }
@@ -120,7 +122,7 @@ const PoolCVDetail: React.FC = () => {
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch (e) {
-      enqueueSnackbar('Failed to download file', { variant: 'error' });
+      enqueueSnackbar(t('error.downloadFailed'), { variant: 'error' });
     }
   };
 
@@ -128,10 +130,10 @@ const PoolCVDetail: React.FC = () => {
     if (!detail) return;
     try {
       await poolCVService.deleteFile(detail.id, fileId);
-      enqueueSnackbar('File deleted', { variant: 'success' });
+      enqueueSnackbar(t('poolCV.fileDeleted'), { variant: 'success' });
       await queryClient.invalidateQueries({ queryKey: ['poolCV', id] });
     } catch (e) {
-      enqueueSnackbar('Failed to delete file', { variant: 'error' });
+      enqueueSnackbar(t('error.deleteFailed'), { variant: 'error' });
     }
   };
 
@@ -146,7 +148,7 @@ const PoolCVDetail: React.FC = () => {
       setMatchedPositions(positions || []);
       setMatchOpen(true);
     } catch (e) {
-      enqueueSnackbar('Failed to fetch matching positions', { variant: 'error' });
+      enqueueSnackbar(t('error.loadFailed', { item: t('position.titlePlural').toLowerCase() }), { variant: 'error' });
     } finally {
       setMatching(false);
     }
@@ -178,7 +180,7 @@ const PoolCVDetail: React.FC = () => {
                     <Chip
                       size="small"
                       icon={detail.isActive ? <ActiveIcon /> : <InactiveIcon />}
-                      label={detail.isActive ? 'Active' : 'Inactive'}
+                      label={detail.isActive ? t('poolCV.active') : t('poolCV.inactive')}
                       color={detail.isActive ? 'success' : 'default'}
                     />
                     {(detail.experienceYears ?? 0) > 0 && (
@@ -190,10 +192,10 @@ const PoolCVDetail: React.FC = () => {
               <Box sx={{ display: 'flex', gap: 1 }}>
                 {canEdit && (
                   <>
-                    <Tooltip title={detail.isActive ? 'Deactivate' : 'Activate'}>
-                      <Button variant="outlined" onClick={handleToggleActive} startIcon={detail.isActive ? <InactiveIcon /> : <ActiveIcon />} disabled={toggling}>Status</Button>
+                    <Tooltip title={detail.isActive ? t('common.deactivate') : t('common.activate')}>
+                      <Button variant="outlined" onClick={handleToggleActive} startIcon={detail.isActive ? <InactiveIcon /> : <ActiveIcon />} disabled={toggling}>{t('common.status')}</Button>
                     </Tooltip>
-                    <Button variant="outlined" startIcon={<EditIcon />} onClick={() => navigate(`/cv-sharing/pool-cvs/${detail.id}/edit`)}>Edit</Button>
+                    <Button variant="outlined" startIcon={<EditIcon />} onClick={() => navigate(`/cv-sharing/pool-cvs/${detail.id}/edit`)}>{t('common.edit')}</Button>
                   </>
                 )}
               </Box>
@@ -201,7 +203,7 @@ const PoolCVDetail: React.FC = () => {
           </Grid>
 
           <Grid item xs={12} md={8}>
-            <Typography variant="h6">Contact</Typography>
+            <Typography variant="h6">{t('application.contact')}</Typography>
             <Divider sx={{ mb: 2 }} />
             <List>
               <ListItem>
@@ -217,7 +219,7 @@ const PoolCVDetail: React.FC = () => {
               {detail.tckn && (
                 <ListItem>
                   <ListItemIcon><IdIcon /></ListItemIcon>
-                  <ListItemText primary={`TCKN: ${detail.tckn}`} />
+                  <ListItemText primary={`${t('poolCV.tckn')}: ${detail.tckn}`} />
                 </ListItem>
               )}
               {detail.currentPosition && (
@@ -228,7 +230,7 @@ const PoolCVDetail: React.FC = () => {
               )}
             </List>
 
-            <Typography variant="h6" sx={{ mt: 3 }}>Skills</Typography>
+            <Typography variant="h6" sx={{ mt: 3 }}>{t('poolCV.skills')}</Typography>
             <Divider sx={{ mb: 2 }} />
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
               {(detail.skills || []).map((s) => (
@@ -236,7 +238,7 @@ const PoolCVDetail: React.FC = () => {
               ))}
             </Box>
 
-            <Typography variant="h6" sx={{ mt: 3 }}>Languages</Typography>
+            <Typography variant="h6" sx={{ mt: 3 }}>{t('poolCV.languages')}</Typography>
             <Divider sx={{ mb: 2 }} />
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
               {(detail.languages || []).map((l) => {
@@ -248,14 +250,14 @@ const PoolCVDetail: React.FC = () => {
               })}
             </Box>
 
-            <Typography variant="h6" sx={{ mt: 3 }}>Files</Typography>
+            <Typography variant="h6" sx={{ mt: 3 }}>{t('poolCV.files')}</Typography>
             <Divider sx={{ mb: 2 }} />
             <Box>
               {canEdit && (
                 <>
                   <FileUpload onFilesChange={setFiles} value={files} />
                   <Button sx={{ mt: 1 }} variant="contained" onClick={handleUpload} disabled={files.length === 0 || uploading}>
-                    {uploading ? 'Uploading...' : 'Upload Files'}
+                    {uploading ? t('common.uploading') : t('poolCV.uploadFiles')}
                   </Button>
                 </>
               )}
@@ -286,7 +288,7 @@ const PoolCVDetail: React.FC = () => {
           </Grid>
 
           <Grid item xs={12} md={4}>
-            <Typography variant="h6">Tags</Typography>
+            <Typography variant="h6">{t('poolCV.tags')}</Typography>
             <Divider sx={{ mb: 2 }} />
             {canEdit ? (
               <PoolCVTags
@@ -302,36 +304,36 @@ const PoolCVDetail: React.FC = () => {
               </Box>
             )}
 
-            <Typography variant="h6" sx={{ mt: 3 }}>Actions</Typography>
+            <Typography variant="h6" sx={{ mt: 3 }}>{t('common.actions')}</Typography>
             <Divider sx={{ mb: 2 }} />
-            <Button fullWidth variant="outlined" startIcon={<MatchIcon />} onClick={handleMatchPositions} disabled={matching}>Match Positions</Button>
+            <Button fullWidth variant="outlined" startIcon={<MatchIcon />} onClick={handleMatchPositions} disabled={matching}>{t('poolCV.matchPositions')}</Button>
           </Grid>
         </Grid>
 
         <Dialog open={matchOpen} onClose={() => setMatchOpen(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>Matching Positions</DialogTitle>
+          <DialogTitle>{t('poolCV.matchedPositions')}</DialogTitle>
           <DialogContent>
             {matchedPositions.length > 0 ? (
               <List>
                 {matchedPositions.map((matched) => (
                   <ListItem key={matched.position.id}
                     secondaryAction={
-                      <Button size="small" onClick={() => navigate(`/cv-sharing/positions/${matched.position.id}`)}>View</Button>
+                      <Button size="small" onClick={() => navigate(`/cv-sharing/positions/${matched.position.id}`)}>{t('common.view')}</Button>
                     }
                   >
                     <ListItemText
                       primary={matched.position.title}
-                      secondary={`${matched.position.department || ''}${matched.matchScore ? ` • Match ${matched.matchScore}%` : ''}`}
+                      secondary={`${matched.position.department || ''}${matched.matchScore ? ` • ${t('common.match')} ${matched.matchScore}%` : ''}`}
                     />
                   </ListItem>
                 ))}
               </List>
             ) : (
-              <Typography>No matching positions found</Typography>
+              <Typography>{t('poolCV.noMatchingPositions')}</Typography>
             )}
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setMatchOpen(false)}>Close</Button>
+            <Button onClick={() => setMatchOpen(false)}>{t('common.close')}</Button>
           </DialogActions>
         </Dialog>
       </Paper>

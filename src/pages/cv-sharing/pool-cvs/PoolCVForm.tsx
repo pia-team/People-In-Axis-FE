@@ -23,10 +23,12 @@ import FileUpload from '@/components/ui/FileUpload';
 import { poolCVService } from '@/services/cv-sharing';
 import { CreatePoolCVRequest, PoolCVDetail, LanguageProficiency } from '@/types/cv-sharing';
 import { isValidTCKN } from '@/utils/tckn';
+import { useTranslation } from 'react-i18next';
 
 type FormData = CreatePoolCVRequest & { isActive?: boolean };
 
 const PoolCVForm: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { enqueueSnackbar } = useSnackbar();
@@ -89,7 +91,7 @@ const PoolCVForm: React.FC = () => {
       setSkills((data.skills || []).map(s => ({ name: s.name, yearsOfExperience: s.yearsOfExperience })));
       setLanguages((data.languages || []).map(l => ({ code: l.code, proficiencyLevel: l.proficiencyLevel })));
     } catch (e) {
-      enqueueSnackbar('Failed to load CV', { variant: 'error' });
+      enqueueSnackbar(t('error.loadFailed', { item: t('poolCV.title').toLowerCase() }), { variant: 'error' });
       navigate('/cv-sharing/pool-cvs');
     } finally {
       setLoading(false);
@@ -139,7 +141,7 @@ const PoolCVForm: React.FC = () => {
       await queryClient.invalidateQueries({ queryKey: ['poolCV', poolCvId || id] });
       await queryClient.invalidateQueries({ queryKey: ['poolCVs'] });
 
-      enqueueSnackbar(`CV ${id ? 'updated' : 'created'} successfully`, { variant: 'success' });
+      enqueueSnackbar(id ? t('poolCV.poolCVUpdated') : t('poolCV.poolCVCreated'), { variant: 'success' });
       const targetId = poolCvId || id;
       if (targetId) {
         navigate(`/cv-sharing/pool-cvs/${targetId}`);
@@ -151,7 +153,7 @@ const PoolCVForm: React.FC = () => {
       const headers = e?.response?.headers || {};
       const ideReject = headers['x-idempotency-reject'] === 'true' || headers['X-Idempotency-Reject'] === 'true';
       if (status === 409 && ideReject) {
-        enqueueSnackbar('Already submitted recently. Using the previous result.', { variant: 'info' });
+        enqueueSnackbar(t('poolCV.alreadySubmitted'), { variant: 'info' });
         try {
           const my = await poolCVService.getMyPoolCVs(0, 20);
           const found = (my?.content || []).find((p: any) => p?.email === data.email);
@@ -165,7 +167,7 @@ const PoolCVForm: React.FC = () => {
         }
       } else {
         const resp = e?.response?.data;
-        let msg = resp?.message || e.message || 'Failed to save CV';
+        let msg = resp?.message || e.message || t('error.saveFailed');
         if (resp?.errors && Array.isArray(resp.errors) && resp.errors.length > 0) {
           msg = resp.errors.map((er: any) => er?.message || `${er?.field ?? 'field'} is invalid`).join(', ');
         }
@@ -196,7 +198,7 @@ const PoolCVForm: React.FC = () => {
     <Box sx={{ p: 3 }}>
       <Paper sx={{ p: 3 }}>
         <Typography variant="h4" gutterBottom>
-          {id ? 'Edit Pool CV' : 'Add CV to Talent Pool'}
+          {id ? t('poolCV.editPoolCV') : t('poolCV.addCVToTalentPool')}
         </Typography>
 
         <form onSubmit={handleSubmit(onSubmit, (errors) => {
@@ -206,12 +208,12 @@ const PoolCVForm: React.FC = () => {
             return error?.message || `${key} is invalid`;
           });
           if (errorMessages.length > 0) {
-            enqueueSnackbar(`Please fix the form errors: ${errorMessages.join(', ')}`, { variant: 'error' });
+            enqueueSnackbar(t('validation.formErrors', { errors: errorMessages.join(', ') }), { variant: 'error' });
           }
         })}>
           <Grid container spacing={3}>
             <Grid item xs={12}>
-              <Typography variant="h6">Personal Information</Typography>
+              <Typography variant="h6">{t('application.personalInformation')}</Typography>
               <Divider sx={{ mb: 2 }} />
             </Grid>
 
@@ -219,9 +221,9 @@ const PoolCVForm: React.FC = () => {
               <Controller
                 name="firstName"
                 control={control}
-                rules={{ required: 'First name is required' }}
+                rules={{ required: t('validation.required') }}
                 render={({ field }) => (
-                  <TextField {...field} label="First Name" fullWidth error={!!errors.firstName} helperText={errors.firstName?.message} />
+                  <TextField {...field} label={t('poolCV.firstName')} fullWidth error={!!errors.firstName} helperText={errors.firstName?.message} />
                 )}
               />
             </Grid>
@@ -229,9 +231,9 @@ const PoolCVForm: React.FC = () => {
               <Controller
                 name="lastName"
                 control={control}
-                rules={{ required: 'Last name is required' }}
+                rules={{ required: t('validation.required') }}
                 render={({ field }) => (
-                  <TextField {...field} label="Last Name" fullWidth error={!!errors.lastName} helperText={errors.lastName?.message} />
+                  <TextField {...field} label={t('poolCV.lastName')} fullWidth error={!!errors.lastName} helperText={errors.lastName?.message} />
                 )}
               />
             </Grid>
@@ -240,9 +242,9 @@ const PoolCVForm: React.FC = () => {
               <Controller
                 name="email"
                 control={control}
-                rules={{ required: 'Email is required' }}
+                rules={{ required: t('validation.required') }}
                 render={({ field }) => (
-                  <TextField {...field} label="Email" type="email" fullWidth error={!!errors.email} helperText={errors.email?.message} />
+                  <TextField {...field} label={t('poolCV.email')} type="email" fullWidth error={!!errors.email} helperText={errors.email?.message} />
                 )}
               />
             </Grid>
@@ -251,7 +253,7 @@ const PoolCVForm: React.FC = () => {
                 name="phone"
                 control={control}
                 render={({ field }) => (
-                  <TextField {...field} label="Phone" fullWidth />
+                  <TextField {...field} label={t('poolCV.phone')} fullWidth />
                 )}
               />
             </Grid>
@@ -263,12 +265,12 @@ const PoolCVForm: React.FC = () => {
                 rules={{
                   pattern: {
                     value: /^\d{11}$/,
-                    message: 'TCKN must be 11 digits'
+                    message: t('validation.tcknMustBe11Digits')
                   },
-                  validate: (v) => !v || v.length === 0 || isValidTCKN(v) || 'Invalid TCKN checksum'
+                  validate: (v) => !v || v.length === 0 || isValidTCKN(v) || t('validation.invalidTCKN')
                 }}
                 render={({ field }) => (
-                  <TextField {...field} label="TCKN" fullWidth />
+                  <TextField {...field} label={t('poolCV.tckn')} fullWidth />
                 )}
               />
             </Grid>
@@ -277,7 +279,7 @@ const PoolCVForm: React.FC = () => {
                 name="birthDate"
                 control={control}
                 render={({ field }) => (
-                  <TextField {...field} label="Birth Date" type="date" InputLabelProps={{ shrink: true }} fullWidth />
+                  <TextField {...field} label={t('poolCV.birthDate')} type="date" InputLabelProps={{ shrink: true }} fullWidth />
                 )}
               />
             </Grid>
@@ -287,13 +289,13 @@ const PoolCVForm: React.FC = () => {
                 name="address"
                 control={control}
                 render={({ field }) => (
-                  <TextField {...field} label="Address" fullWidth multiline rows={2} />
+                  <TextField {...field} label={t('poolCV.address')} fullWidth multiline rows={2} />
                 )}
               />
             </Grid>
 
             <Grid item xs={12}>
-              <Typography variant="h6">Professional</Typography>
+              <Typography variant="h6">{t('application.professionalDetails')}</Typography>
               <Divider sx={{ mb: 2 }} />
             </Grid>
 
@@ -302,7 +304,7 @@ const PoolCVForm: React.FC = () => {
                 name="experienceYears"
                 control={control}
                 render={({ field }) => (
-                  <TextField {...field} type="number" label="Experience (years)" fullWidth InputProps={{ inputProps: { min: 0 } }} />
+                  <TextField {...field} type="number" label={t('poolCV.experienceYears')} fullWidth InputProps={{ inputProps: { min: 0 } }} />
                 )}
               />
             </Grid>
@@ -311,7 +313,7 @@ const PoolCVForm: React.FC = () => {
                 name="currentPosition"
                 control={control}
                 render={({ field }) => (
-                  <TextField {...field} label="Current Position" fullWidth />
+                  <TextField {...field} label={t('poolCV.currentPosition')} fullWidth />
                 )}
               />
             </Grid>
@@ -320,27 +322,27 @@ const PoolCVForm: React.FC = () => {
                 name="currentCompany"
                 control={control}
                 render={({ field }) => (
-                  <TextField {...field} label="Current Company" fullWidth />
+                  <TextField {...field} label={t('poolCV.currentCompany')} fullWidth />
                 )}
               />
             </Grid>
 
             {/* Skills */}
             <Grid item xs={12}>
-              <Typography variant="subtitle1" gutterBottom>Skills</Typography>
-              <Button size="small" startIcon={<AddIcon />} onClick={addSkill}>Add Skill</Button>
+              <Typography variant="subtitle1" gutterBottom>{t('poolCV.skills')}</Typography>
+              <Button size="small" startIcon={<AddIcon />} onClick={addSkill}>{t('poolCV.addSkill')}</Button>
               <Grid container spacing={2} sx={{ mt: 1 }}>
                 {skills.map((s, i) => (
                   <Grid item xs={12} md={6} key={i}>
                     <Box sx={{ display: 'flex', gap: 1 }}>
                       <TextField
                         fullWidth
-                        label="Skill Name"
+                        label={t('poolCV.skillName')}
                         value={s.name}
                         onChange={(e) => updateSkill(i, 'name', e.target.value)}
                       />
                       <TextField
-                        label="Years"
+                        label={t('common.years')}
                         type="number"
                         value={s.yearsOfExperience || ''}
                         onChange={(e) => updateSkill(i, 'yearsOfExperience', e.target.value)}
@@ -356,20 +358,20 @@ const PoolCVForm: React.FC = () => {
 
             {/* Languages */}
             <Grid item xs={12}>
-              <Typography variant="subtitle1" gutterBottom>Languages</Typography>
-              <Button size="small" startIcon={<AddIcon />} onClick={addLanguage}>Add Language</Button>
+              <Typography variant="subtitle1" gutterBottom>{t('poolCV.languages')}</Typography>
+              <Button size="small" startIcon={<AddIcon />} onClick={addLanguage}>{t('poolCV.addLanguage')}</Button>
               <Grid container spacing={2} sx={{ mt: 1 }}>
                 {languages.map((l, i) => (
                   <Grid item xs={12} md={6} key={i}>
                     <Box sx={{ display: 'flex', gap: 1 }}>
                       <TextField
                         fullWidth
-                        label="Language Code (e.g., en, tr)"
+                        label={t('poolCV.languageCode')}
                         value={l.code}
                         onChange={(e) => updateLanguage(i, 'code', e.target.value)}
                       />
                       <TextField
-                        label="Proficiency (A1..C2/NATIVE)"
+                        label={t('poolCV.proficiency')}
                         value={l.proficiencyLevel}
                         onChange={(e) => updateLanguage(i, 'proficiencyLevel', e.target.value)}
                         sx={{ width: 200 }}
@@ -388,7 +390,7 @@ const PoolCVForm: React.FC = () => {
                 control={control}
                 render={({ field }) => (
                   <Box>
-                    <Typography variant="subtitle1" gutterBottom>Tags</Typography>
+                    <Typography variant="subtitle1" gutterBottom>{t('poolCV.tags')}</Typography>
                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                       {(field.value || []).map((t: string, i: number) => (
                         <Chip key={`${t}-${i}`} label={t} onDelete={() => {
@@ -483,7 +485,7 @@ const PoolCVForm: React.FC = () => {
                     }
                   }}
                 >
-                  {id ? 'Save Changes' : 'Create CV'}
+                  {id ? t('common.save') : t('poolCV.createPoolCV')}
                 </Button>
               </Box>
             </Grid>

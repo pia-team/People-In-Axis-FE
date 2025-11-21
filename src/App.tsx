@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { CircularProgress, Box } from '@mui/material';
 
 import { useKeycloak } from '@/hooks/useKeycloak';
+import { useTranslation } from 'react-i18next';
 import MainLayout from '@/layouts/MainLayout';
 import AuthLayout from '@/layouts/AuthLayout';
 import PrivateRoute from '@/components/auth/PrivateRoute';
@@ -97,8 +98,6 @@ const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 const UserManagement = lazy(() => import('@/pages/admin/UserManagement'));
 const RoleManagement = lazy(() => import('@/pages/admin/RoleManagement'));
 const Settings = lazy(() => import('@/pages/admin/Settings'));
-// Settings pages
-const LanguagesPage = lazy(() => import('@/pages/settings/Languages'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
 const LoadingScreen: React.FC = () => (
@@ -114,13 +113,42 @@ const LoadingScreen: React.FC = () => (
 
 const App: React.FC = () => {
   const { initialized } = useKeycloak();
+  const { i18n, ready } = useTranslation();
+  const [languageKey, setLanguageKey] = React.useState(i18n.language || 'en');
 
-  if (!initialized) {
+  // Listen for language changes to update key and force complete re-render
+  React.useEffect(() => {
+    const handleLanguageChange = (lng: string) => {
+      // Update key to force complete re-render of all components
+      setLanguageKey(lng);
+    };
+    
+    // Listen to both i18n events and custom events
+    i18n.on('languageChanged', handleLanguageChange);
+    
+    const handleCustomChange = (e: CustomEvent) => {
+      setLanguageKey(e.detail?.language || i18n.language || 'en');
+    };
+    
+    window.addEventListener('i18n:languageChanged', handleCustomChange as EventListener);
+    
+    // Set initial language
+    setLanguageKey(i18n.language || 'en');
+    
+    return () => {
+      i18n.off('languageChanged', handleLanguageChange);
+      window.removeEventListener('i18n:languageChanged', handleCustomChange as EventListener);
+    };
+  }, [i18n]);
+
+  if (!initialized || !ready) {
     return <LoadingScreen />;
   }
 
+  // Use languageKey as key to force complete re-render when language changes
+  // This ensures ALL components (including lazy-loaded ones) re-render with new translations
   return (
-    <Suspense fallback={<LoadingScreen />}>
+    <Suspense fallback={<LoadingScreen />} key={`app-${languageKey}`}>
       <Routes>
         {/* Public routes */}
         <Route element={<PublicRoute />}>
@@ -337,11 +365,6 @@ const App: React.FC = () => {
               <Route path="users" element={<UserManagement />} />
               <Route path="roles" element={<RoleManagement />} />
               <Route path="settings" element={<Settings />} />
-            </Route>
-
-            {/* Settings */}
-            <Route path="/settings">
-              <Route path="languages" element={<LanguagesPage />} />
             </Route>
 
             {/* Notifications */}

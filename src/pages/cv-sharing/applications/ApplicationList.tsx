@@ -41,6 +41,7 @@ import SectionCard from '@/components/ui/SectionCard';
 // import { standardDataGridSx } from '@/components/ui/dataGridStyles';
 import EmptyState from '@/components/ui/EmptyState';
 import { useKeycloak } from '@/hooks/useKeycloak';
+import { useTranslation } from 'react-i18next';
 
 interface CommentDialogData {
   open: boolean;
@@ -55,6 +56,7 @@ interface RatingDialogData {
 }
 
 const ApplicationList: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const [paginationModel, setPaginationModel] = React.useState<GridPaginationModel>(
@@ -140,12 +142,12 @@ const ApplicationList: React.FC = () => {
   const handleStatusChange = async (applicationId: string, newStatus: ApplicationStatus) => {
     try {
       await applicationService.updateApplicationStatus(applicationId, { status: newStatus });
-      enqueueSnackbar('Status updated successfully', { variant: 'success' });
+      enqueueSnackbar(t('success.updated'), { variant: 'success' });
       // Invalidate applications cache to refresh the list
       await queryClient.invalidateQueries({ queryKey: ['applications'] });
       refetch();
     } catch (error) {
-      enqueueSnackbar('Failed to update status', { variant: 'error' });
+      enqueueSnackbar(t('error.updateFailed'), { variant: 'error' });
     }
   };
 
@@ -157,11 +159,11 @@ const ApplicationList: React.FC = () => {
         content: commentDialog.comment,
         isInternal: true
       });
-      enqueueSnackbar('Comment added successfully', { variant: 'success' });
+      enqueueSnackbar(t('application.commentAdded'), { variant: 'success' });
       setCommentDialog({ open: false, applicationId: null, comment: '' });
       refetch();
     } catch (error) {
-      enqueueSnackbar('Failed to add comment', { variant: 'error' });
+      enqueueSnackbar(t('error.createFailed'), { variant: 'error' });
     }
   };
 
@@ -170,11 +172,11 @@ const ApplicationList: React.FC = () => {
     
     try {
       await applicationService.addRating(ratingDialog.applicationId, { score: ratingDialog.score });
-      enqueueSnackbar('Rating added successfully', { variant: 'success' });
+      enqueueSnackbar(t('application.ratingAdded'), { variant: 'success' });
       setRatingDialog({ open: false, applicationId: null, score: 0 });
       refetch();
     } catch (error) {
-      enqueueSnackbar('Failed to add rating', { variant: 'error' });
+      enqueueSnackbar(t('error.createFailed'), { variant: 'error' });
     }
   };
 
@@ -192,10 +194,10 @@ const ApplicationList: React.FC = () => {
     return statusColors[status] || 'default';
   };
 
-  const columns: GridColDef[] = [
+  const columns: GridColDef[] = React.useMemo(() => [
     {
       field: 'applicant',
-      headerName: 'Applicant',
+      headerName: t('application.applicant'),
       //sortField: 'surname'
       flex: 1.5,
       minWidth: 250,
@@ -217,18 +219,18 @@ const ApplicationList: React.FC = () => {
     },
     {
       field: 'positionTitle',
-      headerName: 'Position',
+      headerName: t('application.position'),
       flex: 1,
       minWidth: 150,
       renderCell: (params: GridRenderCellParams) => (
         <Typography variant="body2">
-          {params.row.positionTitle || '-'}
+          {params.row.positionTitle || t('common.notAvailable')}
         </Typography>
       )
     },
     {
       field: 'appliedAt',
-      headerName: 'Applied Date',
+      headerName: t('application.appliedAt'),
       width: 130,
       renderCell: (params: GridRenderCellParams) => (
         <Typography variant="body2">
@@ -238,19 +240,22 @@ const ApplicationList: React.FC = () => {
     },
     {
       field: 'status',
-      headerName: 'Status',
+      headerName: t('common.status'),
       width: 140,
-      renderCell: (params: GridRenderCellParams) => (
+      renderCell: (params: GridRenderCellParams) => {
+        const statusKey = params.row.status?.toLowerCase().replace(/_/g, '') || '';
+        return (
         <Chip
-          label={params.row.status.replace('_', ' ')}
+          label={t(`application.${statusKey}`) || params.row.status.replace('_', ' ')}
           color={getStatusColor(params.row.status)}
           size="small"
         />
-      )
+        );
+      }
     },
     {
       field: 'rating',
-      headerName: 'Rating',
+      headerName: t('application.ratings'),
       width: 140,
       sortable: false,
       renderCell: (params: GridRenderCellParams) => (
@@ -264,7 +269,7 @@ const ApplicationList: React.FC = () => {
             </>
           ) : (
             <Typography variant="caption" color="text.secondary">
-              No ratings
+              {t('application.noRatings')}
             </Typography>
           )}
         </Box>
@@ -272,7 +277,7 @@ const ApplicationList: React.FC = () => {
     },
     {
       field: 'comments',
-      headerName: 'Comments',
+      headerName: t('application.comments'),
       width: 110,
       align: 'center',
       headerAlign: 'center',
@@ -284,12 +289,12 @@ const ApplicationList: React.FC = () => {
     },
     {
       field: 'actions',
-      headerName: 'Actions',
+      headerName: t('common.actions'),
       width: 160,
       sortable: false,
       renderCell: (params: GridRenderCellParams) => (
         <Box>
-          <Tooltip title="View">
+          <Tooltip title={t('common.view')}>
             <IconButton
               size="small"
               onClick={(e) => {
@@ -300,7 +305,7 @@ const ApplicationList: React.FC = () => {
               <ViewIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Add Comment">
+          <Tooltip title={t('application.addComment')}>
             <IconButton
               size="small"
               onClick={(e) => {
@@ -315,7 +320,7 @@ const ApplicationList: React.FC = () => {
               <CommentIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Add Rating">
+          <Tooltip title={t('application.addRating')}>
             <IconButton
               size="small"
               disabled={isCompanyManager}
@@ -343,21 +348,21 @@ const ApplicationList: React.FC = () => {
         </Box>
       )
     }
-  ];
+  ], [t, navigate, isCompanyManager, setCommentDialog, setRatingDialog, handleMenuOpen]);
 
   const NoApplicationsOverlay = React.useCallback(() => (
     <EmptyState
-      title="No applications"
-      description="There are no applications to display."
+      title={t('application.noApplications')}
+      description={t('application.noApplicationsDescription')}
     />
   ), []);
 
   return (
     <PageContainer
-      title="Applications"
+      title={t('application.titlePlural')}
       actions={
         <Stack direction="row" spacing={1}>
-          <Button variant="outlined" onClick={() => refetch()}>Refresh</Button>
+          <Button variant="outlined" onClick={() => refetch()}>{t('common.refresh')}</Button>
         </Stack>
       }
     >
@@ -365,7 +370,7 @@ const ApplicationList: React.FC = () => {
         <SectionCard>
           <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
             <TextField
-              placeholder="Search applications..."
+              placeholder={t('application.searchPlaceholder')}
               value={searchTerm}
               onChange={handleSearch}
               sx={{ flex: { xs: '1 1 100%', md: '1 1 auto' } }}
@@ -378,61 +383,61 @@ const ApplicationList: React.FC = () => {
               }}
             />
             <FormControl sx={{ minWidth: { xs: '100%', sm: 220 } }}>
-              <InputLabel>Department</InputLabel>
+              <InputLabel>{t('position.department')}</InputLabel>
               <Select
                 value={departmentFilter}
-                label="Department"
+                label={t('position.department')}
                 onChange={(e) => {
                   setDepartmentFilter(e.target.value as string);
                   if (paginationModel.page !== 0) setPaginationModel(p => ({ ...p, page: 0 }));
                 }}
               >
-                <MenuItem value="">All Departments</MenuItem>
+                <MenuItem value="">{t('common.all')} {t('position.department')}s</MenuItem>
                 {departmentOptions.map((dep) => (
                   <MenuItem key={dep} value={dep}>{dep}</MenuItem>
                 ))}
               </Select>
             </FormControl>
             <FormControl sx={{ minWidth: { xs: '100%', sm: 260 } }}>
-              <InputLabel>Position</InputLabel>
+              <InputLabel>{t('application.position')}</InputLabel>
               <Select
                 value={positionIdFilter}
-                label="Position"
+                label={t('application.position')}
                 onChange={(e) => {
                   setPositionIdFilter(e.target.value as string);
                   if (paginationModel.page !== 0) setPaginationModel(p => ({ ...p, page: 0 }));
                 }}
                 renderValue={(val) => {
-                  if (!val) return 'All Positions';
+                  if (!val) return t('common.all') + ' ' + t('position.titlePlural');
                   const found = positionOptions.find((p: Position) => p.id === val);
                   return found?.title || String(val);
                 }}
               >
-                <MenuItem value="">All Positions</MenuItem>
+                <MenuItem value="">{t('common.all')} {t('position.titlePlural')}</MenuItem>
                 {positionOptions.map((p: Position) => (
                   <MenuItem key={p.id} value={p.id}>{p.title}</MenuItem>
                 ))}
               </Select>
             </FormControl>
             <FormControl sx={{ minWidth: { xs: '100%', sm: 250 } }}>
-              <InputLabel>Status</InputLabel>
+              <InputLabel>{t('common.status')}</InputLabel>
               <Select
                 value={statusFilter}
                 onChange={(e) => {
                   setStatusFilter(e.target.value as ApplicationStatus | '');
                   if (paginationModel.page !== 0) setPaginationModel(p => ({ ...p, page: 0 }));
                 }}
-                label="Status"
+                label={t('common.status')}
               >
-                <MenuItem value="">All Status</MenuItem>
-                <MenuItem value={ApplicationStatus.NEW}>New</MenuItem>
-                <MenuItem value={ApplicationStatus.IN_REVIEW}>In Review</MenuItem>
-                <MenuItem value={ApplicationStatus.FORWARDED}>Forwarded</MenuItem>
-                <MenuItem value={ApplicationStatus.MEETING_SCHEDULED}>Meeting Scheduled</MenuItem>
-                <MenuItem value={ApplicationStatus.ACCEPTED}>Accepted</MenuItem>
-                <MenuItem value={ApplicationStatus.REJECTED}>Rejected</MenuItem>
-                <MenuItem value={ApplicationStatus.WITHDRAWN}>Withdrawn</MenuItem>
-                <MenuItem value={ApplicationStatus.ARCHIVED}>Archived</MenuItem>
+                <MenuItem value="">{t('common.all')} {t('common.status')}</MenuItem>
+                <MenuItem value={ApplicationStatus.NEW}>{t('application.new')}</MenuItem>
+                <MenuItem value={ApplicationStatus.IN_REVIEW}>{t('application.inReview')}</MenuItem>
+                <MenuItem value={ApplicationStatus.FORWARDED}>{t('application.forwarded')}</MenuItem>
+                <MenuItem value={ApplicationStatus.MEETING_SCHEDULED}>{t('application.meetingScheduled')}</MenuItem>
+                <MenuItem value={ApplicationStatus.ACCEPTED}>{t('application.accepted')}</MenuItem>
+                <MenuItem value={ApplicationStatus.REJECTED}>{t('application.rejected')}</MenuItem>
+                <MenuItem value={ApplicationStatus.WITHDRAWN}>{t('application.withdrawn')}</MenuItem>
+                <MenuItem value={ApplicationStatus.ARCHIVED}>{t('application.archived')}</MenuItem>
               </Select>
             </FormControl>
           </Box>
@@ -491,7 +496,7 @@ const ApplicationList: React.FC = () => {
         </SectionCard>
         {isError && (
           <Typography variant="body2" color="error" sx={{ mt: -1 }}>
-            Failed to load applications.
+            {t('error.loadFailed', { item: t('application.titlePlural').toLowerCase() })}
           </Typography>
         )}
       </Stack>
@@ -509,7 +514,7 @@ const ApplicationList: React.FC = () => {
             handleMenuClose();
           }}>
             <ForwardIcon fontSize="small" sx={{ mr: 1 }} />
-            Forward to Reviewer
+            {t('application.forwardToReviewer')}
           </MenuItem>
           <MenuItem onClick={() => {
             if (selectedApplication) {
@@ -517,7 +522,7 @@ const ApplicationList: React.FC = () => {
             }
             handleMenuClose();
           }}>
-            Mark as In Review
+            {t('common.setAs')} {t('application.inReview')}
           </MenuItem>
           <MenuItem onClick={() => {
             if (selectedApplication) {
@@ -525,7 +530,7 @@ const ApplicationList: React.FC = () => {
             }
             handleMenuClose();
           }}>
-            Accept Application
+            {t('application.acceptApplication')}
           </MenuItem>
           <MenuItem onClick={() => {
             if (selectedApplication) {
@@ -533,7 +538,7 @@ const ApplicationList: React.FC = () => {
             }
             handleMenuClose();
           }}>
-            Reject Application
+            {t('application.rejectApplication')}
           </MenuItem>
         </Menu>
 
@@ -544,13 +549,13 @@ const ApplicationList: React.FC = () => {
           maxWidth="sm"
           fullWidth
         >
-          <DialogTitle>Add Comment</DialogTitle>
+          <DialogTitle>{t('application.addComment')}</DialogTitle>
           <DialogContent>
             <TextField
               fullWidth
               multiline
               rows={4}
-              placeholder="Enter your comment..."
+              placeholder={t('application.commentPlaceholder')}
               value={commentDialog.comment}
               onChange={(e) => setCommentDialog({ ...commentDialog, comment: e.target.value })}
               sx={{ mt: 2 }}
@@ -558,10 +563,10 @@ const ApplicationList: React.FC = () => {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setCommentDialog({ open: false, applicationId: null, comment: '' })}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button variant="contained" onClick={handleAddComment}>
-              Add Comment
+              {t('application.addComment')}
             </Button>
           </DialogActions>
         </Dialog>
@@ -573,7 +578,7 @@ const ApplicationList: React.FC = () => {
           maxWidth="xs"
           fullWidth
         >
-          <DialogTitle>Add Rating</DialogTitle>
+          <DialogTitle>{t('application.addRating')}</DialogTitle>
           <DialogContent>
             <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
               <Rating
@@ -585,10 +590,10 @@ const ApplicationList: React.FC = () => {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setRatingDialog({ open: false, applicationId: null, score: 0 })}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button variant="contained" onClick={handleAddRating} disabled={isCompanyManager || !ratingDialog.score}>
-              Add Rating
+              {t('application.addRating')}
             </Button>
           </DialogActions>
         </Dialog>

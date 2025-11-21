@@ -3,12 +3,14 @@ import { Box, TextField, Button, Stack, MenuItem, Typography } from '@mui/materi
 import { DataGrid, GridColDef, GridPaginationModel, GridSortModel } from '@mui/x-data-grid';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { employeeService } from '@/services/employeeService';
 import { Employee, PaginatedResponse } from '@/types';
 import PageContainer from '@/components/ui/PageContainer';
 import SectionCard from '@/components/ui/SectionCard';
 
 const EmployeeList: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [search, setSearch] = React.useState('');
   const [companyId, setCompanyId] = React.useState<number | ''>('');
@@ -52,16 +54,16 @@ const EmployeeList: React.FC = () => {
 
   const columns = React.useMemo<GridColDef<Employee>[]>(
     () => [
-      { field: 'employeeCode', headerName: 'Code', flex: 1, minWidth: 120 },
-      { field: 'fullName', headerName: 'Name', flex: 1.2, minWidth: 160,
+      { field: 'employeeCode', headerName: t('employee.employeeCode'), flex: 1, minWidth: 120 },
+      { field: 'fullName', headerName: t('employee.fullName'), flex: 1.2, minWidth: 160,
         valueGetter: (params) => params.row.fullName || `${params.row.firstName ?? ''} ${params.row.lastName ?? ''}`.trim(),
       },
-      { field: 'email', headerName: 'Email', flex: 1.3, minWidth: 200 },
-      { field: 'companyName', headerName: 'Company', flex: 1, minWidth: 140 },
-      { field: 'departmentName', headerName: 'Department', flex: 1, minWidth: 140 },
-      { field: 'status', headerName: 'Status', width: 120 },
+      { field: 'email', headerName: t('employee.email'), flex: 1.3, minWidth: 200 },
+      { field: 'companyName', headerName: t('employee.company'), flex: 1, minWidth: 140 },
+      { field: 'departmentName', headerName: t('employee.department'), flex: 1, minWidth: 140 },
+      { field: 'status', headerName: t('common.status'), width: 120 },
     ],
-    []
+    [t]
   );
 
   const handlePaginationChange = (model: GridPaginationModel) => {
@@ -74,11 +76,11 @@ const EmployeeList: React.FC = () => {
 
   return (
     <PageContainer
-      title="Employees"
+      title={t('employee.titlePlural')}
       actions={
         <Stack direction="row" spacing={1}>
-          <Button variant="outlined" onClick={() => refetch()}>Refresh</Button>
-          <Button variant="contained" onClick={() => navigate('/employees/new')}>New</Button>
+          <Button variant="outlined" onClick={() => refetch()}>{t('common.refresh')}</Button>
+          <Button variant="contained" onClick={() => navigate('/employees/new')}>{t('common.add')}</Button>
         </Stack>
       }
     >
@@ -87,14 +89,14 @@ const EmployeeList: React.FC = () => {
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }} flexWrap="wrap">
             <TextField
               size="small"
-              label="Search"
+              label={t('common.search')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               sx={{ minWidth: { xs: '100%', sm: 240 } }}
             />
             <TextField
               size="small"
-              label="Company ID"
+              label={t('employee.company') + ' ID'}
               type="number"
               value={companyId}
               onChange={(e) => setCompanyId(e.target.value === '' ? '' : Number(e.target.value))}
@@ -102,7 +104,7 @@ const EmployeeList: React.FC = () => {
             />
             <TextField
               size="small"
-              label="Department ID"
+              label={t('employee.department') + ' ID'}
               type="number"
               value={departmentId}
               onChange={(e) => setDepartmentId(e.target.value === '' ? '' : Number(e.target.value))}
@@ -110,22 +112,22 @@ const EmployeeList: React.FC = () => {
             />
             <TextField
               size="small"
-              label="Status"
+              label={t('common.status')}
               select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
               sx={{ width: { xs: '100%', sm: 180 } }}
             >
-              <MenuItem value="">All</MenuItem>
-              <MenuItem value="ACTIVE">ACTIVE</MenuItem>
-              <MenuItem value="INACTIVE">INACTIVE</MenuItem>
-              <MenuItem value="ON_LEAVE">ON_LEAVE</MenuItem>
-              <MenuItem value="TERMINATED">TERMINATED</MenuItem>
+              <MenuItem value="">{t('common.all')}</MenuItem>
+              <MenuItem value="ACTIVE">{t('employee.active')}</MenuItem>
+              <MenuItem value="INACTIVE">{t('employee.inactive')}</MenuItem>
+              <MenuItem value="ON_LEAVE">{t('status.onLeave')}</MenuItem>
+              <MenuItem value="TERMINATED">{t('status.terminated')}</MenuItem>
             </TextField>
             <Box sx={{ flexGrow: 1 }} />
             <Stack direction="row" spacing={1}>
-              <Button variant="outlined" onClick={() => refetch()}>Reset</Button>
-              <Button variant="contained" onClick={() => refetch()}>Search</Button>
+              <Button variant="outlined" onClick={() => refetch()}>{t('common.reset')}</Button>
+              <Button variant="contained" onClick={() => refetch()}>{t('common.search')}</Button>
             </Stack>
           </Stack>
         </SectionCard>
@@ -167,7 +169,7 @@ const EmployeeList: React.FC = () => {
           </Box>
           {isError && (
             <Typography variant="body2" color="error" sx={{ mt: 2 }}>
-              Failed to load employees.
+              {t('error.loadFailed', { item: t('employee.titlePlural').toLowerCase() })}
             </Typography>
           )}
         </SectionCard>

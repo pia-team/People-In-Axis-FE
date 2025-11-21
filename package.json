@@ -20,7 +20,9 @@
     "e2e:install": "playwright install --with-deps",
     "preview:start": "vite preview --port 4173 --strictPort",
     "e2e:ci": "start-server-and-test preview:start http://localhost:4173 e2e",
-    "i18n:translate": "node src/translate.js"
+    "i18n:translate": "node src/scripts/translate.js",
+    "i18n:translate:tr": "node src/scripts/translate.js tr",
+    "i18n:translate:all": "node src/scripts/translate.js tr fr de es pt it ru ja zh ko ar hi"
   },
   "dependencies": {
     "@emotion/react": "^11.11.4",
