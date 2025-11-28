@@ -55,6 +55,14 @@ interface RatingDialogData {
   score: number;
 }
 
+const serverSortFieldMap: Record<string, string> = {
+  applicant: 'lastName',
+  positionTitle: 'positionTitle',
+  appliedAt: 'appliedAt',
+  status: 'status',
+  comments: 'commentCount',
+};
+
 const ApplicationList: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -99,8 +107,17 @@ const ApplicationList: React.FC = () => {
     return Array.from(set);
   }, [positionOptions]);
 
+  const sortParam = React.useMemo(() => {
+    if (!sortModel?.length) return undefined;
+    const [currentSort] = sortModel;
+    if (!currentSort?.field || !currentSort.sort) return undefined;
+    const serverField = serverSortFieldMap[currentSort.field];
+    if (!serverField) return undefined;
+    return `${serverField},${currentSort.sort === 'desc' ? 'desc' : 'asc'}`;
+  }, [sortModel]);
+
   const { data, isPending, isError, refetch } = useQuery({
-    queryKey: ['applications', paginationModel.page, paginationModel.pageSize, statusFilter, searchTerm, departmentFilter, positionIdFilter, sortModel],
+    queryKey: ['applications', paginationModel.page, paginationModel.pageSize, statusFilter, searchTerm, departmentFilter, positionIdFilter, sortParam],
     queryFn: async () => applicationService.getApplications({
       page: paginationModel.page,
       size: paginationModel.pageSize,
@@ -108,7 +125,7 @@ const ApplicationList: React.FC = () => {
       q: searchTerm || undefined,
       department: departmentFilter || undefined,
       positionId: positionIdFilter || undefined,
-      sort: sortModel?.[0]?.field ? `${sortModel[0].field},${sortModel[0].sort === 'asc' ? 'asc' : 'desc'}` : undefined,
+      sort: sortParam,
     }),
     placeholderData: keepPreviousData,
   });

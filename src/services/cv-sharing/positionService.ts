@@ -216,6 +216,13 @@ class PositionService {
   }
 
   /**
+   * Remove recorded Pool CV match & application from a position
+   */
+  async removeMatch(positionId: string, poolCvId: string): Promise<void> {
+    await axios.delete(`${this.baseUrl}/${positionId}/matches/${poolCvId}`);
+  }
+
+  /**
    * Export positions to CSV
    */
   async exportPositions(filter?: PositionFilter): Promise<Blob> {
