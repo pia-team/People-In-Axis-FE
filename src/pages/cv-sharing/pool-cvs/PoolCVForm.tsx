@@ -401,7 +401,7 @@ const PoolCVForm: React.FC = () => {
                       ))}
                     </Box>
                     <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                      <TextField size="small" placeholder="Add tag" onKeyDown={(e) => {
+                      <TextField size="small" placeholder={t('poolCV.addTag')} onKeyDown={(e) => {
                         const input = e.target as HTMLInputElement;
                         if (e.key === 'Enter' && input.value.trim()) {
                           e.preventDefault();
@@ -417,7 +417,7 @@ const PoolCVForm: React.FC = () => {
 
             {/* Files */}
             <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>Files</Typography>
+              <Typography variant="h6" gutterBottom>{t('poolCV.files')}</Typography>
               <FileUpload onFilesChange={setFiles} value={files} />
             </Grid>
 
@@ -461,7 +461,7 @@ const PoolCVForm: React.FC = () => {
                   render={({ field }) => (
                     <FormControlLabel 
                       control={<Checkbox {...field} checked={!!field.value} />} 
-                      label="Active" 
+                      label={t('poolCV.active')} 
                       sx={{ mt: 1 }}
                     />
                   )}
@@ -472,7 +472,7 @@ const PoolCVForm: React.FC = () => {
             {/* Actions */}
             <Grid item xs={12}>
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                <Button variant="outlined" startIcon={<CancelIcon />} onClick={() => navigate('/cv-sharing/pool-cvs')} disabled={loading}>Cancel</Button>
+                <Button variant="outlined" startIcon={<CancelIcon />} onClick={() => navigate('/cv-sharing/pool-cvs')} disabled={loading}>{t('common.cancel')}</Button>
                 <Button 
                   type="submit" 
                   variant="contained" 

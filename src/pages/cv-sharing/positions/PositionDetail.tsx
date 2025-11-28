@@ -632,7 +632,7 @@ const PositionDetail: React.FC = () => {
                 {t('common.previous')}
               </Button>
               <Typography variant="body2" color="text.secondary">
-                {t('common.page')} {appsPage + 1} {t('common.of')} {matchesPage?.pageInfo?.totalPages ?? 1}
+                {t('common.pageOf', { current: appsPage + 1, total: matchesPage?.pageInfo?.totalPages ?? 1 })}
               </Typography>
               <Button
                 variant="outlined"
@@ -722,7 +722,15 @@ const PositionDetail: React.FC = () => {
           .filter((s) => s !== position.status && s !== PositionStatus.ARCHIVED)
           .map((status) => (
             <MenuItem key={status} onClick={() => handleStatusChange(status)}>
-              {t('common.setAs')} {t(`position.${status.toLowerCase()}`) || status}
+              {(() => {
+                const statusKey = `setAs${status.charAt(0) + status.slice(1).toLowerCase()}`;
+                const translationKey = `common.${statusKey}`;
+                const translation = t(translationKey as any);
+                if (translation && translation !== translationKey) {
+                  return translation;
+                }
+                return `${t('common.setAs')} ${t(`position.${status.toLowerCase()}`) || status}`;
+              })()}
             </MenuItem>
           ))}
       </Menu>

@@ -399,6 +399,24 @@ const PositionList: React.FC = () => {
                 setPage(model.page);
                 setPageSize(model.pageSize);
               }}
+              localeText={{
+                MuiTablePagination: {
+                  labelRowsPerPage: t('common.rowsPerPage'),
+                  labelDisplayedRows: ({ from, to, count }: { from: number; to: number; count: number }) => {
+                    if (count === -1) {
+                      return `${from}–${to}`;
+                    }
+                    const currentPage = Math.floor(from / pageSize) + 1;
+                    const totalPages = Math.ceil(count / pageSize);
+                    return t('common.pageOf', { current: currentPage, total: totalPages });
+                  },
+                },
+                columnMenuSortAsc: t('common.sortByAsc'),
+                columnMenuSortDesc: t('common.sortByDesc'),
+                columnMenuFilter: t('common.filter'),
+                columnMenuHideColumn: t('common.hideColumn'),
+                columnMenuManageColumns: t('common.manageColumns'),
+              } as any}
               onCellClick={(params) => {
                 // Don't navigate if clicking on actions column
                 if (params.field !== 'actions') {
@@ -448,7 +466,15 @@ const PositionList: React.FC = () => {
           .filter(s => s !== selectedPosition?.status && s !== PositionStatus.ARCHIVED)
           .map((status) => (
             <MenuItem key={status} onClick={() => handleStatusChange(status)}>
-{t('common.setAs')} {t(`position.${status.toLowerCase()}`)}
+              {(() => {
+                const statusKey = `setAs${status.charAt(0) + status.slice(1).toLowerCase()}`;
+                const translationKey = `common.${statusKey}`;
+                const translation = t(translationKey as any);
+                if (translation && translation !== translationKey) {
+                  return translation;
+                }
+                return `${t('common.setAs')} ${t(`position.${status.toLowerCase()}`)}`;
+              })()}
             </MenuItem>
           ))}
       </Menu>

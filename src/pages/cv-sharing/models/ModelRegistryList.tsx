@@ -50,12 +50,12 @@ const ModelRegistryList: React.FC = () => {
   const activateMutation = useMutation({
     mutationFn: (id: number) => modelRegistryService.activateModel(id),
     onSuccess: () => {
-      enqueueSnackbar('Model activated successfully', { variant: 'success' });
+      enqueueSnackbar(t('model.modelActivated'), { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['models'] });
       queryClient.invalidateQueries({ queryKey: ['activeModel'] });
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data?.message || 'Failed to activate model', {
+      enqueueSnackbar(error?.response?.data?.message || t('model.failedToActivateModel'), {
         variant: 'error',
       });
     },
@@ -79,22 +79,22 @@ const ModelRegistryList: React.FC = () => {
   const columns: GridColDef[] = [
     {
       field: 'id',
-      headerName: 'ID',
+      headerName: t('common.id'),
       width: 80,
     },
     {
       field: 'version',
-      headerName: 'Version',
+      headerName: t('model.version'),
       width: 150,
     },
     {
       field: 'modelType',
-      headerName: 'Type',
+      headerName: t('model.modelType'),
       width: 150,
     },
     {
       field: 'status',
-      headerName: 'Status',
+      headerName: t('model.status'),
       width: 130,
       renderCell: (params: GridRenderCellParams) => (
         <Chip
@@ -106,11 +106,11 @@ const ModelRegistryList: React.FC = () => {
     },
     {
       field: 'isActive',
-      headerName: 'Active',
+      headerName: t('model.active'),
       width: 100,
       renderCell: (params: GridRenderCellParams) => (
         <Chip
-          label={params.value ? 'Yes' : 'No'}
+          label={params.value ? t('model.yes') : t('model.no')}
           size="small"
           color={params.value ? 'success' : 'default'}
           icon={params.value ? <ActiveIcon /> : undefined}
@@ -119,32 +119,32 @@ const ModelRegistryList: React.FC = () => {
     },
     {
       field: 'trainingExamplesCount',
-      headerName: 'Training Examples',
+      headerName: t('model.trainingExamples'),
       width: 150,
       renderCell: (params: GridRenderCellParams) => (
-        <Typography variant="body2">{params.value || 'N/A'}</Typography>
+        <Typography variant="body2">{params.value || t('common.notAvailable')}</Typography>
       ),
     },
     {
       field: 'activatedAt',
-      headerName: 'Activated At',
+      headerName: t('model.activatedAt'),
       width: 180,
       renderCell: (params: GridRenderCellParams) => (
         <Typography variant="body2">
-          {params.value ? new Date(params.value).toLocaleDateString() : 'N/A'}
+          {params.value ? new Date(params.value).toLocaleDateString() : t('common.notAvailable')}
         </Typography>
       ),
     },
     {
       field: 'actions',
-      headerName: 'Actions',
+      headerName: t('common.actions'),
       width: 150,
       sortable: false,
       renderCell: (params: GridRenderCellParams) => {
         const model = params.row as ModelRegistry;
         return (
           <Stack direction="row" spacing={1}>
-            <Tooltip title="View Details">
+            <Tooltip title={t('abTest.viewDetails')}>
               <IconButton
                 size="small"
                 onClick={() => navigate(`/cv-sharing/models/${model.id}`)}
@@ -153,13 +153,13 @@ const ModelRegistryList: React.FC = () => {
               </IconButton>
             </Tooltip>
             {canEdit && !model.isActive && model.status === 'ACTIVE' && (
-              <Tooltip title="Activate">
+              <Tooltip title={t('model.activate')}>
                 <IconButton
                   size="small"
                   color="success"
                   onClick={() => {
                     if (!canEdit) return;
-                    if (window.confirm('Activate this model? Other models will be deactivated.')) {
+                    if (window.confirm(t('model.activateConfirm'))) {
                       activateMutation.mutate(model.id);
                     }
                   }}
@@ -185,14 +185,14 @@ const ModelRegistryList: React.FC = () => {
               startIcon={<AddIcon />}
               onClick={() => navigate('/cv-sharing/models/new')}
             >
-              Register Model
+              {t('model.registerModel')}
             </Button>
           )}
         </Stack>
 
         {activeModel && (
           <Alert severity="success" sx={{ mb: 2 }}>
-            Active Model: <strong>{activeModel.version}</strong> ({activeModel.modelType})
+            {t('model.activeModel')}: <strong>{activeModel.version}</strong> ({activeModel.modelType})
           </Alert>
         )}
 
@@ -218,6 +218,24 @@ const ModelRegistryList: React.FC = () => {
             }}
             disableRowSelectionOnClick
             sx={{ minHeight: 400 }}
+            localeText={{
+              MuiTablePagination: {
+                labelRowsPerPage: t('common.rowsPerPage'),
+                labelDisplayedRows: ({ from, to, count }: { from: number; to: number; count: number }) => {
+                  if (count === -1) {
+                    return `${from}–${to}`;
+                  }
+                  const currentPage = Math.floor(from / pageSize) + 1;
+                  const totalPages = Math.ceil(count / pageSize);
+                  return t('common.pageOf', { current: currentPage, total: totalPages });
+                },
+              },
+              columnMenuSortAsc: t('common.sortByAsc'),
+              columnMenuSortDesc: t('common.sortByDesc'),
+              columnMenuFilter: t('common.filter'),
+              columnMenuHideColumn: t('common.hideColumn'),
+              columnMenuManageColumns: t('common.manageColumns'),
+            } as any}
           />
         </Paper>
       </Box>

@@ -20,12 +20,14 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { modelRegistryService } from '@/services/cv-sharing/modelRegistryService';
 import { useKeycloak } from '@/hooks/useKeycloak';
 import PageContainer from '@/components/ui/PageContainer';
 
 const ModelDetail: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
@@ -42,13 +44,13 @@ const ModelDetail: React.FC = () => {
   const activateMutation = useMutation({
     mutationFn: () => modelRegistryService.activateModel(Number(id!)),
     onSuccess: () => {
-      enqueueSnackbar('Model activated successfully', { variant: 'success' });
+      enqueueSnackbar(t('model.modelActivated'), { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['models'] });
       queryClient.invalidateQueries({ queryKey: ['activeModel'] });
       queryClient.invalidateQueries({ queryKey: ['model', id] });
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data?.message || 'Failed to activate model', {
+      enqueueSnackbar(error?.response?.data?.message || t('model.failedToActivateModel'), {
         variant: 'error',
       });
     },
@@ -80,7 +82,7 @@ const ModelDetail: React.FC = () => {
   if (!model) {
     return (
       <PageContainer>
-        <Alert severity="error">Model not found</Alert>
+        <Alert severity="error">{t('model.modelNotFound')}</Alert>
       </PageContainer>
     );
   }
@@ -92,7 +94,7 @@ const ModelDetail: React.FC = () => {
           <IconButton onClick={() => navigate('/cv-sharing/models')}>
             <BackIcon />
           </IconButton>
-          <Typography variant="h4">Model: {model.version}</Typography>
+          <Typography variant="h4">{t('model.modelVersion')} {model.version}</Typography>
         </Stack>
 
         <Grid container spacing={3}>
@@ -107,7 +109,7 @@ const ModelDetail: React.FC = () => {
                       size="small"
                     />
                     {model.isActive && (
-                      <Chip label="Active" color="success" size="small" icon={<ActivateIcon />} />
+                      <Chip label={t('model.active')} color="success" size="small" icon={<ActivateIcon />} />
                     )}
                   </Stack>
 
@@ -116,19 +118,19 @@ const ModelDetail: React.FC = () => {
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
                       <Typography variant="caption" color="textSecondary">
-                        Version
+                        {t('model.version')}
                       </Typography>
                       <Typography variant="body1">{model.version}</Typography>
                     </Grid>
                     <Grid item xs={12} sm={6}>
                       <Typography variant="caption" color="textSecondary">
-                        Model Type
+                        {t('model.modelType')}
                       </Typography>
                       <Typography variant="body1">{model.modelType}</Typography>
                     </Grid>
                     <Grid item xs={12}>
                       <Typography variant="caption" color="textSecondary">
-                        Model Path
+                        {t('model.modelPath')}
                       </Typography>
                       <Typography variant="body1" sx={{ wordBreak: 'break-all' }}>
                         {model.modelPath}
@@ -137,7 +139,7 @@ const ModelDetail: React.FC = () => {
                     {model.trainingExamplesCount && (
                       <Grid item xs={12} sm={6}>
                         <Typography variant="caption" color="textSecondary">
-                          Training Examples
+                          {t('model.trainingExamples')}
                         </Typography>
                         <Typography variant="body1">{model.trainingExamplesCount}</Typography>
                       </Grid>
@@ -145,20 +147,20 @@ const ModelDetail: React.FC = () => {
                     {model.trainingDateFrom && (
                       <Grid item xs={12} sm={6}>
                         <Typography variant="caption" color="textSecondary">
-                          Training Period
+                          {t('model.trainingPeriod')}
                         </Typography>
                         <Typography variant="body1">
                           {new Date(model.trainingDateFrom).toLocaleDateString()} -{' '}
                           {model.trainingDateTo
                             ? new Date(model.trainingDateTo).toLocaleDateString()
-                            : 'Ongoing'}
+                            : t('model.ongoing')}
                         </Typography>
                       </Grid>
                     )}
                     {model.activatedAt && (
                       <Grid item xs={12} sm={6}>
                         <Typography variant="caption" color="textSecondary">
-                          Activated At
+                          {t('model.activatedAt')}
                         </Typography>
                         <Typography variant="body1">
                           {new Date(model.activatedAt).toLocaleString()}
@@ -172,7 +174,7 @@ const ModelDetail: React.FC = () => {
                       <Divider />
                       <Box>
                         <Typography variant="subtitle2" gutterBottom>
-                          Metrics
+                          {t('model.metrics')}
                         </Typography>
                         <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
                           <pre style={{ margin: 0, fontSize: '0.875rem' }}>
@@ -188,7 +190,7 @@ const ModelDetail: React.FC = () => {
                       <Divider />
                       <Box>
                         <Typography variant="caption" color="textSecondary">
-                          Notes
+                          {t('model.notes')}
                         </Typography>
                         <Typography variant="body2">{model.notes}</Typography>
                       </Box>
@@ -206,13 +208,13 @@ const ModelDetail: React.FC = () => {
                     startIcon={<ActivateIcon />}
                     onClick={() => {
                       if (!canEdit) return;
-                      if (window.confirm('Activate this model? Other models will be deactivated.')) {
+                      if (window.confirm(t('model.activateConfirm'))) {
                         activateMutation.mutate();
                       }
                     }}
                     disabled={activateMutation.isPending}
                   >
-                    {activateMutation.isPending ? 'Activating...' : 'Activate Model'}
+                    {activateMutation.isPending ? t('model.activating') : t('model.activateModel')}
                   </Button>
                 </CardContent>
               </Card>
@@ -223,7 +225,7 @@ const ModelDetail: React.FC = () => {
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
-                  Quick Actions
+                  {t('model.quickActions')}
                 </Typography>
                 <Stack spacing={2}>
                   <Button
@@ -232,7 +234,7 @@ const ModelDetail: React.FC = () => {
                     onClick={() => navigate('/cv-sharing/models')}
                     fullWidth
                   >
-                    Back to List
+                    {t('model.backToList')}
                   </Button>
                 </Stack>
               </CardContent>

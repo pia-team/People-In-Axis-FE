@@ -110,7 +110,7 @@ const ApplicationForm: React.FC = () => {
       const positionData = await positionService.getPositionById(positionId!);
       setPosition(positionData);
     } catch (error) {
-      enqueueSnackbar('Failed to load position details', { variant: 'error' });
+      enqueueSnackbar(t('application.failedToLoadPosition'), { variant: 'error' });
       navigate('/positions');
     } finally {
       setLoading(false);

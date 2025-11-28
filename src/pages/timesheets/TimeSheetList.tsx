@@ -9,8 +9,10 @@ import PageContainer from '@/components/ui/PageContainer';
 import SectionCard from '@/components/ui/SectionCard';
 import { standardDataGridSx } from '@/components/ui/dataGridStyles';
 import EmptyState from '@/components/ui/EmptyState';
+import { useTranslation } from 'react-i18next';
 
 const TimeSheetList: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [paginationModel, setPaginationModel] = React.useState<{ page: number; pageSize: number }>(
@@ -44,17 +46,17 @@ const TimeSheetList: React.FC = () => {
 
   const NoTimeSheetsOverlay = React.useCallback(() => (
     <EmptyState
-      title="No timesheets"
-      description="There are no timesheets to display."
+      title={t('timesheet.noTimesheets')}
+      description={t('timesheet.noTimesheetsListDescription')}
     />
-  ), [refetch]);
+  ), [refetch, t]);
 
   return (
     <PageContainer
-      title="TimeSheets"
+      title={t('timesheet.timesheetsTitle')}
       actions={
         <Stack direction="row" spacing={1}>
-          <Button variant="outlined" onClick={() => refetch()}>Refresh</Button>
+          <Button variant="outlined" onClick={() => refetch()}>{t('timesheet.refresh')}</Button>
           <Button
             variant="outlined"
             onClick={async () => {
@@ -67,16 +69,16 @@ const TimeSheetList: React.FC = () => {
               window.URL.revokeObjectURL(url);
             }}
           >
-            Export
+            {t('common.export')}
           </Button>
-          <Button variant="contained" onClick={() => navigate('/timesheets/new')}>New</Button>
+          <Button variant="contained" onClick={() => navigate('/timesheets/new')}>{t('timesheet.new')}</Button>
         </Stack>
       }
     >
       <Stack spacing={2}>
         <SectionCard>
           <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
-            <Button variant="outlined" onClick={() => fileInputRef.current?.click()}>Import</Button>
+            <Button variant="outlined" onClick={() => fileInputRef.current?.click()}>{t('common.import')}</Button>
             <input
               type="file"
               accept=".xlsx,.xls"
@@ -114,7 +116,7 @@ const TimeSheetList: React.FC = () => {
         </SectionCard>
         {isError && (
           <Typography variant="body2" color="error" sx={{ mt: -1 }}>
-            Failed to load timesheets.
+            {t('timesheet.failedToLoadTimesheets')}
           </Typography>
         )}
       </Stack>

@@ -29,20 +29,22 @@ import PageContainer from '@/components/ui/PageContainer';
 import SectionCard from '@/components/ui/SectionCard';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
+import { useTranslation } from 'react-i18next';
 // Using native Date for relative time formatting
-const formatRelativeTime = (date: string | Date): string => {
+const formatRelativeTime = (date: string | Date, t: any): string => {
   const now = new Date();
   const then = typeof date === 'string' ? new Date(date) : date;
   const diffInSeconds = Math.floor((now.getTime() - then.getTime()) / 1000);
   
-  if (diffInSeconds < 60) return 'just now';
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+  if (diffInSeconds < 60) return t('notification.justNow');
+  if (diffInSeconds < 3600) return t('notification.minutesAgo', { count: Math.floor(diffInSeconds / 60) });
+  if (diffInSeconds < 86400) return t('notification.hoursAgo', { count: Math.floor(diffInSeconds / 3600) });
+  if (diffInSeconds < 604800) return t('notification.daysAgo', { count: Math.floor(diffInSeconds / 86400) });
   return then.toLocaleDateString();
 };
 
 const NotificationList: React.FC = () => {
+  const { t } = useTranslation();
   const [filter, setFilter] = useState<'all' | 'unread'>('unread');
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
@@ -98,7 +100,7 @@ const NotificationList: React.FC = () => {
 
   const handleDelete = () => {
     if (selectedNotification) {
-      if (window.confirm('Delete this notification?')) {
+      if (window.confirm(t('notification.deleteConfirm'))) {
         deleteMutation.mutate(selectedNotification.id);
       }
     }
@@ -120,18 +122,18 @@ const NotificationList: React.FC = () => {
 
   if (isPending) {
     return (
-      <PageContainer title="Notifications">
-        <LoadingState message="Loading notifications..." />
+      <PageContainer title={t('notification.titlePlural')}>
+        <LoadingState message={t('notification.loadingNotifications')} />
       </PageContainer>
     );
   }
 
   if (isError) {
     return (
-      <PageContainer title="Notifications">
+      <PageContainer title={t('notification.titlePlural')}>
         <ErrorState
-          title="Failed to load notifications"
-          message={error instanceof Error ? error.message : 'An error occurred'}
+          title={t('notification.failedToLoad')}
+          message={error instanceof Error ? error.message : t('error.occurred')}
           onRetry={() => queryClient.invalidateQueries({ queryKey: ['notifications'] })}
         />
       </PageContainer>
@@ -142,7 +144,7 @@ const NotificationList: React.FC = () => {
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
-    <PageContainer title="Notifications">
+    <PageContainer title={t('notification.titlePlural')}>
       <SectionCard>
         <Stack spacing={2}>
           {/* Filters and Actions */}
@@ -155,7 +157,7 @@ const NotificationList: React.FC = () => {
                     onChange={(e) => setFilter(e.target.checked ? 'all' : 'unread')}
                   />
                 }
-                label="Show all"
+                label={t('notification.showAll')}
               />
               <FormControlLabel
                 control={
@@ -164,7 +166,7 @@ const NotificationList: React.FC = () => {
                     onChange={(e) => setFilter(e.target.checked ? 'unread' : 'all')}
                   />
                 }
-                label="Unread only"
+                label={t('notification.unreadOnly')}
               />
             </Stack>
             {unreadCount > 0 && (
@@ -174,7 +176,7 @@ const NotificationList: React.FC = () => {
                 onClick={() => markAllAsReadMutation.mutate()}
                 disabled={markAllAsReadMutation.isPending}
               >
-                Mark all as read
+                {t('notification.markAllAsRead')}
               </Button>
             )}
           </Box>
@@ -186,10 +188,10 @@ const NotificationList: React.FC = () => {
             <Box sx={{ textAlign: 'center', py: 4 }}>
               <NotificationsIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
               <Typography variant="h6" color="text.secondary">
-                No notifications
+                {t('notification.noNotifications')}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {filter === 'unread' ? 'You have no unread notifications' : 'You have no notifications'}
+                {filter === 'unread' ? t('notification.noUnreadNotifications') : t('notification.youHaveNoNotifications')}
               </Typography>
             </Box>
           ) : (
@@ -214,10 +216,10 @@ const NotificationList: React.FC = () => {
                           size="small"
                         />
                         {!notification.isRead && (
-                          <Chip label="Unread" color="primary" size="small" variant="outlined" />
+                          <Chip label={t('notification.unread')} color="primary" size="small" variant="outlined" />
                         )}
                         <Typography variant="caption" color="text.secondary">
-                          {formatRelativeTime(notification.createdAt)}
+                          {formatRelativeTime(notification.createdAt, t)}
                         </Typography>
                       </Stack>
                       <Typography variant="subtitle2" sx={{ fontWeight: notification.isRead ? 400 : 600, mb: 0.5 }}>
@@ -253,14 +255,14 @@ const NotificationList: React.FC = () => {
             <ListItemIcon>
               <MarkReadIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText>Mark as read</ListItemText>
+            <ListItemText>{t('notification.markAsRead')}</ListItemText>
           </MenuItem>
         )}
         <MenuItem onClick={handleDelete}>
           <ListItemIcon>
             <DeleteIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>Delete</ListItemText>
+          <ListItemText>{t('notification.delete')}</ListItemText>
         </MenuItem>
       </Menu>
     </PageContainer>

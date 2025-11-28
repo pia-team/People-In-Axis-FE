@@ -22,6 +22,7 @@ import {
 import { Search as SearchIcon } from '@mui/icons-material';
 import { poolCVService } from '@/services/cv-sharing';
 import { PoolCV } from '@/types/cv-sharing';
+import { useTranslation } from 'react-i18next';
 
 interface PoolCVSelectorProps {
   open: boolean;
@@ -30,6 +31,7 @@ interface PoolCVSelectorProps {
 }
 
 const PoolCVSelector: React.FC<PoolCVSelectorProps> = ({ open, onClose, onSelect }) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<PoolCV[]>([]);
   const [search, setSearch] = useState('');
@@ -84,13 +86,13 @@ const PoolCVSelector: React.FC<PoolCVSelectorProps> = ({ open, onClose, onSelect
             </Select>
           </FormControl>
           <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Experience</InputLabel>
-            <Select value={experience} label="Experience" onChange={(e) => setExperience(e.target.value)}>
-              <MenuItem value="all">All</MenuItem>
-              <MenuItem value="0-2">0-2</MenuItem>
-              <MenuItem value="2-5">2-5</MenuItem>
-              <MenuItem value="5-10">5-10</MenuItem>
-              <MenuItem value="10-99">10+</MenuItem>
+            <InputLabel>{t('poolCV.experienceYears')}</InputLabel>
+            <Select value={experience} label={t('poolCV.experienceYears')} onChange={(e) => setExperience(e.target.value)}>
+              <MenuItem value="all">{t('common.all')}</MenuItem>
+              <MenuItem value="0-2">0-2 {t('common.years')}</MenuItem>
+              <MenuItem value="2-5">2-5 {t('common.years')}</MenuItem>
+              <MenuItem value="5-10">5-10 {t('common.years')}</MenuItem>
+              <MenuItem value="10-99">10+ {t('common.years')}</MenuItem>
             </Select>
           </FormControl>
           <Button variant="outlined" onClick={load}>Apply</Button>

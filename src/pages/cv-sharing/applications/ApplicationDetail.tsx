@@ -182,12 +182,12 @@ const ApplicationDetail: React.FC = () => {
     try {
       setIsDeletingFile(true);
       await applicationService.deleteFile(detail.id, fileToDelete);
-      enqueueSnackbar('File deleted', { variant: 'success' });
+      enqueueSnackbar(t('application.fileDeletedShort'), { variant: 'success' });
       await queryClient.invalidateQueries({ queryKey: ['application', id] });
       setDeleteFileDialogOpen(false);
       setFileToDelete(null);
     } catch (error) {
-      enqueueSnackbar('Failed to delete file', { variant: 'error' });
+      enqueueSnackbar(t('application.failedToDeleteFile'), { variant: 'error' });
     } finally {
       setIsDeletingFile(false);
     }
@@ -200,10 +200,10 @@ const ApplicationDetail: React.FC = () => {
       setCommentSaving(true);
       await applicationService.addComment(detail.id, { content: commentText, isInternal: true });
       setCommentText('');
-      enqueueSnackbar('Comment added', { variant: 'success' });
+      enqueueSnackbar(t('application.commentAddedShort'), { variant: 'success' });
       await queryClient.invalidateQueries({ queryKey: ['application', id] });
     } catch (error) {
-      enqueueSnackbar('Failed to add comment', { variant: 'error' });
+      enqueueSnackbar(t('application.failedToAddComment'), { variant: 'error' });
     } finally {
       setCommentSaving(false);
     }
@@ -277,7 +277,7 @@ const ApplicationDetail: React.FC = () => {
       if (meetingSaving) return;
       setMeetingSaving(true);
       await applicationService.scheduleMeeting(detail.id, meeting as CreateMeetingRequest);
-      enqueueSnackbar(t('application.meetingScheduled'), { variant: 'success' });
+      enqueueSnackbar(t('application.meetingScheduledSuccess'), { variant: 'success' });
       setMeeting({ title: '', startTime: '', durationMinutes: 30, participants: [] });
       closeMeetingDialog();
       await queryClient.invalidateQueries({ queryKey: ['application', id] });
@@ -359,7 +359,7 @@ const ApplicationDetail: React.FC = () => {
                 accept=".pdf,.doc,.docx"
               />
               <label htmlFor="upload-files">
-                <Button variant="outlined" component="span" startIcon={<FileIcon />}>{t('common.select')} {t('application.files')}</Button>
+                <Button variant="outlined" component="span" startIcon={<FileIcon />}>{t('application.selectFile')}</Button>
               </label>
               <Button
                 sx={{ ml: 2 }}
@@ -426,17 +426,46 @@ const ApplicationDetail: React.FC = () => {
             {/* Status selector */}
             <FormControl fullWidth size="small">
               <InputLabel>{t('common.status')}</InputLabel>
-              <Select value={newStatus} label={t('common.status')} onChange={(e) => setNewStatus(e.target.value as ApplicationStatus)}>
+              <Select 
+                value={newStatus} 
+                label={t('common.status')} 
+                onChange={(e) => setNewStatus(e.target.value as ApplicationStatus)}
+                renderValue={(value) => {
+                  // Map status enum values to translation keys for display
+                  const statusMap: Record<ApplicationStatus, string> = {
+                    [ApplicationStatus.NEW]: t('application.new'),
+                    [ApplicationStatus.IN_REVIEW]: t('application.inReview'),
+                    [ApplicationStatus.FORWARDED]: t('application.forwarded'),
+                    [ApplicationStatus.MEETING_SCHEDULED]: t('application.meetingScheduled'),
+                    [ApplicationStatus.ACCEPTED]: t('application.accepted'),
+                    [ApplicationStatus.REJECTED]: t('application.rejected'),
+                    [ApplicationStatus.WITHDRAWN]: t('application.withdrawn'),
+                    [ApplicationStatus.ARCHIVED]: t('application.archived'),
+                  };
+                  return statusMap[value as ApplicationStatus] || (value as string).replace(/_/g, ' ');
+                }}
+              >
                 {statusOptions.map(s => {
-                  const statusKey = s?.toLowerCase().replace(/_/g, '') || '';
+                  // Map status enum values to translation keys
+                  const statusMap: Record<ApplicationStatus, string> = {
+                    [ApplicationStatus.NEW]: t('application.new'),
+                    [ApplicationStatus.IN_REVIEW]: t('application.inReview'),
+                    [ApplicationStatus.FORWARDED]: t('application.forwarded'),
+                    [ApplicationStatus.MEETING_SCHEDULED]: t('application.meetingScheduled'),
+                    [ApplicationStatus.ACCEPTED]: t('application.accepted'),
+                    [ApplicationStatus.REJECTED]: t('application.rejected'),
+                    [ApplicationStatus.WITHDRAWN]: t('application.withdrawn'),
+                    [ApplicationStatus.ARCHIVED]: t('application.archived'),
+                  };
+                  const label = statusMap[s] || s.replace(/_/g, ' ');
                   return (
-                    <MenuItem key={s} value={s}>{t(`application.${statusKey}`) || s.replace('_', ' ')}</MenuItem>
+                    <MenuItem key={s} value={s}>{label}</MenuItem>
                   );
                 })}
               </Select>
             </FormControl>
             <Button sx={{ mt: 2 }} fullWidth variant="contained" onClick={handleStatusChange} disabled={saving}>
-              {t('common.update')} {t('common.status')}
+              {t('application.updateStatus')}
             </Button>
             <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
               {detail.poolCvId && (
@@ -595,10 +624,10 @@ const ApplicationDetail: React.FC = () => {
               value={meeting.provider || MeetingProvider.TEAMS}
               onChange={(e) => setMeeting(m => ({ ...m, provider: e.target.value as MeetingProvider }))}
             >
-              <MenuItem value={MeetingProvider.TEAMS}>TEAMS</MenuItem>
-              <MenuItem value={MeetingProvider.ZOOM}>ZOOM</MenuItem>
-              <MenuItem value={MeetingProvider.MEET}>MEET</MenuItem>
-              <MenuItem value={MeetingProvider.OTHER}>OTHER</MenuItem>
+              <MenuItem value={MeetingProvider.TEAMS}>{t('meeting.teams')}</MenuItem>
+              <MenuItem value={MeetingProvider.ZOOM}>{t('meeting.zoom')}</MenuItem>
+              <MenuItem value={MeetingProvider.MEET}>{t('meeting.meet')}</MenuItem>
+              <MenuItem value={MeetingProvider.OTHER}>{t('meeting.other')}</MenuItem>
             </Select>
           </FormControl>
           <TextField

@@ -26,8 +26,10 @@ import { modelRegistryService } from '@/services/cv-sharing/modelRegistryService
 import { CreateModelRequest } from '@/types/cv-sharing/model';
 import PageContainer from '@/components/ui/PageContainer';
 import { useKeycloak } from '@/hooks/useKeycloak';
+import { useTranslation } from 'react-i18next';
 
 const ModelRegistryForm: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { hasAnyRole } = useKeycloak();
@@ -44,12 +46,12 @@ const ModelRegistryForm: React.FC = () => {
   const createMutation = useMutation({
     mutationFn: (request: CreateModelRequest) => modelRegistryService.registerModel(request),
     onSuccess: () => {
-      enqueueSnackbar('Model registered successfully', { variant: 'success' });
+      enqueueSnackbar(t('model.modelRegistered'), { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['models'] });
       navigate('/cv-sharing/models');
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data?.message || 'Failed to register model', {
+      enqueueSnackbar(error?.response?.data?.message || t('model.failedToRegisterModel'), {
         variant: 'error',
       });
     },
@@ -57,12 +59,12 @@ const ModelRegistryForm: React.FC = () => {
 
   const handleSubmit = () => {
     if (!formData.version || !formData.modelPath) {
-      enqueueSnackbar('Please fill in all required fields', { variant: 'warning' });
+      enqueueSnackbar(t('model.pleaseFillAllRequiredFields'), { variant: 'warning' });
       return;
     }
 
     if (!canEdit) {
-      enqueueSnackbar('You do not have permission to perform this action', { variant: 'error' });
+      enqueueSnackbar(t('matching.permissionDenied'), { variant: 'error' });
       return;
     }
 
@@ -76,57 +78,56 @@ const ModelRegistryForm: React.FC = () => {
           <IconButton onClick={() => navigate('/cv-sharing/models')}>
             <BackIcon />
           </IconButton>
-          <Typography variant="h4">Register Model</Typography>
+          <Typography variant="h4">{t('model.registerModel')}</Typography>
         </Stack>
 
         <Card>
           <CardContent>
             <Stack spacing={3}>
               <Alert severity="info">
-                Register a trained LambdaMART model. The model file should be accessible at the
-                specified path.
+                {t('model.registerModelInfo')}
               </Alert>
 
               <Grid container spacing={2}>
                 <Grid item xs={12} md={6}>
                   <TextField
-                    label="Version"
+                    label={t('model.version')}
                     value={formData.version}
                     onChange={(e) => setFormData({ ...formData, version: e.target.value })}
-                    placeholder="e.g., v1.0.0"
+                    placeholder={t('model.versionPlaceholder')}
                     required
                     fullWidth
                   />
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <FormControl fullWidth>
-                    <InputLabel>Model Type</InputLabel>
+                    <InputLabel>{t('model.modelType')}</InputLabel>
                     <Select
                       value={formData.modelType}
-                      label="Model Type"
+                      label={t('model.modelType')}
                       onChange={(e) => setFormData({ ...formData, modelType: e.target.value })}
                     >
-                      <MenuItem value="LAMBDA_MART">LambdaMART</MenuItem>
-                      <MenuItem value="XGBOOST">XGBoost</MenuItem>
-                      <MenuItem value="LIGHTGBM">LightGBM</MenuItem>
-                      <MenuItem value="NEURAL_RANKER">Neural Ranker</MenuItem>
+                      <MenuItem value="LAMBDA_MART">{t('model.lambdaMart')}</MenuItem>
+                      <MenuItem value="XGBOOST">{t('model.xgboost')}</MenuItem>
+                      <MenuItem value="LIGHTGBM">{t('model.lightgbm')}</MenuItem>
+                      <MenuItem value="NEURAL_RANKER">{t('model.neuralRanker')}</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
                 <Grid item xs={12}>
                   <TextField
-                    label="Model Path"
+                    label={t('model.modelPath')}
                     value={formData.modelPath}
                     onChange={(e) => setFormData({ ...formData, modelPath: e.target.value })}
-                    placeholder="e.g., s3://bucket/models/v1.0.0/model.pkl"
+                    placeholder={t('model.modelPathPlaceholder')}
                     required
                     fullWidth
-                    helperText="Path to the model file (S3, local filesystem, etc.)"
+                    helperText={t('model.modelPathHelper')}
                   />
                 </Grid>
                 <Grid item xs={12}>
                   <TextField
-                    label="Notes (Optional)"
+                    label={t('model.notesOptional')}
                     multiline
                     rows={4}
                     value={formData.notes}
@@ -143,10 +144,10 @@ const ModelRegistryForm: React.FC = () => {
                   onClick={handleSubmit}
                   disabled={createMutation.isPending || !formData.version || !formData.modelPath}
                 >
-                  {createMutation.isPending ? 'Registering...' : 'Register Model'}
+                  {createMutation.isPending ? t('model.registering') : t('model.registerModel')}
                 </Button>
                 <Button variant="outlined" onClick={() => navigate('/cv-sharing/models')}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               </Stack>
             </Stack>

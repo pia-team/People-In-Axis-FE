@@ -48,6 +48,7 @@ const Dashboard: React.FC = () => {
       'COMPANY_REJECTED': t('timesheet.statusCompanyRejected'),
       'MANAGER_REJECTED': t('timesheet.statusManagerRejected'),
       'ADMIN_REJECTED': t('timesheet.statusAdminRejected'),
+      'OTHER': t('common.other'),
     };
     return statusMap[status] || status;
   };
@@ -62,18 +63,19 @@ const Dashboard: React.FC = () => {
       'REIMBURSED': t('expense.statusReimbursed'),
       'CANCELLED': t('expense.statusCancelled'),
       'ON_HOLD': t('expense.statusOnHold'),
+      'OTHER': t('common.other'),
     };
     return statusMap[status] || status;
   };
 
-  const toChartData = (m?: Record<string, number>, top: number = 6) => {
+  const toChartData = (m?: Record<string, number>, top: number = 6, translateFn?: (name: string) => string) => {
     const entries = Object.entries(m ?? {})
-      .map(([name, value]) => ({ name, value }))
+      .map(([name, value]) => ({ name: translateFn ? translateFn(name) : name, value, originalName: name }))
       .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
     if (entries.length <= top) return entries;
     const head = entries.slice(0, top);
     const rest = entries.slice(top).reduce((sum, e) => sum + (e.value ?? 0), 0);
-    return rest > 0 ? [...head, { name: 'OTHER', value: rest }] : head;
+    return rest > 0 ? [...head, { name: translateFn ? translateFn('OTHER') : 'OTHER', value: rest, originalName: 'OTHER' }] : head;
   };
 
   const COLORS = ['#4F46E5', '#06B6D4', '#22C55E', '#F59E0B', '#EF4444', '#8B5CF6', '#14B8A6', '#E11D48'];
@@ -165,7 +167,7 @@ const Dashboard: React.FC = () => {
         {data?.companyId && (
           <>
             <Grid item xs={12}>
-              <Typography variant="h6" sx={{ mt: 1 }}>{t('dashboard.company', { name: data.companyName })}</Typography>
+              <Typography variant="h6" sx={{ mt: 1 }}>{data.companyName ? t('dashboard.companyWithName', { name: data.companyName }) : t('dashboard.companyWithoutName')}</Typography>
               <Divider sx={{ mb: 1 }} />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
@@ -208,9 +210,9 @@ const Dashboard: React.FC = () => {
           <ChartCard title={t('dashboard.timesheetBaseStatus')}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={toChartData(data?.timesheetBaseStatusCounts)} dataKey="value" nameKey="name" cx="45%" cy="50%" outerRadius={105} label>
-                  {toChartData(data?.timesheetBaseStatusCounts).map((entry, index) => (
-                    <Cell key={`ts-${entry.name}-${index}`} fill={COLORS[index % COLORS.length]} />
+                <Pie data={toChartData(data?.timesheetBaseStatusCounts, 6, translateTimesheetStatus)} dataKey="value" nameKey="name" cx="45%" cy="50%" outerRadius={105} label>
+                  {toChartData(data?.timesheetBaseStatusCounts, 6, translateTimesheetStatus).map((entry, index) => (
+                    <Cell key={`ts-${entry.originalName || entry.name}-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
                 <Legend layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ paddingLeft: 8 }} />
@@ -222,7 +224,7 @@ const Dashboard: React.FC = () => {
         <Grid item xs={12} md={6}>
           <ChartCard title={t('dashboard.expenseStatus')}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={toChartData(data?.expenseStatusCounts)} margin={{ left: 8, right: 8, top: 8, bottom: 8 }}>
+              <BarChart data={toChartData(data?.expenseStatusCounts, 6, translateExpenseStatus)} margin={{ left: 8, right: 8, top: 8, bottom: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" interval={0} angle={-25} textAnchor="end" height={50} />
                 <YAxis allowDecimals={false} />

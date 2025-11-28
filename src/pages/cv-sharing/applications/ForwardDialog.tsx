@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { Box, Paper, Typography, TextField, Button, Stack } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import { applicationService } from '@/services/cv-sharing';
 
 const ForwardDialog: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
@@ -19,16 +21,16 @@ const ForwardDialog: React.FC = () => {
       .map(e => e.trim())
       .filter(Boolean);
     if (emails.length === 0) {
-      enqueueSnackbar('Please enter at least one recipient email', { variant: 'warning' });
+      enqueueSnackbar(t('application.pleaseEnterRecipientEmail'), { variant: 'warning' });
       return;
     }
     try {
       setSaving(true);
       await applicationService.forwardApplication(id, { recipients: emails, message });
-      enqueueSnackbar('Application forwarded', { variant: 'success' });
+      enqueueSnackbar(t('application.applicationForwarded'), { variant: 'success' });
       navigate(`/cv-sharing/applications/${id}`);
     } catch (e) {
-      enqueueSnackbar('Failed to forward application', { variant: 'error' });
+      enqueueSnackbar(t('application.failedToForwardApplication'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -38,18 +40,18 @@ const ForwardDialog: React.FC = () => {
     <Box sx={{ p: 3 }}>
       <Paper sx={{ p: 3, maxWidth: 640, mx: 'auto' }}>
         <Typography variant="h5" gutterBottom>
-          Forward Application
+          {t('application.forwardApplication')}
         </Typography>
         <Stack spacing={2}>
           <TextField
-            label="Recipients (comma separated emails)"
+            label={t('application.recipients')}
             placeholder="user1@company.com, user2@company.com"
             value={recipients}
             onChange={(e) => setRecipients(e.target.value)}
             fullWidth
           />
           <TextField
-            label="Message (optional)"
+            label={t('application.messageOptional')}
             multiline
             rows={4}
             value={message}
@@ -57,8 +59,8 @@ const ForwardDialog: React.FC = () => {
             fullWidth
           />
           <Stack direction="row" spacing={1} justifyContent="flex-end">
-            <Button variant="outlined" onClick={() => navigate(-1)} disabled={saving}>Cancel</Button>
-            <Button variant="contained" onClick={handleForward} disabled={saving}>Send</Button>
+            <Button variant="outlined" onClick={() => navigate(-1)} disabled={saving}>{t('common.cancel')}</Button>
+            <Button variant="contained" onClick={handleForward} disabled={saving}>{t('common.send')}</Button>
           </Stack>
         </Stack>
       </Paper>
