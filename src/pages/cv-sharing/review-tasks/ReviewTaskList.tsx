@@ -21,6 +21,8 @@ import {
   IconButton,
   Tooltip,
   Paper,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -40,6 +42,8 @@ import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 
 const ReviewTaskList: React.FC = () => {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { hasAnyRole } = useKeycloak();
@@ -228,13 +232,14 @@ const ReviewTaskList: React.FC = () => {
   return (
     <PageContainer>
       <Box sx={{ mb: 3 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} sx={{ mb: 2 }} spacing={2}>
           <Typography variant="h4">{t('reviewTask.titlePlural')}</Typography>
           {canEdit && (
             <Button
               variant="contained"
               startIcon={<GenerateIcon />}
               onClick={() => setGenerateDialogOpen(true)}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
             >
               {t('reviewTask.generateTasks')}
             </Button>
@@ -307,7 +312,7 @@ const ReviewTaskList: React.FC = () => {
 
         {/* Filters */}
         <Paper sx={{ p: 2, mb: 2 }}>
-          <Stack direction="row" spacing={2} alignItems="center">
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }}>
             <TextField
               placeholder={t('reviewTask.searchPlaceholder')}
               size="small"
@@ -363,7 +368,7 @@ const ReviewTaskList: React.FC = () => {
       </Box>
 
       {/* Generate Dialog */}
-      <Dialog open={generateDialogOpen} onClose={() => setGenerateDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog open={generateDialogOpen} onClose={() => setGenerateDialogOpen(false)} maxWidth="sm" fullWidth fullScreen={isMobile}>
         <DialogTitle>{t('reviewTask.generateReviewTasks')}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>

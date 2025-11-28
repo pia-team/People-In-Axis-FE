@@ -1,5 +1,5 @@
 import React from 'react';
-import { Typography, Stack, Divider, Button, TextField, Table, TableHead, TableRow, TableCell, TableBody, Dialog, DialogTitle, DialogContent, List, ListItem, ListItemText } from '@mui/material';
+import { Typography, Stack, Divider, Button, TextField, Table, TableHead, TableRow, TableCell, TableBody, Dialog, DialogTitle, DialogContent, List, ListItem, ListItemText, useMediaQuery, useTheme } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { timeSheetService } from '@/services/timesheetService';
@@ -10,6 +10,8 @@ import SectionCard from '@/components/ui/SectionCard';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 const TimeSheetDetail: React.FC = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { id } = useParams();
   const navigate = useNavigate();
   const { hasRole } = useKeycloak();
@@ -105,9 +107,9 @@ const TimeSheetDetail: React.FC = () => {
     <PageContainer
       title="TimeSheet Detail"
       actions={
-        <Stack direction="row" spacing={1}>
-          <Button variant="outlined" onClick={() => navigate('/timesheets')}>Back</Button>
-          <Button variant="text" onClick={() => setHistoryOpen(true)}>History</Button>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+          <Button variant="outlined" onClick={() => navigate('/timesheets')} sx={{ width: { xs: '100%', sm: 'auto' } }}>Back</Button>
+          <Button variant="text" onClick={() => setHistoryOpen(true)} sx={{ width: { xs: '100%', sm: 'auto' } }}>History</Button>
           <Button
             variant="contained"
             onClick={() => submitMutation.mutate()}
@@ -384,7 +386,7 @@ const TimeSheetDetail: React.FC = () => {
         />
       </ConfirmDialog>
 
-      <Dialog open={historyOpen} onClose={() => setHistoryOpen(false)} maxWidth="md" fullWidth>
+      <Dialog open={historyOpen} onClose={() => setHistoryOpen(false)} maxWidth="md" fullWidth fullScreen={isMobile}>
         <DialogTitle>TimeSheet History</DialogTitle>
         <DialogContent>
           {!historyItems && (

@@ -18,7 +18,9 @@ import {
   DialogContent,
   DialogActions,
   Tooltip,
-  LinearProgress
+  LinearProgress,
+  useMediaQuery,
+  useTheme
 } from '@mui/material';
 import {
   Email as EmailIcon,
@@ -47,6 +49,8 @@ import { useTranslation } from 'react-i18next';
 
 const PoolCVDetail: React.FC = () => {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
@@ -167,7 +171,7 @@ const PoolCVDetail: React.FC = () => {
       <Paper sx={{ p: 3 }}>
         <Grid container spacing={3}>
           <Grid item xs={12}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Avatar>
                   {detail.firstName[0]}{detail.lastName[0]}
@@ -310,7 +314,7 @@ const PoolCVDetail: React.FC = () => {
           </Grid>
         </Grid>
 
-        <Dialog open={matchOpen} onClose={() => setMatchOpen(false)} maxWidth="sm" fullWidth>
+        <Dialog open={matchOpen} onClose={() => setMatchOpen(false)} maxWidth="sm" fullWidth fullScreen={isMobile}>
           <DialogTitle>{t('poolCV.matchedPositions')}</DialogTitle>
           <DialogContent>
             {matchedPositions.length > 0 ? (

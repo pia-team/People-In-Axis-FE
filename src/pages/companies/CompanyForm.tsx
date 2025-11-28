@@ -142,9 +142,9 @@ const CompanyForm: React.FC = () => {
             <TextField label={t('company.establishedYear')} type="number" value={form.establishedYear ?? ''} onChange={handleNumber('establishedYear')} />
           </Stack>
           <TextField label={t('common.description')} value={form.description || ''} onChange={handleChange('description')} multiline minRows={3} />
-          <Stack direction="row" spacing={2}>
-            <Button variant="outlined" onClick={() => navigate('/companies')}>{t('common.cancel')}</Button>
-            <Button variant="contained" onClick={onSubmit} disabled={isPending}>{isEdit ? t('common.save') : t('common.create')}</Button>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+            <Button variant="outlined" onClick={() => navigate('/companies')} sx={{ width: { xs: '100%', sm: 'auto' } }}>{t('common.cancel')}</Button>
+            <Button variant="contained" onClick={onSubmit} disabled={isPending} sx={{ width: { xs: '100%', sm: 'auto' } }}>{isEdit ? t('common.save') : t('common.create')}</Button>
           </Stack>
         </Stack>
       </SectionCard>

@@ -107,7 +107,7 @@ const Dashboard: React.FC = () => {
 
   const ChartCard: React.FC<React.PropsWithChildren<{ title: string }>> = ({ title, children }) => (
     <CardBase title={title}>
-      <Box sx={{ mt: 1, height: 300 }}>{children}</Box>
+      <Box sx={{ mt: 1, height: { xs: 250, sm: 300 } }}>{children}</Box>
     </CardBase>
   );
 

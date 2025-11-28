@@ -15,6 +15,8 @@ import {
   DialogContent,
   DialogActions,
   Alert,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -39,6 +41,8 @@ import TrainingStats from './TrainingStats';
 
 const TrainingExampleList: React.FC = () => {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { hasAnyRole } = useKeycloak();
@@ -245,9 +249,9 @@ const TrainingExampleList: React.FC = () => {
   return (
     <PageContainer>
       <Box sx={{ mb: 3 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} sx={{ mb: 2 }} spacing={2}>
           <Typography variant="h4">{t('training.titlePlural')}</Typography>
-          <Stack direction="row" spacing={2}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             {canEdit && (
               <>
                 <Button
@@ -281,7 +285,7 @@ const TrainingExampleList: React.FC = () => {
 
         {/* Filters */}
         <Paper sx={{ p: 2, mb: 2 }}>
-          <Stack direction="row" spacing={2} alignItems="center">
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }}>
             <TextField
               placeholder={t('common.search')}
               size="small"
@@ -340,7 +344,7 @@ const TrainingExampleList: React.FC = () => {
       </Box>
 
       {/* Export Dialog */}
-      <Dialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)} maxWidth="sm" fullWidth fullScreen={isMobile}>
         <DialogTitle>{t('training.exportTrainingData')}</DialogTitle>
         <DialogContent>
           <Alert severity="info" sx={{ mt: 2 }}>

@@ -274,11 +274,13 @@ const PositionDetail: React.FC = () => {
     <PageContainer
       title={position.title}
       actions={
-        <Stack direction="row" spacing={1}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
           <Button
             variant="outlined"
             startIcon={<BackIcon />}
             onClick={() => navigate('/cv-sharing/positions')}
+            fullWidth={false}
+            sx={{ width: { xs: '100%', sm: 'auto' } }}
           >
             {t('common.back')}
           </Button>
@@ -289,6 +291,8 @@ const PositionDetail: React.FC = () => {
               navigator.clipboard.writeText(window.location.href);
               enqueueSnackbar(t('common.linkCopied'), { variant: 'success' });
             }}
+            fullWidth={false}
+            sx={{ width: { xs: '100%', sm: 'auto' } }}
           >
             {t('common.share')}
           </Button>
@@ -380,7 +384,7 @@ const PositionDetail: React.FC = () => {
                   <Typography variant="h4" gutterBottom>
                     {position.title}
                   </Typography>
-                  <Stack direction="row" spacing={2} alignItems="center">
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'flex-start', sm: 'center' }}>
                     <Chip
                       label={t(`position.${position.status?.toLowerCase() || ''}`) || position.status}
                       color={getStatusColor(position.status)}
@@ -479,7 +483,7 @@ const PositionDetail: React.FC = () => {
                     {t('position.requiredSkills')}
                   </Typography>
                   <Divider sx={{ my: 2 }} />
-                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} flexWrap="wrap" useFlexGap>
                     {position.skills.map((skill, index) => {
                       const label = `${skill.name}${skill.proficiencyLevel ? ` (${skill.proficiencyLevel})` : ''}`;
                       return (
@@ -569,7 +573,7 @@ const PositionDetail: React.FC = () => {
                   <ListItem
                     key={`${m.poolCvId}-${idx}`}
                     secondaryAction={
-                      <Stack direction="row" spacing={1} alignItems="center">
+                      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }}>
                         {m.matchScore != null && (
                           <Chip label={`${t('common.score')}: ${m.matchScore}`} size="small" color="primary" />
                         )}
@@ -623,7 +627,7 @@ const PositionDetail: React.FC = () => {
                 {t('common.noResults')}
               </Typography>
             )}
-            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
+            <Box sx={{ mt: 2, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', gap: 2 }}>
               <Button
                 variant="outlined"
                 disabled={!matchesPage || appsPage <= 0}

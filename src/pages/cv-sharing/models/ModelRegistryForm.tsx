@@ -137,16 +137,17 @@ const ModelRegistryForm: React.FC = () => {
                 </Grid>
               </Grid>
 
-              <Stack direction="row" spacing={2}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <Button
                   variant="contained"
                   startIcon={<SaveIcon />}
                   onClick={handleSubmit}
                   disabled={createMutation.isPending || !formData.version || !formData.modelPath}
+                  sx={{ width: { xs: '100%', sm: 'auto' } }}
                 >
                   {createMutation.isPending ? t('model.registering') : t('model.registerModel')}
                 </Button>
-                <Button variant="outlined" onClick={() => navigate('/cv-sharing/models')}>
+                <Button variant="outlined" onClick={() => navigate('/cv-sharing/models')} sx={{ width: { xs: '100%', sm: 'auto' } }}>
                   {t('common.cancel')}
                 </Button>
               </Stack>

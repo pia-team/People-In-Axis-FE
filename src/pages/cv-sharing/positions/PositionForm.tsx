@@ -479,12 +479,13 @@ const PositionForm: React.FC = () => {
 
             {/* Action Buttons */}
             <Grid item xs={12}>
-              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
+              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, justifyContent: 'flex-end', mt: 3 }}>
                 <Button
                   variant="outlined"
                   startIcon={<CancelIcon />}
                   onClick={() => navigate('/cv-sharing/positions')}
                   disabled={isSaving || loading}
+                  sx={{ width: { xs: '100%', sm: 'auto' } }}
                 >
                   {t('common.cancel')}
                 </Button>
@@ -495,6 +496,7 @@ const PositionForm: React.FC = () => {
                       variant="contained"
                       startIcon={<SaveIcon />}
                       disabled={!isHR || isSaving || loading}
+                      sx={{ width: { xs: '100%', sm: 'auto' } }}
                     >
                       {id ? t('common.update') : t('common.create')} {t('position.title')}
                     </Button>

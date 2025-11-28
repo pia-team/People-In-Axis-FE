@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Chip, TextField, Button, Divider } from '@mui/material';
+import { Box, Chip, TextField, Button, Divider, Stack } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { poolCVService } from '@/services/cv-sharing';
 
@@ -66,16 +66,18 @@ const PoolCVTags: React.FC<PoolCVTagsProps> = ({ poolCvId, tags, onChange }) => 
           <Chip key={t} label={t} onDelete={() => remove(t)} />
         ))}
       </Box>
-      <Box sx={{ display: 'flex', gap: 1 }}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
         <TextField
           size="small"
           placeholder={suggestions.length ? `e.g. ${suggestions[0]}` : 'Add tag'}
           value={newTag}
           onChange={(e) => setNewTag(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), add())}
+          fullWidth
+          sx={{ flex: { xs: '1 1 100%', sm: '1 1 auto' } }}
         />
-        <Button variant="outlined" onClick={add} disabled={working}>Add</Button>
-      </Box>
+        <Button variant="outlined" onClick={add} disabled={working} sx={{ width: { xs: '100%', sm: 'auto' } }}>Add</Button>
+      </Stack>
       <Divider sx={{ mt: 1 }} />
     </Box>
   );
