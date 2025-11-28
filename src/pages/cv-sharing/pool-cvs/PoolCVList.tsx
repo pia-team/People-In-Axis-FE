@@ -46,7 +46,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
-import { poolCVService } from '@/services/cv-sharing';
+import { poolCVService, positionService } from '@/services/cv-sharing';
 import { PoolCV, PagedResponse } from '@/types/cv-sharing';
 import { MatchedPosition } from '@/types/cv-sharing/matched-position';
 import { useKeycloak } from '@/providers/KeycloakProvider';
@@ -85,6 +85,8 @@ const PoolCVList: React.FC = () => {
   const [confirmBusyId, setConfirmBusyId] = useState<string | null>(null);
   const [toggleBusyId, setToggleBusyId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'card' | 'list' | 'compact'>('card');
+  const [existingMatches, setExistingMatches] = useState<Record<string, boolean>>({});
+  const [matchStatusLoading, setMatchStatusLoading] = useState(false);
 
   const { data, isPending, refetch } = useQuery<PagedResponse<PoolCV>>({
     queryKey: ['poolCVs', statusFilter, experienceFilter],
@@ -131,6 +133,30 @@ const PoolCVList: React.FC = () => {
     }
   };
 
+  const hydrateExistingMatches = React.useCallback(async (cvId: string | null, positions: MatchedPosition[]) => {
+    if (!cvId || positions.length === 0) {
+      setExistingMatches({});
+      return;
+    }
+    setMatchStatusLoading(true);
+    try {
+      const entries = await Promise.all(
+        positions.map(async (matched) => {
+          try {
+            const res = await positionService.getMatchesForPosition(matched.position.id, 0, 50);
+            const isMatched = res.content?.some(existing => existing.poolCvId === cvId) ?? false;
+            return [matched.position.id, isMatched] as const;
+          } catch {
+            return [matched.position.id, false] as const;
+          }
+        })
+      );
+      setExistingMatches(Object.fromEntries(entries));
+    } finally {
+      setMatchStatusLoading(false);
+    }
+  }, []);
+
   const handleConfirmMatch = async (cvId: string, positionId: string, matchScore?: number) => {
     try {
       if (confirmBusyId === positionId) return;
@@ -140,6 +166,7 @@ const PoolCVList: React.FC = () => {
       // Refresh dialog data
       const positions = await poolCVService.matchPositionsForPoolCV(cvId);
       setMatchDialog(md => ({ ...md, positions }));
+      void hydrateExistingMatches(cvId, positions || []);
       // Invalidate position caches to refresh applications count and list
       await queryClient.invalidateQueries({ queryKey: ['position', positionId] });
       await queryClient.invalidateQueries({ queryKey: ['position-matches', positionId] });
@@ -174,6 +201,7 @@ const PoolCVList: React.FC = () => {
         poolCVId: cvId,
         positions: positions || []
       });
+      void hydrateExistingMatches(cvId, positions || []);
     } catch (error) {
       enqueueSnackbar(t('error.loadFailed', { item: t('position.titlePlural').toLowerCase() }), { variant: 'error' });
     } finally {
@@ -567,7 +595,10 @@ const PoolCVList: React.FC = () => {
         {/* Match Positions Dialog */}
         <Dialog
           open={matchDialog.open}
-          onClose={() => setMatchDialog({ open: false, poolCVId: null, positions: [] })}
+          onClose={() => {
+            setMatchDialog({ open: false, poolCVId: null, positions: [] });
+            setExistingMatches({});
+          }}
           maxWidth="sm"
           fullWidth
         >
@@ -653,15 +684,22 @@ const PoolCVList: React.FC = () => {
                         >
                           {t('position.viewPosition')}
                         </Button>
-                        <Button
-                          size="small"
-                          variant="contained"
-                          onClick={() => handleConfirmMatch(matchDialog.poolCVId!, matched.position.id, matched.matchScore)}
-                          disabled={confirmBusyId === matched.position.id}
-                        >
-                          {confirmBusyId === matched.position.id ? t('common.matching') : t('poolCV.confirmMatch')}
-                        </Button>
+                        {!existingMatches[matched.position.id] && (
+                          <Button
+                            size="small"
+                            variant="contained"
+                            onClick={() => handleConfirmMatch(matchDialog.poolCVId!, matched.position.id, matched.matchScore)}
+                            disabled={confirmBusyId === matched.position.id || matchStatusLoading}
+                          >
+                            {confirmBusyId === matched.position.id ? t('common.matching') : t('poolCV.confirmMatch')}
+                          </Button>
+                        )}
                       </Stack>
+                      {existingMatches[matched.position.id] && (
+                        <Typography variant="caption" color="success.main" sx={{ mt: 0.5, display: 'block' }}>
+                          {t('poolCV.alreadyMatched')}
+                        </Typography>
+                      )}
                     </ListItem>
                   );
                 })}

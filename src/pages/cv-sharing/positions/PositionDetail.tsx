@@ -91,6 +91,8 @@ const PositionDetail: React.FC = () => {
   const [statusMenuAnchor, setStatusMenuAnchor] = useState<null | HTMLElement>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [removeDialog, setRemoveDialog] = useState<{ open: boolean; poolCvId?: string; name?: string }>({ open: false });
+  const [isRemovingApplicant, setIsRemovingApplicant] = useState(false);
 
   const { data: position, isPending } = useQuery({
     queryKey: ['position', id],
@@ -194,6 +196,22 @@ const PositionDetail: React.FC = () => {
       enqueueSnackbar(t('error.updateFailed'), { variant: 'error' });
     } finally {
       setIsArchiving(false);
+    }
+  };
+
+  const handleRemoveMatch = async () => {
+    if (!id || !removeDialog.poolCvId) return;
+    try {
+      setIsRemovingApplicant(true);
+      await positionService.removeMatch(id, removeDialog.poolCvId);
+      enqueueSnackbar(t('position.applicationRemoved'), { variant: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['position-matches'] });
+      queryClient.invalidateQueries({ queryKey: ['position', id] });
+      setRemoveDialog({ open: false });
+    } catch (error) {
+      enqueueSnackbar(t('error.deleteFailed'), { variant: 'error' });
+    } finally {
+      setIsRemovingApplicant(false);
     }
   };
 
@@ -569,6 +587,22 @@ const PositionDetail: React.FC = () => {
                             <ViewIcon />
                           </IconButton>
                         )}
+                        {isHR && (
+                          <Tooltip title={t('position.removeApplication')}>
+                            <IconButton
+                              edge="end"
+                              color="error"
+                              aria-label="remove-application"
+                              onClick={() => setRemoveDialog({
+                                open: true,
+                                poolCvId: m.poolCvId,
+                                name: `${m.firstName} ${m.lastName}`
+                              })}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </Tooltip>
+                        )}
                       </Stack>
                     }
                   >
@@ -692,6 +726,17 @@ const PositionDetail: React.FC = () => {
             </MenuItem>
           ))}
       </Menu>
+      <ConfirmDialog
+        open={removeDialog.open}
+        title={t('position.removeApplication')}
+        description={t('position.removeApplicationConfirm', { name: removeDialog.name ?? t('common.applicant') })}
+        confirmLabel={t('common.delete')}
+        cancelLabel={t('common.cancel')}
+        confirmColor="error"
+        loading={isRemovingApplicant}
+        onClose={() => setRemoveDialog({ open: false })}
+        onConfirm={handleRemoveMatch}
+      />
       <ConfirmDialog
         open={deleteDialogOpen}
         title={t('position.deletePosition')}
