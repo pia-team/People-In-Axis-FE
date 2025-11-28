@@ -153,35 +153,42 @@ const getMenuItems = (t: (key: string) => string): MenuItemType[] => [
         roles: ['HUMAN_RESOURCES', 'MANAGER', 'COMPANY_MANAGER', 'EMPLOYEE']
       },
       {
-        title: t('navigation.reviewTasks'),
-        path: '/cv-sharing/review-tasks',
-        icon: <AssignmentInd />,
-        roles: ['HUMAN_RESOURCES', 'ADMIN']
-      },
-      {
-        title: t('navigation.training'),
-        path: '/cv-sharing/training',
-        icon: <QueryStats />,
-        roles: ['HUMAN_RESOURCES', 'ADMIN']
-      },
-      {
         title: t('navigation.settings'),
         path: '/cv-sharing/settings/matching',
         icon: <Settings />,
         roles: ['HUMAN_RESOURCES','MANAGER']
       },
       {
-        title: t('navigation.models'),
-        path: '/cv-sharing/models',
-        icon: <InsertChartOutlined />,
-        roles: ['HUMAN_RESOURCES', 'ADMIN']
-      },
-      {
-        title: t('navigation.abTests'),
-        path: '/cv-sharing/ab-tests',
-        icon: <BarChart />,
-        roles: ['HUMAN_RESOURCES', 'ADMIN']
-      },
+        title: t('navigation.aiManagement'),
+        icon: <QueryStats />,
+        roles: ['HUMAN_RESOURCES', 'ADMIN'],
+        children: [
+          {
+            title: t('navigation.reviewTasks'),
+            path: '/cv-sharing/review-tasks',
+            icon: <AssignmentInd />,
+            roles: ['HUMAN_RESOURCES', 'ADMIN']
+          },
+          {
+            title: t('navigation.training'),
+            path: '/cv-sharing/training',
+            icon: <QueryStats />,
+            roles: ['HUMAN_RESOURCES', 'ADMIN']
+          },
+          {
+            title: t('navigation.models'),
+            path: '/cv-sharing/models',
+            icon: <InsertChartOutlined />,
+            roles: ['HUMAN_RESOURCES', 'ADMIN']
+          },
+          {
+            title: t('navigation.abTests'),
+            path: '/cv-sharing/ab-tests',
+            icon: <BarChart />,
+            roles: ['HUMAN_RESOURCES', 'ADMIN']
+          },
+        ]
+      }
     ],
   },
   {
@@ -483,7 +490,7 @@ const MainLayout: React.FC = () => {
             <Divider sx={{ my: 2, mx: 2 }} />
             <Box sx={{ px: 2, pb: 1 }}>
               <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 600 }}>
-                Modules
+                {t('common.modules')}
               </Typography>
             </Box>
             <List>
@@ -528,7 +535,7 @@ const MainLayout: React.FC = () => {
             size="large" 
             color="inherit" 
             onClick={handleNotificationMenuOpen}
-            aria-label="Notifications"
+            aria-label={t('notification.titlePlural')}
           >
             <Badge badgeContent={unreadNotificationCount > 0 ? unreadNotificationCount : undefined} color="error">
               <Notifications />
@@ -558,7 +565,7 @@ const MainLayout: React.FC = () => {
           >
             <MenuItem disabled>
               <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                Notifications
+                {t('notification.titlePlural')}
                 {unreadNotificationCount > 0 && (
                   <Badge badgeContent={unreadNotificationCount} color="error" sx={{ ml: 1 }}>
                     <span style={{ width: 0, height: 0 }} />
@@ -567,12 +574,12 @@ const MainLayout: React.FC = () => {
               </Typography>
             </MenuItem>
             <MenuItem onClick={() => { navigate('/notifications'); handleNotificationMenuClose(); }}>
-              View all notifications
+              {t('notification.viewAllNotifications')}
             </MenuItem>
             {unreadNotificationCount === 0 && (
               <MenuItem disabled>
                 <Typography variant="body2" color="text.secondary">
-                  No new notifications
+                  {t('notification.noNewNotifications')}
                 </Typography>
               </MenuItem>
             )}

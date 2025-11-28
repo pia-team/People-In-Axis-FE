@@ -100,10 +100,10 @@ const MatchingSettings: React.FC = () => {
     mutationFn: (next: MatchingConfig) => matchingService.updateConfig(next),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['matching','config'] });
-      enqueueSnackbar('Matching configuration updated successfully', { variant: 'success' });
+      enqueueSnackbar(t('matching.settingsUpdated'), { variant: 'success' });
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data?.message || 'Failed to update configuration', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || t('matching.failedToUpdateConfiguration'), { variant: 'error' });
     }
   });
 
@@ -139,10 +139,10 @@ const MatchingSettings: React.FC = () => {
         }
       }, 300);
       
-      enqueueSnackbar(`Skill alias "${data.alias}" ${wasEditing ? 'updated' : 'added'} successfully`, { variant: 'success' });
+      enqueueSnackbar(wasEditing ? t('matching.aliasUpdated', { alias: data.alias }) : t('matching.aliasAdded', { alias: data.alias }), { variant: 'success' });
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data?.message || 'Failed to save skill alias', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || t('matching.failedToSaveAlias'), { variant: 'error' });
     }
   });
 
@@ -154,10 +154,10 @@ const MatchingSettings: React.FC = () => {
       setTimeout(() => {
         refetchAliases();
       }, 300);
-      enqueueSnackbar('Skill alias deleted successfully', { variant: 'success' });
+      enqueueSnackbar(t('matching.aliasDeleted'), { variant: 'success' });
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data?.message || 'Failed to delete skill alias', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || t('matching.failedToDeleteAlias'), { variant: 'error' });
     }
   });
 
@@ -169,7 +169,7 @@ const MatchingSettings: React.FC = () => {
   const handleSave = () => {
     if (!localCfg) return;
     if (!canEdit) {
-      enqueueSnackbar('You do not have permission to perform this action', { variant: 'error' });
+      enqueueSnackbar(t('matching.permissionDenied'), { variant: 'error' });
       return;
     }
     updateCfg.mutate({ ...localCfg });
@@ -187,11 +187,11 @@ const MatchingSettings: React.FC = () => {
 
   const handleSubmitAlias = () => {
     if (!aliasForm.alias.trim() || !aliasForm.canonicalSkill.trim()) {
-      enqueueSnackbar('Please fill in both alias and canonical skill fields', { variant: 'warning' });
+      enqueueSnackbar(t('matching.fillBothFields'), { variant: 'warning' });
       return;
     }
     if (!canEdit) {
-      enqueueSnackbar('You do not have permission to perform this action', { variant: 'error' });
+      enqueueSnackbar(t('matching.permissionDenied'), { variant: 'error' });
       return;
     }
     upsertAlias.mutate({ ...aliasForm, isEdit: editingAlias !== null });
@@ -214,13 +214,13 @@ const MatchingSettings: React.FC = () => {
 
       <Paper sx={{ p: 3 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6">Weights & Threshold</Typography>
+          <Typography variant="h6">{t('matching.weightsAndThreshold')}</Typography>
           <Stack direction="row" alignItems="center" spacing={1}>
             <Typography variant="caption" sx={{ color: weightColor, fontWeight: 600 }}>
-              Total: {totalWeight.toFixed(2)} (target: 1.00)
+              {t('matching.total')}: {totalWeight.toFixed(2)} ({t('matching.target')}: 1.00)
             </Typography>
             {diff > tolerance && (
-              <Tooltip title="Weight total must equal 1.00 to save configuration">
+              <Tooltip title={t('matching.weightTotalMustEqual')}>
                 <Alert 
                   severity="error" 
                   sx={{ 
@@ -230,7 +230,7 @@ const MatchingSettings: React.FC = () => {
                     '& .MuiAlert-message': { fontSize: '0.75rem', py: 0.5 }
                   }}
                 >
-                  Adjust weights to total 1.00
+                  {t('matching.adjustWeightsToTotal')}
                 </Alert>
               </Tooltip>
             )}
@@ -240,11 +240,9 @@ const MatchingSettings: React.FC = () => {
         {diff > tolerance && (
           <Alert severity="warning" sx={{ mt: 2, mb: 2 }}>
             <Typography variant="body2">
-              <strong>Weight Total Must Equal 1.00</strong>
+              <strong>{t('matching.weightTotalMustEqual1')}</strong>
               <br />
-              The sum of all weight values must equal exactly 1.00 for the matching algorithm to work correctly. 
-              Currently, the total is <strong>{totalWeight.toFixed(2)}</strong>. 
-              Please adjust the weights above so they sum to 1.00. The Save button will be enabled once the total equals 1.00.
+              {t('matching.weightTotalDescription', { total: totalWeight.toFixed(2) })}
             </Typography>
           </Alert>
         )}
@@ -252,7 +250,7 @@ const MatchingSettings: React.FC = () => {
         {diff <= tolerance && diff > 0 && (
           <Alert severity="success" sx={{ mt: 2, mb: 2 }}>
             <Typography variant="body2">
-              Weight total is within acceptable range (1.00 ± 0.01). You can save the configuration.
+              {t('matching.weightTotalWithinRange')}
             </Typography>
           </Alert>
         )}
@@ -260,13 +258,13 @@ const MatchingSettings: React.FC = () => {
         <Grid container spacing={3} sx={{ mt: 1 }}>
           {(
             [
-              ['Skills','weightSkills'],
-              ['Experience','weightExperience'],
-              ['Language','weightLanguage'],
-              ['Education','weightEducation'],
-              ['Location','weightLocation'],
-              ['Salary','weightSalary'],
-              ['Semantic','weightSemantic'],
+              [t('matching.skillWeight'),'weightSkills'],
+              [t('matching.experienceWeight'),'weightExperience'],
+              [t('matching.languageWeight'),'weightLanguage'],
+              [t('matching.educationWeight'),'weightEducation'],
+              [t('matching.locationWeight'),'weightLocation'],
+              [t('matching.salaryWeight'),'weightSalary'],
+              [t('matching.semanticWeight'),'weightSemantic'],
             ] as [string, WeightKey][]
           ).map(([label, key]) => (
             <Grid item xs={12} md={6} key={key}>
@@ -278,7 +276,7 @@ const MatchingSettings: React.FC = () => {
             <TextField
               fullWidth
               type="number"
-              label="Min Threshold"
+              label={t('matching.minThreshold')}
               value={localCfg?.minThreshold ?? ''}
               onChange={(e) => setLocalCfg(prev => ({ ...(prev || {}), minThreshold: Number(e.target.value) }))}
               inputProps={{ min: 0, max: 100 }}
@@ -288,7 +286,7 @@ const MatchingSettings: React.FC = () => {
           <Grid item xs={12} md={4}>
             <FormControlLabel
               control={<Switch checked={Boolean(localCfg?.requireAllRequiredSkills)} onChange={(e) => setLocalCfg(prev => ({ ...(prev || {}), requireAllRequiredSkills: e.target.checked }))} disabled={!canEdit} />}
-              label="Require all required skills"
+              label={t('matching.requireAllRequiredSkills')}
             />
           </Grid>
           <Grid item xs={12}>
@@ -299,11 +297,11 @@ const MatchingSettings: React.FC = () => {
                 disabled={!canEdit || updateCfg.isPending || diff > tolerance}
               >
                 {updateCfg.isPending ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
-                Save Configuration
+                {t('matching.saveConfiguration')}
               </Button>
               {diff > tolerance && (
                 <Typography variant="caption" color="error" sx={{ fontStyle: 'italic' }}>
-                  Cannot save: Weight total must equal 1.00 (current: {totalWeight.toFixed(2)})
+                  {t('matching.cannotSave', { total: totalWeight.toFixed(2) })}
                 </Typography>
               )}
             </Stack>
@@ -313,41 +311,41 @@ const MatchingSettings: React.FC = () => {
 
       <Paper sx={{ p: 3 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-          <Typography variant="h6">Skill Aliases</Typography>
+          <Typography variant="h6">{t('matching.skillAliases')}</Typography>
           {aliases && aliases.length > 0 && (
-            <Chip label={`${aliases.length} alias${aliases.length !== 1 ? 'es' : ''}`} size="small" color="primary" />
+            <Chip label={`${aliases.length} ${aliases.length !== 1 ? t('matching.alias') + 'es' : t('matching.alias')}`} size="small" color="primary" />
           )}
         </Stack>
 
         {aliasesError && (
           <Alert severity="error" sx={{ mb: 2 }}>
-            Failed to load skill aliases: {aliasesError instanceof Error ? aliasesError.message : 'Unknown error'}
+            {t('matching.failedToLoadAliases', { error: aliasesError instanceof Error ? aliasesError.message : 'Unknown error' })}
           </Alert>
         )}
 
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 2 }}>
           <TextField 
-            label="Alias" 
+            label={t('matching.alias')} 
             value={aliasForm.alias} 
             onChange={(e) => setAliasForm({ ...aliasForm, alias: e.target.value })} 
             disabled={!canEdit || upsertAlias.isPending}
             placeholder="e.g., JS, React.js"
             fullWidth
-            helperText="Alternative name for the skill"
+            helperText={t('matching.alternativeNameForSkill')}
           />
           <TextField 
-            label="Canonical Skill" 
+            label={t('matching.canonicalSkill')} 
             value={aliasForm.canonicalSkill} 
             onChange={(e) => setAliasForm({ ...aliasForm, canonicalSkill: e.target.value })} 
             disabled={!canEdit || upsertAlias.isPending}
             placeholder="e.g., JavaScript"
             fullWidth
-            helperText="Standard name for the skill"
+            helperText={t('matching.standardNameForSkill')}
           />
           <Stack direction="row" spacing={1}>
             {editingAlias ? (
               <>
-                <Tooltip title="Save changes">
+                <Tooltip title={t('matching.saveChanges')}>
                   <IconButton 
                     color="primary" 
                     onClick={handleSubmitAlias} 
@@ -356,7 +354,7 @@ const MatchingSettings: React.FC = () => {
                     {upsertAlias.isPending ? <CircularProgress size={20} /> : <CheckIcon />}
                   </IconButton>
                 </Tooltip>
-                <Tooltip title="Cancel editing">
+                <Tooltip title={t('matching.cancelEditing')}>
                   <IconButton 
                     color="default" 
                     onClick={handleCancelEdit} 
@@ -374,7 +372,7 @@ const MatchingSettings: React.FC = () => {
                 disabled={!canEdit || !aliasForm.alias.trim() || !aliasForm.canonicalSkill.trim() || upsertAlias.isPending}
                 sx={{ minWidth: 140 }}
               >
-                Add Alias
+                {t('matching.addAlias')}
               </Button>
             )}
           </Stack>
@@ -387,7 +385,7 @@ const MatchingSettings: React.FC = () => {
           <TextField
             fullWidth
             size="small"
-            placeholder="Search aliases or canonical skills..."
+            placeholder={t('matching.searchAliases')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             InputProps={{
@@ -411,10 +409,10 @@ const MatchingSettings: React.FC = () => {
         {/* Empty state */}
         {!aliasesLoading && (!aliases || aliases.length === 0) && (
           <Alert severity="info" sx={{ mt: 2 }}>
-            No skill aliases found. Add aliases to improve matching accuracy by mapping alternative skill names to their canonical forms.
+            {t('matching.noAliasesFound')}
             <br />
             <Typography variant="caption" component="div" sx={{ mt: 1 }}>
-              Example: "JS" → "JavaScript", "React.js" → "React"
+              {t('matching.aliasExample')}
             </Typography>
           </Alert>
         )}
@@ -422,7 +420,7 @@ const MatchingSettings: React.FC = () => {
         {/* Filtered empty state */}
         {!aliasesLoading && aliases && aliases.length > 0 && filteredAliases.length === 0 && (
           <Alert severity="info" sx={{ mt: 2 }}>
-            No aliases match your search term "{searchTerm}"
+            {t('matching.noAliasesMatchSearch', { term: searchTerm })}
           </Alert>
         )}
 
@@ -430,8 +428,8 @@ const MatchingSettings: React.FC = () => {
         {process.env.NODE_ENV === 'development' && (
           <Alert severity="info" sx={{ mt: 1, mb: 2 }}>
             <Typography variant="caption">
-              <strong>Debug Info:</strong> Aliases count: {aliases?.length || 0}, Filtered: {filteredAliases?.length || 0}, 
-              Loading: {String(aliasesLoading)}, Error: {aliasesError ? String(aliasesError) : 'None'}
+              <strong>{t('matching.debugInfo')}</strong> {t('matching.aliasesCount')}: {aliases?.length || 0}, {t('matching.filtered')}: {filteredAliases?.length || 0}, 
+              {t('matching.loading')}: {String(aliasesLoading)}, {t('matching.error')}: {aliasesError ? String(aliasesError) : t('matching.none')}
             </Typography>
           </Alert>
         )}
@@ -441,9 +439,9 @@ const MatchingSettings: React.FC = () => {
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell><strong>Alias</strong></TableCell>
-                <TableCell><strong>Canonical Skill</strong></TableCell>
-                <TableCell align="right"><strong>Actions</strong></TableCell>
+                <TableCell><strong>{t('matching.alias')}</strong></TableCell>
+                <TableCell><strong>{t('matching.canonicalSkill')}</strong></TableCell>
+                <TableCell align="right"><strong>{t('common.actions')}</strong></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -459,7 +457,7 @@ const MatchingSettings: React.FC = () => {
                   </TableCell>
                   <TableCell align="right">
                     <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                      <Tooltip title="Edit alias">
+                      <Tooltip title={t('matching.editAlias')}>
                         <IconButton 
                           size="small" 
                           color="primary" 
@@ -469,13 +467,13 @@ const MatchingSettings: React.FC = () => {
                           <EditIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title="Delete alias">
+                      <Tooltip title={t('matching.deleteAlias')}>
                         <IconButton 
                           size="small" 
                           color="error" 
                           onClick={() => {
                             if (!canEdit) return;
-                            if (window.confirm(`Are you sure you want to delete the alias "${a.alias}"?`)) {
+                            if (window.confirm(t('matching.deleteAliasConfirm', { alias: a.alias }))) {
                               deleteAlias.mutate(a.id);
                             }
                           }} 
@@ -496,8 +494,7 @@ const MatchingSettings: React.FC = () => {
         {!aliasesLoading && aliases && aliases.length > 0 && (
           <Alert severity="info" sx={{ mt: 2 }}>
             <Typography variant="body2">
-              <strong>How it works:</strong> Skill aliases help the matching algorithm recognize alternative names for the same skill. 
-              For example, if you add "JS" → "JavaScript", CVs containing "JS" will be matched with positions requiring "JavaScript".
+              <strong>{t('matching.howItWorks')}</strong> {t('matching.howItWorksDescription')}
             </Typography>
           </Alert>
         )}

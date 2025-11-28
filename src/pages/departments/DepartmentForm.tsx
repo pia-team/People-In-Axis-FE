@@ -6,8 +6,10 @@ import { departmentService } from '@/services/departmentService';
 import { Department, DepartmentCreateDTO, DepartmentUpdateDTO } from '@/types';
 import PageContainer from '@/components/ui/PageContainer';
 import SectionCard from '@/components/ui/SectionCard';
+import { useTranslation } from 'react-i18next';
 
 const DepartmentForm: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams();
   const isEdit = Boolean(id);
   const navigate = useNavigate();
@@ -87,23 +89,23 @@ const DepartmentForm: React.FC = () => {
   };
 
   return (
-    <PageContainer title={isEdit ? 'Edit Department' : 'New Department'}>
+    <PageContainer title={isEdit ? t('department.editDepartmentTitle') : t('department.newDepartment')}>
       <SectionCard>
         <Stack spacing={2}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <TextField label="Name" value={form.name || ''} onChange={handleChange('name')} fullWidth required />
-            <TextField label="Company ID" type="number" value={form.companyId ?? ''} onChange={handleNumber('companyId')} sx={{ minWidth: 200 }} required />
-            <TextField label="Manager ID" type="number" value={form.managerId ?? ''} onChange={handleNumber('managerId')} sx={{ minWidth: 200 }} />
+            <TextField label={t('department.name')} value={form.name || ''} onChange={handleChange('name')} fullWidth required />
+            <TextField label={t('department.companyId')} type="number" value={form.companyId ?? ''} onChange={handleNumber('companyId')} sx={{ minWidth: 200 }} required />
+            <TextField label={t('department.managerId')} type="number" value={form.managerId ?? ''} onChange={handleNumber('managerId')} sx={{ minWidth: 200 }} />
           </Stack>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <TextField label="Parent Department ID" type="number" value={form.parentDepartmentId ?? ''} onChange={handleNumber('parentDepartmentId')} sx={{ minWidth: 200 }} />
-            <TextField label="Location" value={form.location || ''} onChange={handleChange('location')} sx={{ minWidth: 200 }} />
-            <TextField label="Budget" type="number" value={form.budget ?? ''} onChange={handleNumber('budget')} sx={{ minWidth: 200 }} />
+            <TextField label={t('department.parentDepartmentId')} type="number" value={form.parentDepartmentId ?? ''} onChange={handleNumber('parentDepartmentId')} sx={{ minWidth: 200 }} />
+            <TextField label={t('department.location')} value={form.location || ''} onChange={handleChange('location')} sx={{ minWidth: 200 }} />
+            <TextField label={t('department.budget')} type="number" value={form.budget ?? ''} onChange={handleNumber('budget')} sx={{ minWidth: 200 }} />
           </Stack>
-          <TextField label="Description" value={form.description || ''} onChange={handleChange('description')} multiline minRows={3} />
+          <TextField label={t('department.description')} value={form.description || ''} onChange={handleChange('description')} multiline minRows={3} />
           <Stack direction="row" spacing={2}>
-            <Button variant="outlined" onClick={() => navigate('/departments')}>Cancel</Button>
-            <Button variant="contained" onClick={onSubmit} disabled={isPending}>{isEdit ? 'Save' : 'Create'}</Button>
+            <Button variant="outlined" onClick={() => navigate('/departments')}>{t('common.cancel')}</Button>
+            <Button variant="contained" onClick={onSubmit} disabled={isPending}>{isEdit ? t('common.save') : t('common.create')}</Button>
           </Stack>
         </Stack>
       </SectionCard>

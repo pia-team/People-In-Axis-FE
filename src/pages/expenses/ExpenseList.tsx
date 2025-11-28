@@ -9,8 +9,10 @@ import PageContainer from '@/components/ui/PageContainer';
 import SectionCard from '@/components/ui/SectionCard';
 import { standardDataGridSx } from '@/components/ui/dataGridStyles';
 import EmptyState from '@/components/ui/EmptyState';
+import { useTranslation } from 'react-i18next';
 
 const ExpenseList: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [paginationModel, setPaginationModel] = React.useState<{ page: number; pageSize: number }>(
@@ -46,17 +48,17 @@ const ExpenseList: React.FC = () => {
 
   const NoExpensesOverlay = React.useCallback(() => (
     <EmptyState
-      title="No expenses"
-      description="There are no expenses to display."
+      title={t('expense.noExpenses')}
+      description={t('expense.noExpensesDescription')}
     />
-  ), [refetch]);
+  ), [refetch, t]);
 
   return (
     <PageContainer
-      title="Expenses"
+      title={t('expense.expensesTitle')}
       actions={
         <Stack direction="row" spacing={1}>
-          <Button variant="outlined" onClick={() => refetch()}>Refresh</Button>
+          <Button variant="outlined" onClick={() => refetch()}>{t('timesheet.refresh')}</Button>
           <Button
             variant="outlined"
             onClick={async () => {
@@ -69,16 +71,16 @@ const ExpenseList: React.FC = () => {
               window.URL.revokeObjectURL(url);
             }}
           >
-            Export
+            {t('common.export')}
           </Button>
-          <Button variant="contained" onClick={() => navigate('/expenses/new')}>New</Button>
+          <Button variant="contained" onClick={() => navigate('/expenses/new')}>{t('timesheet.new')}</Button>
         </Stack>
       }
     >
       <Stack spacing={2}>
         <SectionCard>
           <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
-            <Button variant="outlined" onClick={() => fileInputRef.current?.click()}>Import</Button>
+            <Button variant="outlined" onClick={() => fileInputRef.current?.click()}>{t('common.import')}</Button>
             <input
               type="file"
               accept=".xlsx,.xls"
@@ -115,7 +117,7 @@ const ExpenseList: React.FC = () => {
           </Box>
           {isError && (
             <Typography variant="body2" color="error" sx={{ mt: 2 }}>
-              Failed to load expenses.
+              {t('expense.failedToLoadExpenses')}
             </Typography>
           )}
         </SectionCard>

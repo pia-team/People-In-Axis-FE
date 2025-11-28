@@ -8,8 +8,10 @@ import PageContainer from '@/components/ui/PageContainer';
 import SectionCard from '@/components/ui/SectionCard';
 import { standardDataGridSx } from '@/components/ui/dataGridStyles';
 import EmptyState from '@/components/ui/EmptyState';
+import { useTranslation } from 'react-i18next';
 
 const MyTimeSheets: React.FC = () => {
+  const { t } = useTranslation();
   const [paginationModel, setPaginationModel] = React.useState<{ page: number; pageSize: number }>(
     { page: 0, pageSize: 10 }
   );
@@ -40,15 +42,15 @@ const MyTimeSheets: React.FC = () => {
 
   const NoMyTimeSheetsOverlay = React.useCallback(() => (
     <EmptyState
-      title="No timesheets"
-      description="You have no timesheets to display."
+      title={t('timesheet.noTimesheets')}
+      description={t('timesheet.noTimesheetsDescription')}
     />
-  ), [refetch]);
+  ), [refetch, t]);
 
   return (
     <PageContainer
-      title="My TimeSheets"
-      actions={<Button variant="outlined" onClick={() => refetch()}>Refresh</Button>}
+      title={t('timesheet.myTimesheets')}
+      actions={<Button variant="outlined" onClick={() => refetch()}>{t('timesheet.refresh')}</Button>}
     >
       <SectionCard>
         <Box sx={{ height: 600, width: '100%' }}>
@@ -69,7 +71,7 @@ const MyTimeSheets: React.FC = () => {
         </Box>
         {isError && (
           <Typography variant="body2" color="error" sx={{ mt: 2 }}>
-            Failed to load your timesheets.
+            {t('timesheet.failedToLoadTimesheets')}
           </Typography>
         )}
       </SectionCard>

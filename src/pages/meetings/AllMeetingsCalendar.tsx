@@ -6,6 +6,7 @@ import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { parse, startOfWeek, getDay, format } from 'date-fns';
 import enUS from 'date-fns/locale/en-US';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import { useTranslation } from 'react-i18next';
 
 const locales = { 'en-US': enUS } as any;
 const localizer = dateFnsLocalizer({
@@ -29,6 +30,7 @@ type CalendarEvent = {
 };
 
 const AllMeetingsCalendar: React.FC = () => {
+  const { t } = useTranslation();
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState<RbcView>('month');
@@ -66,7 +68,7 @@ const AllMeetingsCalendar: React.FC = () => {
     <Box sx={{ p: 3 }}>
       <Paper sx={{ p: 2 }}>
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-          <Typography variant="h5">Company Meetings</Typography>
+          <Typography variant="h5">{t('meeting.companyMeetings')}</Typography>
         </Stack>
         <Divider sx={{ mb: 2 }} />
         {loading && <LinearProgress />}

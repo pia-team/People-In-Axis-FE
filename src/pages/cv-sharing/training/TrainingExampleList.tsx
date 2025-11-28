@@ -57,11 +57,11 @@ const TrainingExampleList: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => trainingService.deleteTrainingExample(id),
     onSuccess: () => {
-      enqueueSnackbar('Training example deleted', { variant: 'success' });
+      enqueueSnackbar(t('training.trainingExampleDeleted'), { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['trainingExamples'] });
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data?.message || 'Failed to delete training example', {
+      enqueueSnackbar(error?.response?.data?.message || t('training.failedToDeleteTrainingExample'), {
         variant: 'error',
       });
     },
@@ -70,12 +70,12 @@ const TrainingExampleList: React.FC = () => {
   const exportMutation = useMutation({
     mutationFn: () => trainingService.exportTrainingData(),
     onSuccess: (data) => {
-      enqueueSnackbar(`Exported ${data.length} training examples`, { variant: 'success' });
+      enqueueSnackbar(t('training.exportedCount', { count: data.length }), { variant: 'success' });
       setExportDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ['trainingExamples'] });
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data?.message || 'Failed to export training data', {
+      enqueueSnackbar(error?.response?.data?.message || t('training.failedToExport'), {
         variant: 'error',
       });
     },
@@ -99,27 +99,27 @@ const TrainingExampleList: React.FC = () => {
   const getLabelText = (label: number) => {
     switch (label) {
       case 0:
-        return 'Irrelevant';
+        return t('training.irrelevant');
       case 1:
-        return 'Somewhat Relevant';
+        return t('training.somewhatRelevant');
       case 2:
-        return 'Relevant';
+        return t('training.relevant');
       case 3:
-        return 'Highly Relevant';
+        return t('training.highlyRelevant');
       default:
-        return 'Unknown';
+        return t('training.unknown');
     }
   };
 
   const columns: GridColDef[] = [
     {
       field: 'id',
-      headerName: 'ID',
+      headerName: t('common.id'),
       width: 80,
     },
     {
       field: 'poolCvName',
-      headerName: 'Pool CV',
+      headerName: t('training.poolCV'),
       width: 200,
       renderCell: (params: GridRenderCellParams) => (
         <Typography variant="body2">{params.value || params.row.poolCvId}</Typography>
@@ -127,7 +127,7 @@ const TrainingExampleList: React.FC = () => {
     },
     {
       field: 'positionTitle',
-      headerName: 'Position',
+      headerName: t('training.position'),
       width: 200,
       renderCell: (params: GridRenderCellParams) => (
         <Typography variant="body2">{params.value || params.row.positionId}</Typography>
@@ -135,7 +135,7 @@ const TrainingExampleList: React.FC = () => {
     },
     {
       field: 'relevanceLabel',
-      headerName: 'Label',
+      headerName: t('training.label'),
       width: 180,
       renderCell: (params: GridRenderCellParams) => (
         <Chip
@@ -147,37 +147,37 @@ const TrainingExampleList: React.FC = () => {
     },
     {
       field: 'matchScore',
-      headerName: 'Match Score',
+      headerName: t('training.matchScore'),
       width: 120,
       renderCell: (params: GridRenderCellParams) => (
-        <Typography variant="body2">{params.value || 'N/A'}</Typography>
+        <Typography variant="body2">{params.value || t('common.notAvailable')}</Typography>
       ),
     },
     {
       field: 'labeledByName',
-      headerName: 'Labeled By',
+      headerName: t('training.labeledBy'),
       width: 150,
       renderCell: (params: GridRenderCellParams) => (
-        <Typography variant="body2">{params.value || 'N/A'}</Typography>
+        <Typography variant="body2">{params.value || t('common.notAvailable')}</Typography>
       ),
     },
     {
       field: 'labeledAt',
-      headerName: 'Labeled At',
+      headerName: t('training.labeledAt'),
       width: 180,
       renderCell: (params: GridRenderCellParams) => (
         <Typography variant="body2">
-          {params.value ? new Date(params.value).toLocaleDateString() : 'N/A'}
+          {params.value ? new Date(params.value).toLocaleDateString() : t('common.notAvailable')}
         </Typography>
       ),
     },
     {
       field: 'exported',
-      headerName: 'Exported',
+      headerName: t('training.exported'),
       width: 100,
       renderCell: (params: GridRenderCellParams) => (
         <Chip
-          label={params.value ? 'Yes' : 'No'}
+          label={params.value ? t('model.yes') : t('model.no')}
           size="small"
           color={params.value ? 'success' : 'default'}
         />
@@ -185,14 +185,14 @@ const TrainingExampleList: React.FC = () => {
     },
     {
       field: 'actions',
-      headerName: 'Actions',
+      headerName: t('common.actions'),
       width: 150,
       sortable: false,
       renderCell: (params: GridRenderCellParams) => {
         const example = params.row as TrainingExample;
         return (
           <Stack direction="row" spacing={1}>
-            <Tooltip title="View">
+            <Tooltip title={t('common.view')}>
               <IconButton
                 size="small"
                 onClick={() => navigate(`/cv-sharing/training/${example.id}`)}
@@ -202,7 +202,7 @@ const TrainingExampleList: React.FC = () => {
             </Tooltip>
             {canEdit && (
               <>
-                <Tooltip title="Edit">
+                <Tooltip title={t('common.edit')}>
                   <IconButton
                     size="small"
                     onClick={() => navigate(`/cv-sharing/training/${example.id}/edit`)}
@@ -210,13 +210,13 @@ const TrainingExampleList: React.FC = () => {
                     <EditIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
-                <Tooltip title="Delete">
+                <Tooltip title={t('common.delete')}>
                   <IconButton
                     size="small"
                     color="error"
                     onClick={() => {
                       if (!canEdit) return;
-                      if (window.confirm('Are you sure you want to delete this training example?')) {
+                      if (window.confirm(t('training.deleteConfirm'))) {
                         deleteMutation.mutate(example.id);
                       }
                     }}
@@ -255,21 +255,21 @@ const TrainingExampleList: React.FC = () => {
                   startIcon={<StatsIcon />}
                   onClick={() => navigate('/cv-sharing/training/stats')}
                 >
-                  Statistics
+                  {t('training.statistics')}
                 </Button>
                 <Button
                   variant="outlined"
                   startIcon={<DownloadIcon />}
                   onClick={() => setExportDialogOpen(true)}
                 >
-                  Export
+                  {t('common.export')}
                 </Button>
                 <Button
                   variant="contained"
                   startIcon={<AddIcon />}
                   onClick={() => navigate('/cv-sharing/training/new')}
                 >
-                  Create Example
+                  {t('training.createExample')}
                 </Button>
               </>
             )}
@@ -283,7 +283,7 @@ const TrainingExampleList: React.FC = () => {
         <Paper sx={{ p: 2, mb: 2 }}>
           <Stack direction="row" spacing={2} alignItems="center">
             <TextField
-              placeholder="Search..."
+              placeholder={t('common.search')}
               size="small"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -317,20 +317,38 @@ const TrainingExampleList: React.FC = () => {
             }}
             disableRowSelectionOnClick
             sx={{ minHeight: 400 }}
+            localeText={{
+              MuiTablePagination: {
+                labelRowsPerPage: t('common.rowsPerPage'),
+                labelDisplayedRows: ({ from, to, count }: { from: number; to: number; count: number }) => {
+                  if (count === -1) {
+                    return `${from}–${to}`;
+                  }
+                  const currentPage = Math.floor(from / pageSize) + 1;
+                  const totalPages = Math.ceil(count / pageSize);
+                  return t('common.pageOf', { current: currentPage, total: totalPages });
+                },
+              },
+              columnMenuSortAsc: t('common.sortByAsc'),
+              columnMenuSortDesc: t('common.sortByDesc'),
+              columnMenuFilter: t('common.filter'),
+              columnMenuHideColumn: t('common.hideColumn'),
+              columnMenuManageColumns: t('common.manageColumns'),
+            } as any}
           />
         </Paper>
       </Box>
 
       {/* Export Dialog */}
       <Dialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Export Training Data</DialogTitle>
+        <DialogTitle>{t('training.exportTrainingData')}</DialogTitle>
         <DialogContent>
           <Alert severity="info" sx={{ mt: 2 }}>
-            This will export all unexported training examples and mark them as exported.
+            {t('training.exportInfo')}
           </Alert>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setExportDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => setExportDialogOpen(false)}>{t('common.cancel')}</Button>
           <Button
             variant="contained"
             onClick={() => {
@@ -339,7 +357,7 @@ const TrainingExampleList: React.FC = () => {
             }}
             disabled={!canEdit || exportMutation.isPending}
           >
-            {exportMutation.isPending ? 'Exporting...' : 'Export'}
+            {exportMutation.isPending ? t('training.exporting') : t('common.export')}
           </Button>
         </DialogActions>
       </Dialog>

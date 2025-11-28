@@ -22,12 +22,14 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { abTestService } from '@/services/cv-sharing/abTestService';
 import { useKeycloak } from '@/hooks/useKeycloak';
 import PageContainer from '@/components/ui/PageContainer';
 
 const AbTestDetail: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
@@ -44,12 +46,12 @@ const AbTestDetail: React.FC = () => {
   const startMutation = useMutation({
     mutationFn: () => abTestService.startAbTest(Number(id!)),
     onSuccess: () => {
-      enqueueSnackbar('A/B test started', { variant: 'success' });
+      enqueueSnackbar(t('abTest.abTestStartedShort'), { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['abTests'] });
       queryClient.invalidateQueries({ queryKey: ['abTest', id] });
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data?.message || 'Failed to start A/B test', {
+      enqueueSnackbar(error?.response?.data?.message || t('abTest.failedToStart'), {
         variant: 'error',
       });
     },
@@ -58,12 +60,12 @@ const AbTestDetail: React.FC = () => {
   const pauseMutation = useMutation({
     mutationFn: () => abTestService.pauseAbTest(Number(id!)),
     onSuccess: () => {
-      enqueueSnackbar('A/B test paused', { variant: 'success' });
+      enqueueSnackbar(t('abTest.abTestPausedShort'), { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['abTests'] });
       queryClient.invalidateQueries({ queryKey: ['abTest', id] });
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data?.message || 'Failed to pause A/B test', {
+      enqueueSnackbar(error?.response?.data?.message || t('abTest.failedToPause'), {
         variant: 'error',
       });
     },
@@ -72,12 +74,12 @@ const AbTestDetail: React.FC = () => {
   const completeMutation = useMutation({
     mutationFn: () => abTestService.completeAbTest(Number(id!)),
     onSuccess: () => {
-      enqueueSnackbar('A/B test completed', { variant: 'success' });
+      enqueueSnackbar(t('abTest.abTestCompletedShort'), { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['abTests'] });
       queryClient.invalidateQueries({ queryKey: ['abTest', id] });
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data?.message || 'Failed to complete A/B test', {
+      enqueueSnackbar(error?.response?.data?.message || t('abTest.failedToComplete'), {
         variant: 'error',
       });
     },
@@ -109,7 +111,7 @@ const AbTestDetail: React.FC = () => {
   if (!test) {
     return (
       <PageContainer>
-        <Alert severity="error">A/B test not found</Alert>
+        <Alert severity="error">{t('abTest.abTestNotFound')}</Alert>
       </PageContainer>
     );
   }
@@ -142,7 +144,7 @@ const AbTestDetail: React.FC = () => {
                   {test.description && (
                     <Box>
                       <Typography variant="caption" color="textSecondary">
-                        Description
+                        {t('abTest.description')}
                       </Typography>
                       <Typography variant="body1">{test.description}</Typography>
                     </Box>
@@ -152,7 +154,7 @@ const AbTestDetail: React.FC = () => {
                     {test.startDate && (
                       <Grid item xs={12} sm={6}>
                         <Typography variant="caption" color="textSecondary">
-                          Start Date
+                          {t('abTest.startDate')}
                         </Typography>
                         <Typography variant="body1">
                           {new Date(test.startDate).toLocaleString()}
@@ -162,7 +164,7 @@ const AbTestDetail: React.FC = () => {
                     {test.endDate && (
                       <Grid item xs={12} sm={6}>
                         <Typography variant="caption" color="textSecondary">
-                          End Date
+                          {t('abTest.endDate')}
                         </Typography>
                         <Typography variant="body1">
                           {new Date(test.endDate).toLocaleString()}
@@ -176,7 +178,7 @@ const AbTestDetail: React.FC = () => {
                       <Divider />
                       <Box>
                         <Typography variant="subtitle2" gutterBottom>
-                          Variants
+                          {t('abTest.variants')}
                         </Typography>
                         <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
                           <pre style={{ margin: 0, fontSize: '0.875rem' }}>
@@ -192,7 +194,7 @@ const AbTestDetail: React.FC = () => {
                       <Divider />
                       <Box>
                         <Typography variant="subtitle2" gutterBottom>
-                          Traffic Split
+                          {t('abTest.trafficSplit')}
                         </Typography>
                         <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
                           <pre style={{ margin: 0, fontSize: '0.875rem' }}>
@@ -208,7 +210,7 @@ const AbTestDetail: React.FC = () => {
                       <Divider />
                       <Box>
                         <Typography variant="subtitle2" gutterBottom>
-                          Results
+                          {t('abTest.results')}
                         </Typography>
                         <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
                           <pre style={{ margin: 0, fontSize: '0.875rem' }}>
@@ -236,7 +238,7 @@ const AbTestDetail: React.FC = () => {
                         }}
                         disabled={!canEdit || startMutation.isPending}
                       >
-                        {startMutation.isPending ? 'Starting...' : 'Start Test'}
+                        {startMutation.isPending ? t('abTest.starting') : t('abTest.startTest')}
                       </Button>
                     )}
                     {test.status === 'ACTIVE' && (
@@ -250,7 +252,7 @@ const AbTestDetail: React.FC = () => {
                           }}
                           disabled={pauseMutation.isPending}
                         >
-                          {pauseMutation.isPending ? 'Pausing...' : 'Pause Test'}
+                          {pauseMutation.isPending ? t('abTest.pausing') : t('abTest.pauseTest')}
                         </Button>
                         <Button
                           variant="contained"
@@ -261,7 +263,7 @@ const AbTestDetail: React.FC = () => {
                           }}
                           disabled={!canEdit || completeMutation.isPending}
                         >
-                          {completeMutation.isPending ? 'Completing...' : 'Complete Test'}
+                          {completeMutation.isPending ? t('abTest.completing') : t('abTest.completeTest')}
                         </Button>
                       </>
                     )}
@@ -276,7 +278,7 @@ const AbTestDetail: React.FC = () => {
                           }}
                           disabled={!canEdit || startMutation.isPending}
                         >
-                          {startMutation.isPending ? 'Starting...' : 'Resume Test'}
+                          {startMutation.isPending ? t('abTest.starting') : t('abTest.resumeTest')}
                         </Button>
                         <Button
                           variant="outlined"
@@ -287,7 +289,7 @@ const AbTestDetail: React.FC = () => {
                           }}
                           disabled={!canEdit || completeMutation.isPending}
                         >
-                          {completeMutation.isPending ? 'Completing...' : 'Complete Test'}
+                          {completeMutation.isPending ? t('abTest.completing') : t('abTest.completeTest')}
                         </Button>
                       </>
                     )}
@@ -301,7 +303,7 @@ const AbTestDetail: React.FC = () => {
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
-                  Quick Actions
+                  {t('abTest.quickActions')}
                 </Typography>
                 <Stack spacing={2}>
                   <Button
@@ -310,7 +312,7 @@ const AbTestDetail: React.FC = () => {
                     onClick={() => navigate('/cv-sharing/ab-tests')}
                     fullWidth
                   >
-                    Back to List
+                    {t('abTest.backToList')}
                   </Button>
                 </Stack>
               </CardContent>

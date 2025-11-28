@@ -672,7 +672,18 @@ const PoolCVList: React.FC = () => {
                         )}
                         
                         <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                          {matched.recommendation}
+                          {(() => {
+                            // Map backend recommendation strings to translation keys
+                            const recommendationMap: Record<string, string> = {
+                              'Highly recommended candidate. Strong match across all criteria.': t('poolCV.highlyRecommended'),
+                              'Good candidate with some skill gaps. Consider for interview with skills assessment.': t('poolCV.goodCandidateSkillGaps'),
+                              'Strong skills but limited experience. Good potential for growth.': t('poolCV.strongSkillsLimitedExperience'),
+                              'Solid candidate. Recommended for interview.': t('poolCV.solidCandidate'),
+                              'Moderate match. Review specific requirements before proceeding.': t('poolCV.moderateMatch'),
+                              'Limited match. Consider only if other candidates unavailable.': t('poolCV.limitedMatch'),
+                            };
+                            return recommendationMap[matched.recommendation] || matched.recommendation;
+                          })()}
                         </Typography>
                       </Box>
                       

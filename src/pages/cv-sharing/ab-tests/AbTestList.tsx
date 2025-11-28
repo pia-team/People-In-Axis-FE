@@ -46,11 +46,11 @@ const AbTestList: React.FC = () => {
   const startMutation = useMutation({
     mutationFn: (id: number) => abTestService.startAbTest(id),
     onSuccess: () => {
-      enqueueSnackbar('A/B test started', { variant: 'success' });
+      enqueueSnackbar(t('abTest.abTestStartedShort'), { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['abTests'] });
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data?.message || 'Failed to start A/B test', {
+      enqueueSnackbar(error?.response?.data?.message || t('abTest.failedToStart'), {
         variant: 'error',
       });
     },
@@ -59,11 +59,11 @@ const AbTestList: React.FC = () => {
   const pauseMutation = useMutation({
     mutationFn: (id: number) => abTestService.pauseAbTest(id),
     onSuccess: () => {
-      enqueueSnackbar('A/B test paused', { variant: 'success' });
+      enqueueSnackbar(t('abTest.abTestPausedShort'), { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['abTests'] });
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data?.message || 'Failed to pause A/B test', {
+      enqueueSnackbar(error?.response?.data?.message || t('abTest.failedToPause'), {
         variant: 'error',
       });
     },
@@ -72,11 +72,11 @@ const AbTestList: React.FC = () => {
   const completeMutation = useMutation({
     mutationFn: (id: number) => abTestService.completeAbTest(id),
     onSuccess: () => {
-      enqueueSnackbar('A/B test completed', { variant: 'success' });
+      enqueueSnackbar(t('abTest.abTestCompletedShort'), { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['abTests'] });
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data?.message || 'Failed to complete A/B test', {
+      enqueueSnackbar(error?.response?.data?.message || t('abTest.failedToComplete'), {
         variant: 'error',
       });
     },
@@ -100,17 +100,17 @@ const AbTestList: React.FC = () => {
   const columns: GridColDef[] = [
     {
       field: 'id',
-      headerName: 'ID',
+      headerName: t('common.id'),
       width: 80,
     },
     {
       field: 'testName',
-      headerName: 'Test Name',
+      headerName: t('abTest.testName'),
       width: 200,
     },
     {
       field: 'status',
-      headerName: 'Status',
+      headerName: t('abTest.status'),
       width: 130,
       renderCell: (params: GridRenderCellParams) => (
         <Chip
@@ -122,34 +122,34 @@ const AbTestList: React.FC = () => {
     },
     {
       field: 'startDate',
-      headerName: 'Start Date',
+      headerName: t('abTest.startDate'),
       width: 150,
       renderCell: (params: GridRenderCellParams) => (
         <Typography variant="body2">
-          {params.value ? new Date(params.value).toLocaleDateString() : 'N/A'}
+          {params.value ? new Date(params.value).toLocaleDateString() : t('common.notAvailable')}
         </Typography>
       ),
     },
     {
       field: 'endDate',
-      headerName: 'End Date',
+      headerName: t('abTest.endDate'),
       width: 150,
       renderCell: (params: GridRenderCellParams) => (
         <Typography variant="body2">
-          {params.value ? new Date(params.value).toLocaleDateString() : 'N/A'}
+          {params.value ? new Date(params.value).toLocaleDateString() : t('common.notAvailable')}
         </Typography>
       ),
     },
     {
       field: 'actions',
-      headerName: 'Actions',
+      headerName: t('common.actions'),
       width: 200,
       sortable: false,
       renderCell: (params: GridRenderCellParams) => {
         const test = params.row as AbTest;
         return (
           <Stack direction="row" spacing={1}>
-            <Tooltip title="View Details">
+            <Tooltip title={t('abTest.viewDetails')}>
               <IconButton
                 size="small"
                 onClick={() => navigate(`/cv-sharing/ab-tests/${test.id}`)}
@@ -158,7 +158,7 @@ const AbTestList: React.FC = () => {
               </IconButton>
             </Tooltip>
             {canEdit && test.status === 'DRAFT' && (
-              <Tooltip title="Start Test">
+              <Tooltip title={t('abTest.startTest')}>
                 <IconButton
                   size="small"
                   color="success"
@@ -172,7 +172,7 @@ const AbTestList: React.FC = () => {
               </Tooltip>
             )}
             {canEdit && test.status === 'ACTIVE' && (
-              <Tooltip title="Pause Test">
+              <Tooltip title={t('abTest.pauseTest')}>
                 <IconButton
                   size="small"
                   color="warning"
@@ -186,7 +186,7 @@ const AbTestList: React.FC = () => {
               </Tooltip>
             )}
             {canEdit && (test.status === 'ACTIVE' || test.status === 'PAUSED') && (
-              <Tooltip title="Complete Test">
+              <Tooltip title={t('abTest.completeTest')}>
                 <IconButton
                   size="small"
                   color="info"
@@ -218,14 +218,14 @@ const AbTestList: React.FC = () => {
               startIcon={<AddIcon />}
               onClick={() => navigate('/cv-sharing/ab-tests/new')}
             >
-              Create Test
+              {t('abTest.createTest')}
             </Button>
           )}
         </Stack>
 
         {activeTests.length > 0 && (
           <Alert severity="info" sx={{ mb: 2 }}>
-            {activeTests.length} active A/B test(s) running
+            {t('abTest.activeTestsRunning', { count: activeTests.length })}
           </Alert>
         )}
 
@@ -251,6 +251,24 @@ const AbTestList: React.FC = () => {
             }}
             disableRowSelectionOnClick
             sx={{ minHeight: 400 }}
+            localeText={{
+              MuiTablePagination: {
+                labelRowsPerPage: t('common.rowsPerPage'),
+                labelDisplayedRows: ({ from, to, count }: { from: number; to: number; count: number }) => {
+                  if (count === -1) {
+                    return `${from}–${to}`;
+                  }
+                  const currentPage = Math.floor(from / pageSize) + 1;
+                  const totalPages = Math.ceil(count / pageSize);
+                  return t('common.pageOf', { current: currentPage, total: totalPages });
+                },
+              },
+              columnMenuSortAsc: t('common.sortByAsc'),
+              columnMenuSortDesc: t('common.sortByDesc'),
+              columnMenuFilter: t('common.filter'),
+              columnMenuHideColumn: t('common.hideColumn'),
+              columnMenuManageColumns: t('common.manageColumns'),
+            } as any}
           />
         </Paper>
       </Box>

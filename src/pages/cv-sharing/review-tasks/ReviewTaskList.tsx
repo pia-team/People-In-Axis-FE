@@ -121,28 +121,28 @@ const ReviewTaskList: React.FC = () => {
   const columns: GridColDef[] = [
     {
       field: 'id',
-      headerName: 'ID',
+      headerName: t('reviewTask.id'),
       width: 80,
     },
     {
       field: 'poolCvName',
-      headerName: 'Pool CV',
+      headerName: t('reviewTask.poolCV'),
       width: 200,
       renderCell: (params: GridRenderCellParams) => (
-        <Typography variant="body2">{params.value || 'N/A'}</Typography>
+        <Typography variant="body2">{params.value || t('common.notAvailable')}</Typography>
       ),
     },
     {
       field: 'positionTitle',
-      headerName: 'Position',
+      headerName: t('reviewTask.position'),
       width: 200,
       renderCell: (params: GridRenderCellParams) => (
-        <Typography variant="body2">{params.value || 'N/A'}</Typography>
+        <Typography variant="body2">{params.value || t('common.notAvailable')}</Typography>
       ),
     },
     {
       field: 'uncertaintyScore',
-      headerName: 'Uncertainty',
+      headerName: t('reviewTask.uncertainty'),
       width: 130,
       renderCell: (params: GridRenderCellParams) => (
         <Chip
@@ -154,7 +154,7 @@ const ReviewTaskList: React.FC = () => {
     },
     {
       field: 'matchScore',
-      headerName: 'Match Score',
+      headerName: t('reviewTask.matchScore'),
       width: 120,
       renderCell: (params: GridRenderCellParams) => (
         <Typography variant="body2">{params.value || 'N/A'}</Typography>
@@ -162,7 +162,7 @@ const ReviewTaskList: React.FC = () => {
     },
     {
       field: 'priority',
-      headerName: 'Priority',
+      headerName: t('reviewTask.priority'),
       width: 120,
       renderCell: (params: GridRenderCellParams) => (
         <Chip
@@ -174,7 +174,7 @@ const ReviewTaskList: React.FC = () => {
     },
     {
       field: 'status',
-      headerName: 'Status',
+      headerName: t('reviewTask.status'),
       width: 130,
       renderCell: (params: GridRenderCellParams) => (
         <Chip
@@ -186,22 +186,22 @@ const ReviewTaskList: React.FC = () => {
     },
     {
       field: 'assignedToName',
-      headerName: 'Assigned To',
+      headerName: t('reviewTask.assignedTo'),
       width: 150,
       renderCell: (params: GridRenderCellParams) => (
-        <Typography variant="body2">{params.value || 'Unassigned'}</Typography>
+        <Typography variant="body2">{params.value || t('reviewTask.unassigned')}</Typography>
       ),
     },
     {
       field: 'actions',
-      headerName: 'Actions',
+      headerName: t('reviewTask.actions'),
       width: 120,
       sortable: false,
       renderCell: (params: GridRenderCellParams) => {
         const task = params.row as ReviewTask;
         return (
           <Stack direction="row" spacing={1}>
-            <Tooltip title="View Details">
+            <Tooltip title={t('reviewTask.viewDetails')}>
               <IconButton
                 size="small"
                 onClick={() => navigate(`/cv-sharing/review-tasks/${task.id}`)}
@@ -236,7 +236,7 @@ const ReviewTaskList: React.FC = () => {
               startIcon={<GenerateIcon />}
               onClick={() => setGenerateDialogOpen(true)}
             >
-              Generate Tasks
+              {t('reviewTask.generateTasks')}
             </Button>
           )}
         </Stack>
@@ -309,7 +309,7 @@ const ReviewTaskList: React.FC = () => {
         <Paper sx={{ p: 2, mb: 2 }}>
           <Stack direction="row" spacing={2} alignItems="center">
             <TextField
-              placeholder="Search..."
+              placeholder={t('reviewTask.searchPlaceholder')}
               size="small"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -323,18 +323,18 @@ const ReviewTaskList: React.FC = () => {
               sx={{ flexGrow: 1 }}
             />
             <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>Status</InputLabel>
+              <InputLabel>{t('reviewTask.status')}</InputLabel>
               <Select
                 value={statusFilter}
-                label="Status"
+                label={t('reviewTask.status')}
                 onChange={(e) => setStatusFilter(e.target.value as any)}
               >
-                <MenuItem value="all">All</MenuItem>
-                <MenuItem value="PENDING">Pending</MenuItem>
-                <MenuItem value="ASSIGNED">Assigned</MenuItem>
-                <MenuItem value="IN_PROGRESS">In Progress</MenuItem>
-                <MenuItem value="COMPLETED">Completed</MenuItem>
-                <MenuItem value="CANCELLED">Cancelled</MenuItem>
+                <MenuItem value="all">{t('common.all')}</MenuItem>
+                <MenuItem value="PENDING">{t('reviewTask.pending')}</MenuItem>
+                <MenuItem value="ASSIGNED">{t('reviewTask.assigned')}</MenuItem>
+                <MenuItem value="IN_PROGRESS">{t('reviewTask.inProgress')}</MenuItem>
+                <MenuItem value="COMPLETED">{t('reviewTask.completed')}</MenuItem>
+                <MenuItem value="CANCELLED">{t('reviewTask.cancelled')}</MenuItem>
               </Select>
             </FormControl>
             <IconButton onClick={() => refetch()}>
@@ -364,35 +364,35 @@ const ReviewTaskList: React.FC = () => {
 
       {/* Generate Dialog */}
       <Dialog open={generateDialogOpen} onClose={() => setGenerateDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Generate Review Tasks</DialogTitle>
+        <DialogTitle>{t('reviewTask.generateReviewTasks')}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
-              label="Minimum Uncertainty"
+              label={t('reviewTask.minimumUncertainty')}
               type="number"
               value={generateParams.minUncertainty}
               onChange={(e) =>
                 setGenerateParams({ ...generateParams, minUncertainty: parseFloat(e.target.value) })
               }
               inputProps={{ min: 0, max: 1, step: 0.1 }}
-              helperText="Tasks with uncertainty score above this value will be created"
+              helperText={t('reviewTask.minimumUncertaintyHelper')}
               fullWidth
             />
             <TextField
-              label="Limit"
+              label={t('reviewTask.limit')}
               type="number"
               value={generateParams.limit}
               onChange={(e) =>
                 setGenerateParams({ ...generateParams, limit: parseInt(e.target.value) })
               }
               inputProps={{ min: 1, max: 1000 }}
-              helperText="Maximum number of tasks to create"
+              helperText={t('reviewTask.limitHelper')}
               fullWidth
             />
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setGenerateDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => setGenerateDialogOpen(false)}>{t('common.cancel')}</Button>
           <Button
             variant="contained"
             onClick={() => {

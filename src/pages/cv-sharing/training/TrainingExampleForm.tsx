@@ -29,8 +29,10 @@ import { CreateTrainingExampleRequest } from '@/types/cv-sharing/training';
 import { PoolCV, Position, PositionStatus } from '@/types/cv-sharing';
 import { useKeycloak } from '@/hooks/useKeycloak';
 import PageContainer from '@/components/ui/PageContainer';
+import { useTranslation } from 'react-i18next';
 
 const TrainingExampleForm: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
@@ -92,12 +94,12 @@ const TrainingExampleForm: React.FC = () => {
     mutationFn: (request: CreateTrainingExampleRequest) =>
       trainingService.createTrainingExample(request),
     onSuccess: () => {
-      enqueueSnackbar('Training example created successfully', { variant: 'success' });
+      enqueueSnackbar(t('training.trainingCreated'), { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['trainingExamples'] });
       navigate('/cv-sharing/training');
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data?.message || 'Failed to create training example', {
+      enqueueSnackbar(error?.response?.data?.message || t('training.failedToCreate'), {
         variant: 'error',
       });
     },
@@ -107,12 +109,12 @@ const TrainingExampleForm: React.FC = () => {
     mutationFn: (relevanceLabel: number) =>
       trainingService.updateTrainingExample(Number(id!), relevanceLabel),
     onSuccess: () => {
-      enqueueSnackbar('Training example updated successfully', { variant: 'success' });
+      enqueueSnackbar(t('training.trainingUpdated'), { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['trainingExamples'] });
       navigate('/cv-sharing/training');
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data?.message || 'Failed to update training example', {
+      enqueueSnackbar(error?.response?.data?.message || t('training.failedToUpdate'), {
         variant: 'error',
       });
     },
@@ -120,12 +122,12 @@ const TrainingExampleForm: React.FC = () => {
 
   const handleSubmit = () => {
     if (!formData.poolCvId || !formData.positionId) {
-      enqueueSnackbar('Please select both Pool CV and Position', { variant: 'warning' });
+      enqueueSnackbar(t('training.pleaseSelectPoolCVAndPosition'), { variant: 'warning' });
       return;
     }
 
     if (!canEdit) {
-      enqueueSnackbar('You do not have permission to perform this action', { variant: 'error' });
+      enqueueSnackbar(t('matching.permissionDenied'), { variant: 'error' });
       return;
     }
 
@@ -146,7 +148,7 @@ const TrainingExampleForm: React.FC = () => {
             <BackIcon />
           </IconButton>
           <Typography variant="h4">
-            {isEdit ? 'Edit Training Example' : 'Create Training Example'}
+            {isEdit ? t('training.editExample') : t('training.createTraining')}
           </Typography>
         </Stack>
 
@@ -167,7 +169,7 @@ const TrainingExampleForm: React.FC = () => {
                     }}
                     disabled={!!isEdit}
                     renderInput={(params) => (
-                      <TextField {...params} label="Pool CV" required />
+                      <TextField {...params} label={t('training.poolCV')} required />
                     )}
                   />
                 </Grid>
@@ -182,30 +184,30 @@ const TrainingExampleForm: React.FC = () => {
                     }}
                     disabled={!!isEdit}
                     renderInput={(params) => (
-                      <TextField {...params} label="Position" required />
+                      <TextField {...params} label={t('training.position')} required />
                     )}
                   />
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <FormControl fullWidth required>
-                    <InputLabel>Relevance Label</InputLabel>
+                    <InputLabel>{t('training.relevanceLabel')}</InputLabel>
                     <Select
                       value={formData.relevanceLabel}
-                      label="Relevance Label"
+                      label={t('training.relevanceLabel')}
                       onChange={(e) =>
                         setFormData({ ...formData, relevanceLabel: Number(e.target.value) as any })
                       }
                     >
-                      <MenuItem value={0}>0 - Irrelevant</MenuItem>
-                      <MenuItem value={1}>1 - Somewhat Relevant</MenuItem>
-                      <MenuItem value={2}>2 - Relevant</MenuItem>
-                      <MenuItem value={3}>3 - Highly Relevant</MenuItem>
+                      <MenuItem value={0}>0 - {t('training.irrelevant')}</MenuItem>
+                      <MenuItem value={1}>1 - {t('training.somewhatRelevant')}</MenuItem>
+                      <MenuItem value={2}>2 - {t('training.relevant')}</MenuItem>
+                      <MenuItem value={3}>3 - {t('training.highlyRelevant')}</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
                 <Grid item xs={12}>
                   <TextField
-                    label="Notes (Optional)"
+                    label={t('training.notesOptional')}
                     multiline
                     rows={4}
                     value={formData.notes}
@@ -229,14 +231,14 @@ const TrainingExampleForm: React.FC = () => {
                 >
                   {isEdit
                     ? updateMutation.isPending
-                      ? 'Updating...'
-                      : 'Update'
+                      ? t('training.updating')
+                      : t('training.update')
                     : createMutation.isPending
-                    ? 'Creating...'
-                    : 'Create'}
+                    ? t('training.creating')
+                    : t('training.createTraining')}
                 </Button>
                 <Button variant="outlined" onClick={() => navigate('/cv-sharing/training')}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               </Stack>
             </Stack>

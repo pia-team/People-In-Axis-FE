@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Box, Paper, Typography, TextField, Button, Stack, Divider, Rating, LinearProgress } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { applicationService } from '@/services/cv-sharing';
 import { ApplicationDetail, ApplicationStatus } from '@/types/cv-sharing';
 
 const ApplicationReview: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
@@ -29,7 +31,7 @@ const ApplicationReview: React.FC = () => {
       const data = await applicationService.getApplicationById(id!);
       setDetail(data);
     } catch (e) {
-      enqueueSnackbar('Failed to load application', { variant: 'error' });
+      enqueueSnackbar(t('application.failedToLoadApplication'), { variant: 'error' });
       navigate('/applications');
     } finally {
       setLoading(false);
@@ -41,11 +43,11 @@ const ApplicationReview: React.FC = () => {
     try {
       setSaving(true);
       await applicationService.addComment(id, { content: comment.trim(), isInternal: true });
-      enqueueSnackbar('Comment added', { variant: 'success' });
+      enqueueSnackbar(t('application.commentAddedShort'), { variant: 'success' });
       setComment('');
       await load();
     } catch (e) {
-      enqueueSnackbar('Failed to add comment', { variant: 'error' });
+      enqueueSnackbar(t('application.failedToAddComment'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -56,11 +58,11 @@ const ApplicationReview: React.FC = () => {
     try {
       setSaving(true);
       await applicationService.addRating(id, { score });
-      enqueueSnackbar('Rating added', { variant: 'success' });
+      enqueueSnackbar(t('application.ratingAddedShort'), { variant: 'success' });
       setScore(null);
       await load();
     } catch (e) {
-      enqueueSnackbar('Failed to add rating', { variant: 'error' });
+      enqueueSnackbar(t('application.failedToAddRating'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -71,13 +73,14 @@ const ApplicationReview: React.FC = () => {
     try {
       setSaving(true);
       await applicationService.updateApplicationStatus(id, { status });
-      enqueueSnackbar(`Application ${status.toLowerCase()}`, { variant: 'success' });
+      const statusKey = status.toLowerCase().replace(/_/g, '');
+      enqueueSnackbar(t(`application.${statusKey}`) || status, { variant: 'success' });
       // Invalidate both detail and list caches
       await queryClient.invalidateQueries({ queryKey: ['application', id] });
       await queryClient.invalidateQueries({ queryKey: ['applications'] });
       navigate(`/cv-sharing/applications/${id}`);
     } catch (e) {
-      enqueueSnackbar('Failed to update status', { variant: 'error' });
+      enqueueSnackbar(t('application.failedToUpdateStatus'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -95,7 +98,7 @@ const ApplicationReview: React.FC = () => {
     <Box sx={{ p: 3 }}>
       <Paper sx={{ p: 3, maxWidth: 800, mx: 'auto' }}>
         <Typography variant="h5" gutterBottom>
-          Review Application
+          {t('application.reviewApplication')}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           {detail.firstName} {detail.lastName} • {detail.positionTitle || detail.positionId}
@@ -105,12 +108,12 @@ const ApplicationReview: React.FC = () => {
 
         <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
           <Rating value={score || 0} onChange={(_, v) => setScore(v)} />
-          <Button variant="outlined" onClick={handleAddRating} disabled={!score || saving}>Add Rating</Button>
+          <Button variant="outlined" onClick={handleAddRating} disabled={!score || saving}>{t('application.addRating')}</Button>
         </Stack>
 
         <Stack spacing={1} sx={{ mb: 2 }}>
           <TextField
-            label="Add Internal Comment"
+            label={t('application.addInternalComment')}
             multiline
             rows={3}
             value={comment}
@@ -118,16 +121,16 @@ const ApplicationReview: React.FC = () => {
             fullWidth
           />
           <Stack direction="row" spacing={1} justifyContent="flex-end">
-            <Button variant="outlined" onClick={handleAddComment} disabled={!comment.trim() || saving}>Add Comment</Button>
+            <Button variant="outlined" onClick={handleAddComment} disabled={!comment.trim() || saving}>{t('application.addComment')}</Button>
           </Stack>
         </Stack>
 
         <Divider sx={{ my: 2 }} />
 
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="flex-end">
-          <Button variant="outlined" onClick={() => navigate(-1)} disabled={saving}>Back</Button>
-          <Button color="error" variant="contained" onClick={() => handleDecision(ApplicationStatus.REJECTED)} disabled={saving}>Reject</Button>
-          <Button color="success" variant="contained" onClick={() => handleDecision(ApplicationStatus.ACCEPTED)} disabled={saving}>Accept</Button>
+          <Button variant="outlined" onClick={() => navigate(-1)} disabled={saving}>{t('common.back')}</Button>
+          <Button color="error" variant="contained" onClick={() => handleDecision(ApplicationStatus.REJECTED)} disabled={saving}>{t('application.reject')}</Button>
+          <Button color="success" variant="contained" onClick={() => handleDecision(ApplicationStatus.ACCEPTED)} disabled={saving}>{t('application.accept')}</Button>
         </Stack>
       </Paper>
     </Box>

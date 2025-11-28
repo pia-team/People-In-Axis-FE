@@ -25,6 +25,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { reviewTaskService } from '@/services/cv-sharing/reviewTaskService';
 import { CompleteReviewTaskRequest } from '@/types/cv-sharing/review-task';
@@ -32,6 +33,7 @@ import { useKeycloak } from '@/hooks/useKeycloak';
 import PageContainer from '@/components/ui/PageContainer';
 
 const ReviewTaskDetail: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
@@ -52,13 +54,13 @@ const ReviewTaskDetail: React.FC = () => {
     mutationFn: (request: CompleteReviewTaskRequest) =>
       reviewTaskService.completeReviewTask(Number(id!), request),
     onSuccess: () => {
-      enqueueSnackbar('Review task completed successfully', { variant: 'success' });
+      enqueueSnackbar(t('reviewTask.taskCompleted'), { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['reviewTasks'] });
       queryClient.invalidateQueries({ queryKey: ['reviewTaskStats'] });
       navigate('/cv-sharing/review-tasks');
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data?.message || 'Failed to complete review task', {
+      enqueueSnackbar(error?.response?.data?.message || t('reviewTask.failedToCompleteReviewTask'), {
         variant: 'error',
       });
     },
@@ -67,13 +69,13 @@ const ReviewTaskDetail: React.FC = () => {
   const cancelMutation = useMutation({
     mutationFn: () => reviewTaskService.cancelReviewTask(Number(id!)),
     onSuccess: () => {
-      enqueueSnackbar('Review task cancelled', { variant: 'success' });
+      enqueueSnackbar(t('reviewTask.reviewTaskCancelled'), { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['reviewTasks'] });
       queryClient.invalidateQueries({ queryKey: ['reviewTaskStats'] });
       navigate('/cv-sharing/review-tasks');
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data?.message || 'Failed to cancel review task', {
+      enqueueSnackbar(error?.response?.data?.message || t('reviewTask.failedToCancelReviewTask'), {
         variant: 'error',
       });
     },
@@ -81,11 +83,11 @@ const ReviewTaskDetail: React.FC = () => {
 
   const handleComplete = () => {
     if (!relevanceLabel && relevanceLabel !== 0) {
-      enqueueSnackbar('Please select a relevance label', { variant: 'warning' });
+      enqueueSnackbar(t('reviewTask.pleaseSelectRelevanceLabel'), { variant: 'warning' });
       return;
     }
     if (!canEdit) {
-      enqueueSnackbar('You do not have permission to complete this task', { variant: 'error' });
+      enqueueSnackbar(t('reviewTask.noPermissionToCompleteTask'), { variant: 'error' });
       return;
     }
     completeMutation.mutate({ relevanceLabel, notes });
@@ -131,7 +133,7 @@ const ReviewTaskDetail: React.FC = () => {
   if (!task) {
     return (
       <PageContainer>
-        <Alert severity="error">Review task not found</Alert>
+        <Alert severity="error">{t('reviewTask.reviewTaskNotFound')}</Alert>
       </PageContainer>
     );
   }
@@ -143,7 +145,7 @@ const ReviewTaskDetail: React.FC = () => {
           <IconButton onClick={() => navigate('/cv-sharing/review-tasks')}>
             <BackIcon />
           </IconButton>
-          <Typography variant="h4">Review Task #{task.id}</Typography>
+          <Typography variant="h4">{t('reviewTask.reviewTaskNumber')}{task.id}</Typography>
         </Stack>
 
         <Grid container spacing={3}>
@@ -170,19 +172,19 @@ const ReviewTaskDetail: React.FC = () => {
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
                       <Typography variant="caption" color="textSecondary">
-                        Pool CV
+                        {t('reviewTask.poolCV')}
                       </Typography>
                       <Typography variant="body1">{task.poolCvName || task.poolCvId}</Typography>
                     </Grid>
                     <Grid item xs={12} sm={6}>
                       <Typography variant="caption" color="textSecondary">
-                        Position
+                        {t('reviewTask.position')}
                       </Typography>
                       <Typography variant="body1">{task.positionTitle || task.positionId}</Typography>
                     </Grid>
                     <Grid item xs={12} sm={6}>
                       <Typography variant="caption" color="textSecondary">
-                        Uncertainty Score
+                        {t('reviewTask.uncertaintyScore')}
                       </Typography>
                       <Typography variant="body1">
                         {(task.uncertaintyScore * 100).toFixed(1)}%
@@ -190,14 +192,14 @@ const ReviewTaskDetail: React.FC = () => {
                     </Grid>
                     <Grid item xs={12} sm={6}>
                       <Typography variant="caption" color="textSecondary">
-                        Match Score
+                        {t('reviewTask.matchScore')}
                       </Typography>
                       <Typography variant="body1">{task.matchScore || 'N/A'}</Typography>
                     </Grid>
                     {task.assignedToName && (
                       <Grid item xs={12} sm={6}>
                         <Typography variant="caption" color="textSecondary">
-                          Assigned To
+                          {t('reviewTask.assignedTo')}
                         </Typography>
                         <Typography variant="body1">{task.assignedToName}</Typography>
                       </Grid>
@@ -209,7 +211,7 @@ const ReviewTaskDetail: React.FC = () => {
                       <Divider />
                       <Box>
                         <Typography variant="caption" color="textSecondary">
-                          Notes
+                          {t('reviewTask.notes')}
                         </Typography>
                         <Typography variant="body2">{task.notes}</Typography>
                       </Box>
@@ -224,24 +226,24 @@ const ReviewTaskDetail: React.FC = () => {
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
-                    Complete Review Task
+                    {t('reviewTask.completeReviewTask')}
                   </Typography>
                   <Stack spacing={2} sx={{ mt: 2 }}>
                     <FormControl fullWidth>
-                      <InputLabel>Relevance Label</InputLabel>
+                      <InputLabel>{t('reviewTask.relevanceLabel')}</InputLabel>
                       <Select
                         value={relevanceLabel}
-                        label="Relevance Label"
+                        label={t('reviewTask.relevanceLabel')}
                         onChange={(e) => setRelevanceLabel(Number(e.target.value) as 0 | 1 | 2 | 3)}
                       >
-                        <MenuItem value={0}>0 - Irrelevant</MenuItem>
-                        <MenuItem value={1}>1 - Somewhat Relevant</MenuItem>
-                        <MenuItem value={2}>2 - Relevant</MenuItem>
-                        <MenuItem value={3}>3 - Highly Relevant</MenuItem>
+                        <MenuItem value={0}>0 - {t('reviewTask.irrelevant')}</MenuItem>
+                        <MenuItem value={1}>1 - {t('reviewTask.somewhatRelevant')}</MenuItem>
+                        <MenuItem value={2}>2 - {t('reviewTask.relevant')}</MenuItem>
+                        <MenuItem value={3}>3 - {t('reviewTask.highlyRelevant')}</MenuItem>
                       </Select>
                     </FormControl>
                     <TextField
-                      label="Notes (Optional)"
+                      label={t('reviewTask.notesOptional')}
                       multiline
                       rows={4}
                       value={notes}
@@ -255,7 +257,7 @@ const ReviewTaskDetail: React.FC = () => {
                         onClick={handleComplete}
                         disabled={!canEdit || completeMutation.isPending}
                       >
-                        {completeMutation.isPending ? 'Completing...' : 'Complete Task'}
+                        {completeMutation.isPending ? t('reviewTask.completing') : t('reviewTask.completeTask')}
                       </Button>
                       <Button
                         variant="outlined"
@@ -267,7 +269,7 @@ const ReviewTaskDetail: React.FC = () => {
                         disabled={!canEdit || cancelMutation.isPending}
                         color="error"
                       >
-                        Cancel Task
+                        {t('reviewTask.cancelTask')}
                       </Button>
                     </Stack>
                   </Stack>
@@ -277,7 +279,7 @@ const ReviewTaskDetail: React.FC = () => {
 
             {task.status === 'COMPLETED' && task.relevanceLabel !== undefined && (
               <Alert severity="success" sx={{ mt: 2 }}>
-                Task completed with relevance label: {task.relevanceLabel}
+                {t('reviewTask.taskCompletedWithLabel')} {task.relevanceLabel}
               </Alert>
             )}
           </Grid>
@@ -287,7 +289,7 @@ const ReviewTaskDetail: React.FC = () => {
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
-                  Quick Actions
+                  {t('reviewTask.quickActions')}
                 </Typography>
                 <Stack spacing={2}>
                   <Button
@@ -296,7 +298,7 @@ const ReviewTaskDetail: React.FC = () => {
                     onClick={() => navigate('/cv-sharing/review-tasks')}
                     fullWidth
                   >
-                    Back to List
+                    {t('reviewTask.backToList')}
                   </Button>
                   {task.poolCvId && (
                     <Button
@@ -304,7 +306,7 @@ const ReviewTaskDetail: React.FC = () => {
                       onClick={() => navigate(`/cv-sharing/pool-cvs/${task.poolCvId}`)}
                       fullWidth
                     >
-                      View Pool CV
+                      {t('reviewTask.viewPoolCV')}
                     </Button>
                   )}
                   {task.positionId && (
@@ -313,7 +315,7 @@ const ReviewTaskDetail: React.FC = () => {
                       onClick={() => navigate(`/cv-sharing/positions/${task.positionId}`)}
                       fullWidth
                     >
-                      View Position
+                      {t('reviewTask.viewPosition')}
                     </Button>
                   )}
                 </Stack>

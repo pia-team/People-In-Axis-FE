@@ -260,11 +260,26 @@ const ApplicationList: React.FC = () => {
       headerName: t('common.status'),
       width: 140,
       renderCell: (params: GridRenderCellParams) => {
-        const statusKey = params.row.status?.toLowerCase().replace(/_/g, '') || '';
+        const status = params.row.status;
+        if (!status) return null;
+        
+        // Map status enum values to translation keys
+        const statusMap: Record<ApplicationStatus, string> = {
+          [ApplicationStatus.NEW]: t('application.new'),
+          [ApplicationStatus.IN_REVIEW]: t('application.inReview'),
+          [ApplicationStatus.FORWARDED]: t('application.forwarded'),
+          [ApplicationStatus.MEETING_SCHEDULED]: t('application.meetingScheduled'),
+          [ApplicationStatus.ACCEPTED]: t('application.accepted'),
+          [ApplicationStatus.REJECTED]: t('application.rejected'),
+          [ApplicationStatus.WITHDRAWN]: t('application.withdrawn'),
+          [ApplicationStatus.ARCHIVED]: t('application.archived'),
+        };
+        
+        const label = statusMap[status as ApplicationStatus] || status.replace(/_/g, ' ');
         return (
         <Chip
-          label={t(`application.${statusKey}`) || params.row.status.replace('_', ' ')}
-          color={getStatusColor(params.row.status)}
+          label={label}
+          color={getStatusColor(status as ApplicationStatus)}
           size="small"
         />
         );
@@ -486,6 +501,24 @@ const ApplicationList: React.FC = () => {
               }}
               disableRowSelectionOnClick
               autoHeight
+              localeText={{
+                MuiTablePagination: {
+                  labelRowsPerPage: t('common.rowsPerPage'),
+                  labelDisplayedRows: ({ from, to, count }: { from: number; to: number; count: number }) => {
+                    if (count === -1) {
+                      return `${from}–${to}`;
+                    }
+                    const currentPage = Math.floor(from / paginationModel.pageSize) + 1;
+                    const totalPages = Math.ceil(count / paginationModel.pageSize);
+                    return t('common.pageOf', { current: currentPage, total: totalPages });
+                  },
+                },
+                columnMenuSortAsc: t('common.sortByAsc'),
+                columnMenuSortDesc: t('common.sortByDesc'),
+                columnMenuFilter: t('common.filter'),
+                columnMenuHideColumn: t('common.hideColumn'),
+                columnMenuManageColumns: t('common.manageColumns'),
+              } as any}
               sx={{
                 border: 'none',
                 '& .MuiDataGrid-cell': {
@@ -539,7 +572,13 @@ const ApplicationList: React.FC = () => {
             }
             handleMenuClose();
           }}>
-            {t('common.setAs')} {t('application.inReview')}
+            {(() => {
+              const translation = t('common.setAsInReview');
+              if (translation && translation !== 'common.setAsInReview') {
+                return translation;
+              }
+              return `${t('common.setAs')} ${t('application.inReview')}`;
+            })()}
           </MenuItem>
           <MenuItem onClick={() => {
             if (selectedApplication) {

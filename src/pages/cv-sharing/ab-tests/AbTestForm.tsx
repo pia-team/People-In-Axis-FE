@@ -22,8 +22,10 @@ import { abTestService } from '@/services/cv-sharing/abTestService';
 import { CreateAbTestRequest } from '@/types/cv-sharing/ab-test';
 import PageContainer from '@/components/ui/PageContainer';
 import { useKeycloak } from '@/hooks/useKeycloak';
+import { useTranslation } from 'react-i18next';
 
 const AbTestForm: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { hasAnyRole } = useKeycloak();
@@ -50,12 +52,12 @@ const AbTestForm: React.FC = () => {
   const createMutation = useMutation({
     mutationFn: (request: CreateAbTestRequest) => abTestService.createAbTest(request),
     onSuccess: () => {
-      enqueueSnackbar('A/B test created successfully', { variant: 'success' });
+      enqueueSnackbar(t('abTest.abTestCreated'), { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['abTests'] });
       navigate('/cv-sharing/ab-tests');
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data?.message || 'Failed to create A/B test', {
+      enqueueSnackbar(error?.response?.data?.message || t('abTest.failedToCreate'), {
         variant: 'error',
       });
     },
@@ -63,19 +65,19 @@ const AbTestForm: React.FC = () => {
 
   const handleSubmit = () => {
     if (!formData.testName || !formData.variants || !formData.trafficSplit) {
-      enqueueSnackbar('Please fill in all required fields', { variant: 'warning' });
+      enqueueSnackbar(t('model.pleaseFillAllRequiredFields'), { variant: 'warning' });
       return;
     }
 
     // Validate traffic split sums to 1.0
     const total = Object.values(formData.trafficSplit).reduce((sum, val) => sum + val, 0);
     if (Math.abs(total - 1.0) > 0.01) {
-      enqueueSnackbar('Traffic split must sum to 1.0', { variant: 'error' });
+      enqueueSnackbar(t('abTest.trafficSplitMustSum'), { variant: 'error' });
       return;
     }
 
     if (!canEdit) {
-      enqueueSnackbar('You do not have permission to perform this action', { variant: 'error' });
+      enqueueSnackbar(t('matching.permissionDenied'), { variant: 'error' });
       return;
     }
 
@@ -89,21 +91,20 @@ const AbTestForm: React.FC = () => {
           <IconButton onClick={() => navigate('/cv-sharing/ab-tests')}>
             <BackIcon />
           </IconButton>
-          <Typography variant="h4">Create A/B Test</Typography>
+          <Typography variant="h4">{t('abTest.createAbTest')}</Typography>
         </Stack>
 
         <Card>
           <CardContent>
             <Stack spacing={3}>
               <Alert severity="info">
-                Configure an A/B test to compare different matching strategies. Define variants and
-                traffic split percentages.
+                {t('abTest.configureAbTest')}
               </Alert>
 
               <Grid container spacing={2}>
                 <Grid item xs={12}>
                   <TextField
-                    label="Test Name"
+                    label={t('abTest.testName')}
                     value={formData.testName}
                     onChange={(e) => setFormData({ ...formData, testName: e.target.value })}
                     required
@@ -112,7 +113,7 @@ const AbTestForm: React.FC = () => {
                 </Grid>
                 <Grid item xs={12}>
                   <TextField
-                    label="Description"
+                    label={t('abTest.description')}
                     multiline
                     rows={3}
                     value={formData.description}
@@ -122,7 +123,7 @@ const AbTestForm: React.FC = () => {
                 </Grid>
                 <Grid item xs={12}>
                   <TextField
-                    label="Variants (JSON)"
+                    label={t('abTest.variantsJson')}
                     multiline
                     rows={6}
                     value={JSON.stringify(formData.variants, null, 2)}
@@ -135,12 +136,12 @@ const AbTestForm: React.FC = () => {
                       }
                     }}
                     fullWidth
-                    helperText="Define test variants with their configurations"
+                    helperText={t('abTest.defineVariants')}
                   />
                 </Grid>
                 <Grid item xs={12}>
                   <TextField
-                    label="Traffic Split (JSON)"
+                    label={t('abTest.trafficSplitJson')}
                     multiline
                     rows={4}
                     value={JSON.stringify(formData.trafficSplit, null, 2)}
@@ -153,12 +154,12 @@ const AbTestForm: React.FC = () => {
                       }
                     }}
                     fullWidth
-                    helperText="Traffic percentages for each variant (must sum to 1.0)"
+                    helperText={t('abTest.trafficPercentages')}
                   />
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <TextField
-                    label="Start Date (Optional)"
+                    label={t('abTest.startDateOptional')}
                     type="datetime-local"
                     value={formData.startDate}
                     onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
@@ -168,7 +169,7 @@ const AbTestForm: React.FC = () => {
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <TextField
-                    label="End Date (Optional)"
+                    label={t('abTest.endDateOptional')}
                     type="datetime-local"
                     value={formData.endDate}
                     onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
@@ -185,10 +186,10 @@ const AbTestForm: React.FC = () => {
                   onClick={handleSubmit}
                   disabled={createMutation.isPending || !formData.testName}
                 >
-                  {createMutation.isPending ? 'Creating...' : 'Create Test'}
+                  {createMutation.isPending ? t('abTest.creating') : t('abTest.createTest')}
                 </Button>
                 <Button variant="outlined" onClick={() => navigate('/cv-sharing/ab-tests')}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               </Stack>
             </Stack>

@@ -26,10 +26,12 @@ import {
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import { applicationService } from '@/services/cv-sharing';
 import { CreateMeetingRequest, Meeting, MeetingProvider } from '@/types/cv-sharing';
 
 const MeetingScheduler: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
@@ -60,7 +62,7 @@ const MeetingScheduler: React.FC = () => {
       const data = await applicationService.getMeetings(id!);
       setMeetings(data || []);
     } catch (e) {
-      enqueueSnackbar('Failed to load meetings', { variant: 'error' });
+      enqueueSnackbar(t('meeting.failedToLoadMeetings'), { variant: 'error' });
     } finally {
       setLoading(false);
     }
@@ -92,7 +94,7 @@ const MeetingScheduler: React.FC = () => {
   const schedule = async () => {
     if (!id) return;
     if (!title || !startTime || !durationMinutes) {
-      enqueueSnackbar('Please fill title, start time and duration', { variant: 'warning' });
+      enqueueSnackbar(t('meeting.pleaseFillRequiredFields'), { variant: 'warning' });
       return;
     }
     const payload: CreateMeetingRequest = {
@@ -108,11 +110,11 @@ const MeetingScheduler: React.FC = () => {
     try {
       setSaving(true);
       await applicationService.scheduleMeeting(id, payload);
-      enqueueSnackbar('Meeting scheduled', { variant: 'success' });
+      enqueueSnackbar(t('application.meetingScheduledSuccess'), { variant: 'success' });
       clearForm();
       await load();
     } catch (e) {
-      enqueueSnackbar('Failed to schedule meeting', { variant: 'error' });
+      enqueueSnackbar(t('meeting.failedToScheduleMeeting'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -122,10 +124,10 @@ const MeetingScheduler: React.FC = () => {
     if (!id) return;
     try {
       await applicationService.cancelMeeting(id, meetingId);
-      enqueueSnackbar('Meeting cancelled', { variant: 'success' });
+      enqueueSnackbar(t('meeting.meetingCancelledShort'), { variant: 'success' });
       await load();
     } catch (e) {
-      enqueueSnackbar('Failed to cancel meeting', { variant: 'error' });
+      enqueueSnackbar(t('meeting.failedToCancelMeeting'), { variant: 'error' });
     }
   };
 
@@ -141,15 +143,15 @@ const MeetingScheduler: React.FC = () => {
     <Box sx={{ p: 3 }}>
       <Paper sx={{ p: 3, maxWidth: 900, mx: 'auto' }}>
         <Typography variant="h5" gutterBottom>
-          Schedule Meeting
+          {t('meeting.scheduleMeeting')}
         </Typography>
 
         <Grid container spacing={2}>
           <Grid item xs={12} md={8}>
             <Stack spacing={2}>
-              <TextField label="Title" value={title} onChange={(e) => setTitle(e.target.value)} fullWidth />
+              <TextField label={t('meeting.meetingTitle')} value={title} onChange={(e) => setTitle(e.target.value)} fullWidth />
               <TextField
-                label="Start Time"
+                label={t('meeting.startTime')}
                 type="datetime-local"
                 InputLabelProps={{ shrink: true }}
                 value={startTime}
@@ -157,7 +159,7 @@ const MeetingScheduler: React.FC = () => {
                 fullWidth
               />
               <TextField
-                label="Duration (minutes)"
+                label={t('meeting.duration')}
                 type="number"
                 inputProps={{ min: 15 }}
                 value={durationMinutes}
@@ -170,26 +172,26 @@ const MeetingScheduler: React.FC = () => {
                 onChange={(e) => setProvider((e.target.value || undefined) as MeetingProvider | undefined)}
               >
                 <MenuItem value="">
-                  <em>Provider (optional)</em>
+                  <em>{t('meeting.providerOptional')}</em>
                 </MenuItem>
-                <MenuItem value={MeetingProvider.TEAMS}>Teams</MenuItem>
-                <MenuItem value={MeetingProvider.ZOOM}>Zoom</MenuItem>
-                <MenuItem value={MeetingProvider.MEET}>Google Meet</MenuItem>
-                <MenuItem value={MeetingProvider.OTHER}>Other</MenuItem>
+                <MenuItem value={MeetingProvider.TEAMS}>{t('meeting.teams')}</MenuItem>
+                <MenuItem value={MeetingProvider.ZOOM}>{t('meeting.zoom')}</MenuItem>
+                <MenuItem value={MeetingProvider.MEET}>{t('meeting.googleMeet')}</MenuItem>
+                <MenuItem value={MeetingProvider.OTHER}>{t('meeting.other')}</MenuItem>
               </Select>
-              <TextField label="Meeting Link" value={meetingLink} onChange={(e) => setMeetingLink(e.target.value)} fullWidth 
+              <TextField label={t('meeting.meetingLink')} value={meetingLink} onChange={(e) => setMeetingLink(e.target.value)} fullWidth 
                 InputProps={{ startAdornment: <InputAdornment position="start"><LinkIcon /></InputAdornment> }} />
-              <TextField label="Location" value={location} onChange={(e) => setLocation(e.target.value)} fullWidth 
+              <TextField label={t('meeting.location')} value={location} onChange={(e) => setLocation(e.target.value)} fullWidth 
                 InputProps={{ startAdornment: <InputAdornment position="start"><PlaceIcon /></InputAdornment> }} />
-              <TextField label="Description" value={description} onChange={(e) => setDescription(e.target.value)} fullWidth multiline rows={3} />
+              <TextField label={t('meeting.notes')} value={description} onChange={(e) => setDescription(e.target.value)} fullWidth multiline rows={3} />
 
               <Divider />
 
-              <Typography variant="subtitle1">Participants</Typography>
+              <Typography variant="subtitle1">{t('meeting.participants')}</Typography>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ sm: 'center' }}>
-                <TextField label="Email" value={participantEmail} onChange={(e) => setParticipantEmail(e.target.value)} fullWidth />
-                <TextField label="Name (optional)" value={participantName} onChange={(e) => setParticipantName(e.target.value)} fullWidth />
-                <Button variant="outlined" onClick={addParticipant}>Add</Button>
+                <TextField label={t('meeting.email')} value={participantEmail} onChange={(e) => setParticipantEmail(e.target.value)} fullWidth />
+                <TextField label={t('meeting.nameOptional')} value={participantName} onChange={(e) => setParticipantName(e.target.value)} fullWidth />
+                <Button variant="outlined" onClick={addParticipant}>{t('common.add')}</Button>
               </Stack>
               <List>
                 {participants.map((p, i) => (
@@ -205,17 +207,17 @@ const MeetingScheduler: React.FC = () => {
               </List>
 
               <Stack direction="row" spacing={1} justifyContent="flex-end">
-                <Button variant="outlined" onClick={() => navigate(-1)} disabled={saving}>Back</Button>
-                <Button variant="contained" onClick={schedule} disabled={saving}>Schedule</Button>
+                <Button variant="outlined" onClick={() => navigate(-1)} disabled={saving}>{t('common.back')}</Button>
+                <Button variant="contained" onClick={schedule} disabled={saving}>{t('meeting.scheduleMeeting')}</Button>
               </Stack>
             </Stack>
           </Grid>
 
           <Grid item xs={12} md={4}>
-            <Typography variant="h6">Existing Meetings</Typography>
+            <Typography variant="h6">{t('meeting.existingMeetings')}</Typography>
             <Divider sx={{ mb: 1 }} />
             {meetings.length === 0 && (
-              <Typography variant="body2" color="text.secondary">No meetings yet</Typography>
+              <Typography variant="body2" color="text.secondary">{t('meeting.noMeetingsYet')}</Typography>
             )}
             <List>
               {meetings.map((m) => (
