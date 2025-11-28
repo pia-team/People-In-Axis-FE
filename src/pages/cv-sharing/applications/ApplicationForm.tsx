@@ -603,11 +603,12 @@ const ApplicationForm: React.FC = () => {
             </Grid>
           )}
 
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', gap: 2, mt: 4 }}>
             <Button
               disabled={activeStep === 0 || submitting}
               onClick={handleBack}
               startIcon={<BackIcon />}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
             >
               {t('common.back')}
             </Button>
@@ -617,6 +618,7 @@ const ApplicationForm: React.FC = () => {
                 type="submit"
                 variant="contained"
                 disabled={!kvkkConsent || uploadedFiles.length === 0 || submitting}
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
                 startIcon={submitting ? null : <SendIcon />}
               >
                 {submitting ? t('common.submitting') : t('application.submitApplication')}
@@ -625,6 +627,7 @@ const ApplicationForm: React.FC = () => {
               <Button
                 variant="contained"
                 onClick={handleNext}
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
                 endIcon={<NextIcon />}
               >
                 {t('common.next')}

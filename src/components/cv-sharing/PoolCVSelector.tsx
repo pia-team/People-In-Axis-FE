@@ -12,12 +12,14 @@ import {
   ListItemText,
   ListItemSecondaryAction,
   Chip,
-  Box,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  CircularProgress
+  CircularProgress,
+  Stack,
+  useMediaQuery,
+  useTheme
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import { poolCVService } from '@/services/cv-sharing';
@@ -32,6 +34,8 @@ interface PoolCVSelectorProps {
 
 const PoolCVSelector: React.FC<PoolCVSelectorProps> = ({ open, onClose, onSelect }) => {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<PoolCV[]>([]);
   const [search, setSearch] = useState('');
@@ -64,10 +68,10 @@ const PoolCVSelector: React.FC<PoolCVSelectorProps> = ({ open, onClose, onSelect
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" fullScreen={isMobile}>
       <DialogTitle>Select a Pool CV</DialogTitle>
       <DialogContent>
-        <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mb: 2 }}>
           <TextField
             size="small"
             placeholder="Search by name, email, position..."
@@ -76,8 +80,9 @@ const PoolCVSelector: React.FC<PoolCVSelectorProps> = ({ open, onClose, onSelect
             onKeyDown={(e) => e.key === 'Enter' && load()}
             fullWidth
             InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }}
+            sx={{ flex: { xs: '1 1 100%', sm: '1 1 auto' } }}
           />
-          <FormControl size="small" sx={{ minWidth: 120 }}>
+          <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 120 } }}>
             <InputLabel>Status</InputLabel>
             <Select value={status} label="Status" onChange={(e) => setStatus(e.target.value as any)}>
               <MenuItem value="all">All</MenuItem>
@@ -85,7 +90,7 @@ const PoolCVSelector: React.FC<PoolCVSelectorProps> = ({ open, onClose, onSelect
               <MenuItem value="inactive">Inactive</MenuItem>
             </Select>
           </FormControl>
-          <FormControl size="small" sx={{ minWidth: 150 }}>
+          <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 150 } }}>
             <InputLabel>{t('poolCV.experienceYears')}</InputLabel>
             <Select value={experience} label={t('poolCV.experienceYears')} onChange={(e) => setExperience(e.target.value)}>
               <MenuItem value="all">{t('common.all')}</MenuItem>
@@ -95,8 +100,8 @@ const PoolCVSelector: React.FC<PoolCVSelectorProps> = ({ open, onClose, onSelect
               <MenuItem value="10-99">10+ {t('common.years')}</MenuItem>
             </Select>
           </FormControl>
-          <Button variant="outlined" onClick={load}>Apply</Button>
-        </Box>
+          <Button variant="outlined" onClick={load} sx={{ width: { xs: '100%', sm: 'auto' } }}>Apply</Button>
+        </Stack>
 
         {loading ? <CircularProgress size={24} /> : (
           <List>
@@ -111,11 +116,11 @@ const PoolCVSelector: React.FC<PoolCVSelectorProps> = ({ open, onClose, onSelect
                     </>
                   }
                 />
-                <ListItemSecondaryAction>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <ListItemSecondaryAction sx={{ position: { xs: 'static', sm: 'absolute' }, mt: { xs: 1, sm: 0 } }}>
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }}>
                     {cv.isActive ? <Chip size="small" label="Active" color="success" /> : <Chip size="small" label="Inactive" />}
-                    <Button size="small" variant="contained" onClick={() => onSelect(cv)}>Select</Button>
-                  </Box>
+                    <Button size="small" variant="contained" onClick={() => onSelect(cv)} fullWidth={isMobile}>Select</Button>
+                  </Stack>
                 </ListItemSecondaryAction>
               </ListItem>
             ))}
@@ -123,7 +128,7 @@ const PoolCVSelector: React.FC<PoolCVSelectorProps> = ({ open, onClose, onSelect
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Close</Button>
+        <Button onClick={onClose} fullWidth={isMobile}>Close</Button>
       </DialogActions>
     </Dialog>
   );

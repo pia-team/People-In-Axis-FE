@@ -20,6 +20,8 @@ import {
   Badge,
   Collapse,
   Container,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -215,6 +217,8 @@ const getMenuItems = (t: (key: string) => string): MenuItemType[] => [
 
 const MainLayout: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
@@ -728,8 +732,10 @@ const MainLayout: React.FC = () => {
         sx={{ width: { sm: sidebarOpen ? drawerWidth : 0 }, flexShrink: { sm: 0 } }}
       >
         <Drawer
-          variant="persistent"
+          variant={isMobile ? 'temporary' : 'persistent'}
           open={sidebarOpen}
+          onClose={isMobile ? () => dispatch(toggleSidebar()) : undefined}
+          ModalProps={isMobile ? { keepMounted: true } : undefined}
           sx={{
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',

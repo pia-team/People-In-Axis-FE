@@ -11,7 +11,7 @@ const SectionCard: React.FC<SectionCardProps> = ({ title, actions, children }) =
   return (
     <Paper sx={{ p: 2.5, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
       {(title || actions) && (
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1.5 }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between" spacing={1} sx={{ mb: 1.5 }}>
           {title && <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>{title}</Typography>}
           {actions && <Box>{actions}</Box>}
         </Stack>

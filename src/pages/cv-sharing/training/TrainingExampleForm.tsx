@@ -217,7 +217,7 @@ const TrainingExampleForm: React.FC = () => {
                 </Grid>
               </Grid>
 
-              <Stack direction="row" spacing={2}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <Button
                   variant="contained"
                   startIcon={<SaveIcon />}
@@ -228,6 +228,7 @@ const TrainingExampleForm: React.FC = () => {
                     !formData.poolCvId ||
                     !formData.positionId
                   }
+                  sx={{ width: { xs: '100%', sm: 'auto' } }}
                 >
                   {isEdit
                     ? updateMutation.isPending
@@ -237,7 +238,7 @@ const TrainingExampleForm: React.FC = () => {
                     ? t('training.creating')
                     : t('training.createTraining')}
                 </Button>
-                <Button variant="outlined" onClick={() => navigate('/cv-sharing/training')}>
+                <Button variant="outlined" onClick={() => navigate('/cv-sharing/training')} sx={{ width: { xs: '100%', sm: 'auto' } }}>
                   {t('common.cancel')}
                 </Button>
               </Stack>

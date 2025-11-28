@@ -55,8 +55,8 @@ const TimeSheetList: React.FC = () => {
     <PageContainer
       title={t('timesheet.timesheetsTitle')}
       actions={
-        <Stack direction="row" spacing={1}>
-          <Button variant="outlined" onClick={() => refetch()}>{t('timesheet.refresh')}</Button>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+          <Button variant="outlined" onClick={() => refetch()} sx={{ width: { xs: '100%', sm: 'auto' } }}>{t('timesheet.refresh')}</Button>
           <Button
             variant="outlined"
             onClick={async () => {
@@ -68,10 +68,11 @@ const TimeSheetList: React.FC = () => {
               a.click();
               window.URL.revokeObjectURL(url);
             }}
+            sx={{ width: { xs: '100%', sm: 'auto' } }}
           >
             {t('common.export')}
           </Button>
-          <Button variant="contained" onClick={() => navigate('/timesheets/new')}>{t('timesheet.new')}</Button>
+          <Button variant="contained" onClick={() => navigate('/timesheets/new')} sx={{ width: { xs: '100%', sm: 'auto' } }}>{t('timesheet.new')}</Button>
         </Stack>
       }
     >

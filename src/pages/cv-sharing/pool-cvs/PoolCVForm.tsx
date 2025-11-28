@@ -471,12 +471,13 @@ const PoolCVForm: React.FC = () => {
 
             {/* Actions */}
             <Grid item xs={12}>
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                <Button variant="outlined" startIcon={<CancelIcon />} onClick={() => navigate('/cv-sharing/pool-cvs')} disabled={loading}>{t('common.cancel')}</Button>
+              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'flex-end', gap: 2 }}>
+                <Button variant="outlined" startIcon={<CancelIcon />} onClick={() => navigate('/cv-sharing/pool-cvs')} disabled={loading} sx={{ width: { xs: '100%', sm: 'auto' } }}>{t('common.cancel')}</Button>
                 <Button 
                   type="submit" 
                   variant="contained" 
-                  startIcon={<SaveIcon />} 
+                  startIcon={<SaveIcon />}
+                  sx={{ width: { xs: '100%', sm: 'auto' } }} 
                   disabled={loading}
                   onClick={(e) => {
                     // Ensure form validation runs

@@ -131,9 +131,9 @@ const EmployeeForm: React.FC = () => {
                 ))}
               </TextField>
             </Stack>
-            <Stack direction="row" spacing={2}>
-              <Button variant="outlined" onClick={() => navigate('/employees')}>{t('common.cancel')}</Button>
-              <Button variant="contained" type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+              <Button variant="outlined" onClick={() => navigate('/employees')} sx={{ width: { xs: '100%', sm: 'auto' } }}>{t('common.cancel')}</Button>
+              <Button variant="contained" type="submit" disabled={createMutation.isPending || updateMutation.isPending} sx={{ width: { xs: '100%', sm: 'auto' } }}>
                 {isEdit ? t('common.save') : t('common.create')}
               </Button>
             </Stack>
