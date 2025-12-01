@@ -91,7 +91,7 @@ const getMenuItems = (t: (key: string) => string): MenuItemType[] => [
   {
     title: t('navigation.employees'),
     icon: <People />,
-    roles: ['HUMAN_RESOURCES', 'ADMIN'],
+    roles: ['HUMAN_RESOURCES'],
     children: [
       { title: t('navigation.allEmployees'), path: '/employees', icon: <Group /> },
       { title: t('navigation.myProfile'), path: '/profile', icon: <Person /> },
@@ -106,6 +106,8 @@ const getMenuItems = (t: (key: string) => string): MenuItemType[] => [
   {
     title: t('navigation.timeManagement'),
     icon: <AccessTime />,
+    isModule: true,
+    roles: ['COMPANY_MANAGER', 'HUMAN_RESOURCES','MANAGER'],
     children: [
       { title: t('navigation.myTimesheets'), path: '/timesheets/my', icon: <ListAlt /> },
       { title: t('navigation.allTimesheets'), path: '/timesheets', icon: <AssignmentInd />, roles: ['MANAGER', 'HUMAN_RESOURCES'] },
@@ -118,6 +120,7 @@ const getMenuItems = (t: (key: string) => string): MenuItemType[] => [
   {
     title: t('navigation.expenses'),
     icon: <ReceiptLong />,
+    roles: ['COMPANY_MANAGER', 'HUMAN_RESOURCES','MANAGER'],
     children: [
       { title: t('navigation.myExpenses'), path: '/expenses/my', icon: <Receipt /> },
       { title: t('navigation.allExpenses'), path: '/expenses', icon: <RequestQuote />, roles: ['MANAGER', 'HUMAN_RESOURCES', 'FINANCE'] },
@@ -128,11 +131,13 @@ const getMenuItems = (t: (key: string) => string): MenuItemType[] => [
     title: t('navigation.projects'),
     path: '/projects',
     icon: <Folder />,
+    roles: ['HUMAN_RESOURCES','MANAGER'],
   },
   {
     title: t('navigation.cvSharing'),
     icon: <Share />,
     isModule: true,
+    roles: ['COMPANY_MANAGER', 'HUMAN_RESOURCES','MANAGER'],
     children: [
       {
         title: t('navigation.positions'),
@@ -187,7 +192,6 @@ const getMenuItems = (t: (key: string) => string): MenuItemType[] => [
   {
     title: t('navigation.reports'),
     icon: <BarChart />,
-    roles: ['HUMAN_RESOURCES', 'ADMIN', 'COMPANY_MANAGER'],
     children: [
       { title: t('navigation.timesheetReport'), path: '/reports/timesheet', icon: <QueryStats /> },
       { title: t('navigation.expenseReport'), path: '/reports/expense', icon: <InsertChartOutlined /> },
@@ -197,7 +201,7 @@ const getMenuItems = (t: (key: string) => string): MenuItemType[] => [
   {
     title: t('navigation.admin'),
     icon: <Settings />,
-    roles: ['ADMIN', 'ADMIN'],
+    roles: ['HUMAN_RESOURCES','MANAGER'],
     children: [
       { title: t('navigation.users'), path: '/admin/users', icon: <ManageAccounts /> },
       { title: t('navigation.roles'), path: '/admin/roles', icon: <Settings /> },

@@ -245,6 +245,11 @@ const PoolCVList: React.FC = () => {
       headerName: t('common.name'),
       flex: 1,
       minWidth: 180,
+      valueGetter: (params) => {
+        const row = params.row as PoolCV;
+        if (!row) return '';
+        return `${row.firstName || ''} ${row.lastName || ''}`.trim();
+      },
       renderCell: (params: GridRenderCellParams) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Avatar sx={{ width: 28, height: 28 }}>
@@ -258,16 +263,28 @@ const PoolCVList: React.FC = () => {
       )
     },
     { field: 'email', headerName: t('poolCV.email'), flex: 1, minWidth: 200 },
-    { field: 'phone', headerName: t('poolCV.phone'), width: 140, valueGetter: (p) => (p.row as PoolCV).phone || t('common.notAvailable') },
+    { 
+      field: 'phone', 
+      headerName: t('poolCV.phone'), 
+      width: 140, 
+      valueGetter: (params) => (params.row as PoolCV)?.phone || ''
+    },
     {
-      field: 'role', headerName: t('position.title'), flex: 1, minWidth: 180,
-      valueGetter: (p) => {
-        const r = p.row as PoolCV;
-        return r.currentPosition ? `${r.currentPosition}${r.currentCompany ? ' • ' + r.currentCompany : ''}` : t('common.notAvailable');
+      field: 'role', 
+      headerName: t('position.title'), 
+      flex: 1, 
+      minWidth: 180,
+      valueGetter: (params) => {
+        const row = params.row as PoolCV;
+        if (!row) return '';
+        return row.currentPosition ? `${row.currentPosition}${row.currentCompany ? ' • ' + row.currentCompany : ''}` : '';
       }
     },
     {
-      field: 'active', headerName: t('common.status'), width: 120,
+      field: 'isActive', 
+      headerName: t('common.status'), 
+      width: 120,
+      valueGetter: (params) => (params.row as PoolCV)?.isActive ? 1 : 0,
       renderCell: (params: GridRenderCellParams) => {
         const r = params.row as PoolCV;
         return (
@@ -280,7 +297,13 @@ const PoolCVList: React.FC = () => {
         );
       }
     },
-    { field: 'fileCount', headerName: t('poolCV.files'), width: 90, valueGetter: (p) => (p.row as PoolCV).fileCount ?? 0 },
+    { 
+      field: 'fileCount', 
+      headerName: t('poolCV.files'), 
+      width: 90, 
+      type: 'number',
+      valueGetter: (params) => (params.row as PoolCV)?.fileCount ?? 0
+    },
     {
       field: 'actions', headerName: t('common.actions'), width: 220, sortable: false,
       renderCell: (params: GridRenderCellParams) => {
@@ -320,7 +343,7 @@ const PoolCVList: React.FC = () => {
         );
       }
     }
-  ], [t, navigate, canEdit, handleMatchPositions, handleDownload, handleToggleStatus, matchBusyId, toggleBusyId, setSelectedCV, setDeleteDialogOpen]);
+  ], [t, navigate, canEdit, handleMatchPositions, handleDownload, handleToggleStatus, matchBusyId, toggleBusyId]);
 
 
   return (
@@ -535,6 +558,11 @@ const PoolCVList: React.FC = () => {
                 getRowId={(row) => row.id}
                 autoHeight
                 disableRowSelectionOnClick
+                pageSizeOptions={[10, 25, 50, 100]}
+                initialState={{
+                    pagination: { paginationModel: { pageSize: 100 } },
+                    sorting: { sortModel: [{ field: 'name', sort: 'asc' }] }
+                  }}
                 sx={{ border: 'none' }}
               />
             </Box>

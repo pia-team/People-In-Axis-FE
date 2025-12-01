@@ -56,7 +56,7 @@ interface RatingDialogData {
 }
 
 const serverSortFieldMap: Record<string, string> = {
-  applicant: 'lastName',
+  applicant: 'firstName',
   positionTitle: 'positionTitle',
   appliedAt: 'appliedAt',
   status: 'status',
@@ -281,7 +281,7 @@ const ApplicationList: React.FC = () => {
             <>
               <Rating value={params.row.averageRating} readOnly size="small" />
               <Typography variant="caption">
-                ({params.row.ratingCount})
+                {params.row.ratingCount ?? 0}
               </Typography>
             </>
           ) : (
@@ -296,6 +296,7 @@ const ApplicationList: React.FC = () => {
       field: 'comments',
       headerName: t('application.comments'),
       width: 110,
+      sortable: false,
       align: 'center',
       headerAlign: 'center',
       renderCell: (params: GridRenderCellParams) => (
