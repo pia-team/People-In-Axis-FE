@@ -253,7 +253,7 @@ const App: React.FC = () => {
             {/* Expenses Approval (role-guarded) */}
             <Route
               path="/expenses/approval"
-              element={<PrivateRoute roles={["MANAGER", "HUMAN_RESOURCES", "FINANCE"]} />}
+              element={<PrivateRoute roles={["MANAGER", "HUMAN_RESOURCES"]} />}
             >
               <Route index element={<ExpenseApproval />} />
             </Route>
@@ -261,7 +261,7 @@ const App: React.FC = () => {
             {/* Reports (protected) */}
             <Route
               path="/reports"
-              element={<PrivateRoute roles={["HUMAN_RESOURCES", "ADMIN", "COMPANY_MANAGER"]} />}
+              element={<PrivateRoute roles={["HUMAN_RESOURCES", "ADMIN", "COMPANY_MANAGER","MANAGER"]} />}
             >
               <Route index element={<Reports />} />
               <Route path="timesheet" element={<TimeSheetReport />} />
@@ -317,7 +317,7 @@ const App: React.FC = () => {
             {/* CV Sharing - Training Examples (Phase 3) */}
             <Route
               path="/cv-sharing/training"
-              element={<PrivateRoute roles={["HUMAN_RESOURCES", "SYSTEM_ADMIN","MANAGER"]} />}
+              element={<PrivateRoute roles={["HUMAN_RESOURCES", "ADMIN","MANAGER"]} />}
             >
               <Route index element={<TrainingExampleList />} />
               <Route path="new" element={<TrainingExampleForm />} />
@@ -328,7 +328,7 @@ const App: React.FC = () => {
             {/* CV Sharing - Review Tasks (Phase 3) */}
             <Route
               path="/cv-sharing/review-tasks"
-              element={<PrivateRoute roles={["HUMAN_RESOURCES", "SYSTEM_ADMIN","MANAGER"]} />}
+              element={<PrivateRoute roles={["HUMAN_RESOURCES", "ADMIN","MANAGER"]} />}
             >
               <Route index element={<ReviewTaskList />} />
               <Route path=":id" element={<ReviewTaskDetail />} />
@@ -337,7 +337,7 @@ const App: React.FC = () => {
             {/* CV Sharing - Model Registry (Phase 3) */}
             <Route
               path="/cv-sharing/models"
-              element={<PrivateRoute roles={["HUMAN_RESOURCES", "SYSTEM_ADMIN","MANAGER"]} />}
+              element={<PrivateRoute roles={["HUMAN_RESOURCES", "ADMIN","MANAGER"]} />}
             >
               <Route index element={<ModelRegistryList />} />
               <Route path="new" element={<ModelRegistryForm />} />
@@ -347,7 +347,7 @@ const App: React.FC = () => {
             {/* CV Sharing - A/B Tests (Phase 3) */}
             <Route
               path="/cv-sharing/ab-tests"
-              element={<PrivateRoute roles={["HUMAN_RESOURCES", "SYSTEM_ADMIN","MANAGER"]} />}
+              element={<PrivateRoute roles={["HUMAN_RESOURCES", "ADMIN","MANAGER"]} />}
             >
               <Route index element={<AbTestList />} />
               <Route path="new" element={<AbTestForm />} />
@@ -358,7 +358,7 @@ const App: React.FC = () => {
             <Route
               path="/admin"
               element={
-                <PrivateRoute roles={['ADMIN', 'SYSTEM_ADMIN']} />
+                <PrivateRoute roles={['ADMIN','HUMAN_RESOURCES',"MANAGER"]} />
               }
             >
               <Route index element={<AdminDashboard />} />

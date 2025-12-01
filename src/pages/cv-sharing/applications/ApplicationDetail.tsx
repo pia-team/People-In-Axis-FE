@@ -384,9 +384,11 @@ const ApplicationDetail: React.FC = () => {
                         <IconButton edge="end" onClick={() => handleDownload(f.id, f.fileName)} aria-label="download">
                           <DownloadIcon />
                         </IconButton>
-                        <IconButton edge="end" onClick={() => handleDeleteFileClick(f.id)} aria-label="delete" sx={{ ml: 1 }}>
-                          <DeleteIcon />
-                        </IconButton>
+                        {!isCompanyManager && (
+                          <IconButton edge="end" onClick={() => handleDeleteFileClick(f.id)} aria-label="delete" sx={{ ml: 1 }}>
+                            <DeleteIcon />
+                          </IconButton>
+                        )}
                       </Box>
                     }
                   >
@@ -400,15 +402,15 @@ const ApplicationDetail: React.FC = () => {
             <Typography variant="h6" sx={{ mt: 3 }}>{t('application.meetings')}</Typography>
             <Divider sx={{ mb: 2 }} />
             <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-              <Button startIcon={<ScheduleIcon />} variant="outlined" onClick={openMeetingDialog}>{t('application.scheduleMeeting')}</Button>
-              <Button startIcon={<CalendarIcon />} variant="outlined" onClick={() => navigate(`/applications/${detail.id}/meetings`)}>{t('application.openScheduler')}</Button>
+              <Button startIcon={<ScheduleIcon />} variant="outlined" onClick={openMeetingDialog} disabled={isCompanyManager}>{t('application.scheduleMeeting')}</Button>
+              <Button startIcon={<CalendarIcon />} variant="outlined" onClick={() => navigate(`/applications/${detail.id}/meetings`)} disabled={isCompanyManager}>{t('application.openScheduler')}</Button>
             </Box>
             {detail.meetings && detail.meetings.length > 0 && (
               <List>
                 {detail.meetings.map(m => (
                   <ListItem key={m.id}
                     secondaryAction={
-                      <Button size="small" color="warning" onClick={() => handleCancelMeetingClick(m.id)} disabled={m.status === 'CANCELLED'}>
+                      <Button size="small" color="warning" onClick={() => handleCancelMeetingClick(m.id)} disabled={m.status === 'CANCELLED' || isCompanyManager}>
                         {m.status === 'CANCELLED' ? t('meeting.cancelled') : t('meeting.cancelMeeting')}
                       </Button>
                     }
@@ -428,11 +430,13 @@ const ApplicationDetail: React.FC = () => {
             <Typography variant="h6">{t('common.status')}</Typography>
             <Divider sx={{ mb: 2 }} />
             {/* Status selector */}
-            <FormControl fullWidth size="small">
-              <InputLabel>{t('common.status')}</InputLabel>
-              <Select 
-                value={newStatus} 
-                label={t('common.status')} 
+            {!isCompanyManager && (
+              <>
+                <FormControl fullWidth size="small">
+                  <InputLabel>{t('common.status')}</InputLabel>
+                  <Select
+                value={newStatus}
+                label={t('common.status')}
                 onChange={(e) => setNewStatus(e.target.value as ApplicationStatus)}
                 renderValue={(value) => {
                   // Map status enum values to translation keys for display
@@ -449,9 +453,9 @@ const ApplicationDetail: React.FC = () => {
                   return statusMap[value as ApplicationStatus] || (value as string).replace(/_/g, ' ');
                 }}
               >
-                {statusOptions.map(s => {
+                    {statusOptions.map(s => {
                   // Map status enum values to translation keys
-                  const statusMap: Record<ApplicationStatus, string> = {
+                      const statusMap: Record<ApplicationStatus, string> = {
                     [ApplicationStatus.NEW]: t('application.new'),
                     [ApplicationStatus.IN_REVIEW]: t('application.inReview'),
                     [ApplicationStatus.FORWARDED]: t('application.forwarded'),
@@ -462,15 +466,22 @@ const ApplicationDetail: React.FC = () => {
                     [ApplicationStatus.ARCHIVED]: t('application.archived'),
                   };
                   const label = statusMap[s] || s.replace(/_/g, ' ');
-                  return (
-                    <MenuItem key={s} value={s}>{label}</MenuItem>
-                  );
-                })}
-              </Select>
-            </FormControl>
-            <Button sx={{ mt: 2 }} fullWidth variant="contained" onClick={handleStatusChange} disabled={saving}>
-              {t('application.updateStatus')}
-            </Button>
+                      return (
+                        <MenuItem key={s} value={s}>{label}</MenuItem>
+                      );
+                    })}
+                  </Select>
+                </FormControl>
+                <Button sx={{ mt: 2 }} fullWidth variant="contained" onClick={handleStatusChange} disabled={saving}>
+                  {t('application.updateStatus')}
+                </Button>
+              </>
+            )}
+            {isCompanyManager && (
+              <Typography variant="body2" color="text.secondary">
+                {t(`application.${detail.status?.toLowerCase().replace(/_/g, '') || ''}`) || detail.status.replace('_', ' ')}
+              </Typography>
+            )}
             <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
               {detail.poolCvId && (
                 <Button 
@@ -482,13 +493,13 @@ const ApplicationDetail: React.FC = () => {
                   {t('application.viewApplicantDetails')}
                 </Button>
               )}
-              <Button size="small" startIcon={<ForwardIcon />} onClick={() => navigate(`/cv-sharing/applications/${detail.id}/forward`)}>{t('application.forwardToReviewer')}</Button>
+              <Button size="small" startIcon={<ForwardIcon />} onClick={() => navigate(`/cv-sharing/applications/${detail.id}/forward`)} disabled={isCompanyManager}>{t('application.forwardToReviewer')}</Button>
             </Box>
 
             <Typography variant="h6" sx={{ mt: 3 }}>{t('application.ratings')}</Typography>
             <Divider sx={{ mb: 2 }} />
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Rating value={ratingScore || 0} onChange={(_, v) => setRatingScore(v)} />
+              <Rating value={ratingScore || 0} onChange={(_, v) => setRatingScore(v)} disabled={isCompanyManager} />
               <Button size="small" variant="outlined" startIcon={<StarIcon />} onClick={handleAddRating} disabled={isCompanyManager || !ratingScore || ratingSaving}>{t('application.rate')}</Button>
             </Box>
             {detail.ratings && detail.ratings.length > 0 && (
@@ -591,8 +602,8 @@ const ApplicationDetail: React.FC = () => {
             <Typography variant="h6" sx={{ mt: 3 }}>{t('application.comments')}</Typography>
             <Divider sx={{ mb: 2 }} />
             <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-              <TextField fullWidth size="small" placeholder={t('application.commentPlaceholder')} value={commentText} onChange={(e) => setCommentText(e.target.value)} />
-              <Button variant="outlined" startIcon={<CommentIcon />} onClick={handleAddComment} disabled={commentSaving || !commentText.trim()}>
+              <TextField fullWidth size="small" placeholder={t('application.commentPlaceholder')} value={commentText} onChange={(e) => setCommentText(e.target.value)} disabled={isCompanyManager} />
+              <Button variant="outlined" startIcon={<CommentIcon />} onClick={handleAddComment} disabled={commentSaving || !commentText.trim() || isCompanyManager}>
                 {t('common.add')}
               </Button>
             </Box>
@@ -611,10 +622,10 @@ const ApplicationDetail: React.FC = () => {
       </Paper>
 
       {/* Meeting Dialog */}
-      <Dialog 
-        open={meetingOpen} 
-        onClose={closeMeetingDialog} 
-        maxWidth="sm" 
+      <Dialog
+        open={meetingOpen}
+        onClose={closeMeetingDialog}
+        maxWidth="sm"
         fullWidth
         fullScreen={isMobile}
       >
