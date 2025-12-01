@@ -551,6 +551,7 @@
     "updatedAt": "Güncellenme Tarihi",
     "createPoolCV": "Havuz CV Oluştur",
     "editPoolCV": "Havuz CV Düzenle",
+    "addCVToTalentPool": "CV'yi Yetenek Havuzuna Ekle",
     "deletePoolCV": "Havuz CV Sil",
     "poolCVDetails": "Havuz CV Detayları",
     "matchPositions": "Pozisyonları Eşleştir",
