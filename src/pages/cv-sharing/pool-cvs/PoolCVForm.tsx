@@ -426,7 +426,7 @@ const PoolCVForm: React.FC = () => {
               <Controller
                 name="kvkkConsent"
                 control={control}
-                rules={!id ? { required: 'KVKK consent is required' } : {}}
+                rules={!id ? { required: t('validation.kvkkConsentRequired') } : {}}
                 render={({ field }) => (
                   <FormControl error={!!errors.kvkkConsent}>
                     <FormControlLabel 
@@ -439,8 +439,8 @@ const PoolCVForm: React.FC = () => {
                       } 
                       label={
                         id && hasKvkkConsent 
-                          ? "KVKK consent has been given (cannot be changed)" 
-                          : "I consent to the processing of my personal data (KVKK)"
+                          ? t('poolCV.kvkkConsentGiven')
+                          : t('poolCV.kvkkConsentLabel')
                       } 
                     />
                     {errors.kvkkConsent && (
@@ -448,7 +448,7 @@ const PoolCVForm: React.FC = () => {
                     )}
                     {id && hasKvkkConsent && (
                       <FormHelperText>
-                        KVKK consent was provided when this CV was created and cannot be modified.
+                        {t('poolCV.kvkkConsentCannotBeModified')}
                       </FormHelperText>
                     )}
                   </FormControl>
