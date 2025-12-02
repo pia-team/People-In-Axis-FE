@@ -405,7 +405,9 @@
     "minExperienceYears": "Minimum Deneyim (yıl)",
     "minSalary": "Minimum Maaş",
     "maxSalary": "Maksimum Maaş",
-    "onsite": "Yerinde"
+    "onsite": "Yerinde",
+    "noDepartment": "Departman belirtilmemiş",
+    "noLocation": "Konum belirtilmemiş"
   },
   "application": {
     "failedToLoadPosition": "Pozisyon detayları yüklenemedi",

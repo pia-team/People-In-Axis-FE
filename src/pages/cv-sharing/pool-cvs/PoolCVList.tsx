@@ -567,6 +567,16 @@ const PoolCVList: React.FC = () => {
                     sorting: { sortModel: [{ field: 'name', sort: 'asc' }] }
                   }}
                 onRowClick={(params) => navigate(`/cv-sharing/pool-cvs/${params.row.id}`)}
+                localeText={{
+                  MuiTablePagination: {
+                    labelRowsPerPage: t('common.rowsPerPage'),
+                  },
+                  columnMenuSortAsc: t('common.sortByAsc'),
+                  columnMenuSortDesc: t('common.sortByDesc'),
+                  columnMenuFilter: t('common.filter'),
+                  columnMenuHideColumn: t('common.hideColumn'),
+                  columnMenuManageColumns: t('common.manageColumns'),
+                } as any}
                 sx={{ 
                   border: 'none',
                   '& .MuiDataGrid-row': {
