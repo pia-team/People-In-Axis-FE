@@ -88,9 +88,12 @@ const PoolCVList: React.FC = () => {
   const [matchStatusLoading, setMatchStatusLoading] = useState(false);
 
   const { data, isPending, refetch } = useQuery<PagedResponse<PoolCV>>({
-    queryKey: ['poolCVs', statusFilter, experienceFilter],
+    queryKey: ['poolCVs', statusFilter, experienceFilter, searchTerm],
     queryFn: async () => {
-      const params: Record<string, unknown> = {};
+      const params: Record<string, unknown> = {
+        size: 1000, // Get all records to support client-side filtering
+        page: 0
+      };
       if (statusFilter !== 'all') {
         params.active = statusFilter === 'active';
       }
@@ -98,6 +101,9 @@ const PoolCVList: React.FC = () => {
         const [min, max] = experienceFilter.split('-').map(Number);
         params.minExperience = min;
         params.maxExperience = max || 99;
+      }
+      if (searchTerm) {
+        params.q = searchTerm;
       }
       return await poolCVService.getPoolCVs(params);
     }
