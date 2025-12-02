@@ -197,7 +197,9 @@ const PoolCVDetail: React.FC = () => {
                 {canEdit && (
                   <>
                     <Tooltip title={detail.isActive ? t('common.deactivate') : t('common.activate')}>
-                      <Button variant="outlined" onClick={handleToggleActive} startIcon={detail.isActive ? <InactiveIcon /> : <ActiveIcon />} disabled={toggling}>{t('common.status')}</Button>
+                      <span>
+                        <Button variant="outlined" onClick={handleToggleActive} startIcon={detail.isActive ? <InactiveIcon /> : <ActiveIcon />} disabled={toggling}>{t('common.status')}</Button>
+                      </span>
                     </Tooltip>
                     <Button variant="outlined" startIcon={<EditIcon />} onClick={() => navigate(`/cv-sharing/pool-cvs/${detail.id}/edit`)}>{t('common.edit')}</Button>
                   </>
