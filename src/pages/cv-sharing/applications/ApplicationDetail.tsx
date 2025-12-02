@@ -39,9 +39,9 @@ import {
   Schedule as ScheduleIcon,
   Save as SaveIcon,
   ForwardToInbox as ForwardIcon,
-  Person as PersonIcon,
   Fingerprint as IdIcon,
-  Edit as EditIcon
+  Edit as EditIcon,
+  AccountCircle as AccountCircleIcon
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
@@ -306,17 +306,29 @@ const ApplicationDetail: React.FC = () => {
         <Grid container spacing={3}>
           <Grid item xs={12}>
             <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Avatar>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
+                <Avatar sx={{ width: 56, height: 56 }}>
                   {detail.firstName[0]}{detail.lastName[0]}
                 </Avatar>
-                <Box>
-                  <Typography variant="h5">
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="h5" gutterBottom>
                     {detail.firstName} {detail.lastName}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
                     {t('application.applyingFor')}: {detail.positionTitle || detail.positionId}
                   </Typography>
+                  {detail.poolCvId && (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      size="small"
+                      startIcon={<AccountCircleIcon />}
+                      onClick={() => navigate(`/cv-sharing/pool-cvs/${detail.poolCvId}`)}
+                      sx={{ mt: 1 }}
+                    >
+                      {t('application.viewApplicantProfile')}
+                    </Button>
+                  )}
                 </Box>
               </Box>
               <Chip label={t(`application.${detail.status?.toLowerCase().replace(/_/g, '') || ''}`) || detail.status.replace('_', ' ')} color={statusColor(detail.status)} />
@@ -482,18 +494,17 @@ const ApplicationDetail: React.FC = () => {
                 {t(`application.${detail.status?.toLowerCase().replace(/_/g, '') || ''}`) || detail.status.replace('_', ' ')}
               </Typography>
             )}
-            <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-              {detail.poolCvId && (
-                <Button 
-                  size="small" 
-                  startIcon={<PersonIcon />} 
-                  onClick={() => navigate(`/cv-sharing/pool-cvs/${detail.poolCvId}`)}
-                  variant="outlined"
-                >
-                  {t('application.viewApplicantDetails')}
-                </Button>
-              )}
-              <Button size="small" startIcon={<ForwardIcon />} onClick={() => navigate(`/cv-sharing/applications/${detail.id}/forward`)} disabled={isCompanyManager}>{t('application.forwardToReviewer')}</Button>
+            <Box sx={{ display: 'flex', gap: 1, mt: 1, flexDirection: 'column' }}>
+              <Button 
+                fullWidth
+                size="small" 
+                startIcon={<ForwardIcon />} 
+                onClick={() => navigate(`/cv-sharing/applications/${detail.id}/forward`)} 
+                disabled={isCompanyManager}
+                variant="outlined"
+              >
+                {t('application.forwardToReviewer')}
+              </Button>
             </Box>
 
             <Typography variant="h6" sx={{ mt: 3 }}>{t('application.ratings')}</Typography>

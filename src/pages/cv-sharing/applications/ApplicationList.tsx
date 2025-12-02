@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -31,7 +31,7 @@ import {
   Forward as ForwardIcon,
   MoreVert as MoreIcon,
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { applicationService, positionService } from '@/services/cv-sharing';
@@ -66,6 +66,7 @@ const serverSortFieldMap: Record<string, string> = {
 const ApplicationList: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { enqueueSnackbar } = useSnackbar();
   const [paginationModel, setPaginationModel] = React.useState<GridPaginationModel>(
     { page: 0, pageSize: 10 }
@@ -155,6 +156,36 @@ const ApplicationList: React.FC = () => {
   };
 
   const queryClient = useQueryClient();
+
+  // Refresh applications when page becomes visible (e.g., after returning from match page)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Invalidate and refetch when page becomes visible
+        queryClient.invalidateQueries({ queryKey: ['applications'] });
+        refetch();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [queryClient, refetch]);
+
+  // Refresh when location changes (e.g., returning from match page)
+  useEffect(() => {
+    // Invalidate cache when navigating to this page
+    queryClient.invalidateQueries({ queryKey: ['applications'] });
+    refetch();
+  }, [location.pathname, queryClient, refetch]);
+
+  const handleRefresh = async () => {
+    // Invalidate all application queries and refetch
+    await queryClient.invalidateQueries({ queryKey: ['applications'] });
+    await refetch();
+    enqueueSnackbar(t('common.refreshed'), { variant: 'success' });
+  };
 
   const handleStatusChange = async (applicationId: string, newStatus: ApplicationStatus) => {
     try {
@@ -395,7 +426,7 @@ const ApplicationList: React.FC = () => {
       title={t('application.titlePlural')}
       actions={
         <Stack direction="row" spacing={1}>
-          <Button variant="outlined" onClick={() => refetch()}>{t('common.refresh')}</Button>
+          <Button variant="outlined" onClick={handleRefresh}>{t('common.refresh')}</Button>
         </Stack>
       }
     >
