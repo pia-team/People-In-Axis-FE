@@ -52,7 +52,6 @@ import { MatchedPosition } from '@/types/cv-sharing/matched-position';
 import { useKeycloak } from '@/providers/KeycloakProvider';
 import PageContainer from '@/components/ui/PageContainer';
 import SectionCard from '@/components/ui/SectionCard';
-import { Tooltip as MuiTooltip } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -646,13 +645,22 @@ const PoolCVList: React.FC = () => {
             setMatchDialog({ open: false, poolCVId: null, positions: [] });
             setExistingMatches({});
           }}
-          maxWidth="sm"
+          maxWidth="md"
           fullWidth
         >
-          <DialogTitle>{t('poolCV.matchedPositions')}</DialogTitle>
+          <DialogTitle>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Typography variant="h6" fontWeight="bold">
+                {t('poolCV.matchedPositions')}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {matchDialog.positions.length} {t('poolCV.positionsFound')}
+              </Typography>
+            </Box>
+          </DialogTitle>
           <DialogContent>
             {matchDialog.positions.length > 0 ? (
-              <List>
+              <Stack spacing={2} sx={{ mt: 1 }}>
                 {matchDialog.positions.map((matched) => {
                   const getMatchColor = (score: number) => {
                     if (score >= 80) return 'success';
@@ -661,109 +669,258 @@ const PoolCVList: React.FC = () => {
                     return 'error';
                   };
                   
+                  const isAlreadyMatched = existingMatches[matched.position.id];
+                  const matchColor = getMatchColor(matched.matchScore ?? 0);
+                  
                   return (
-                    <ListItem key={matched.position.id}>
-                      <Box sx={{ flex: 1 }}>
-                        <Typography variant="subtitle1" fontWeight="bold">
-                          {matched.position.title}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {matched.position.department || t('position.noDepartment')} • {matched.position.location || t('position.noLocation')}
-                        </Typography>
-                        
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
-                          <MuiTooltip 
-                            title={
-                              <Box>
-                                <Typography variant="caption" display="block">
-                                  {t('position.skills')}: {Math.round(matched.breakdown.skillsScore * 100)}%
-                                </Typography>
-                                <Typography variant="caption" display="block">
-                                  {t('position.experienceYears')}: {Math.round(matched.breakdown.experienceScore * 100)}%
-                                </Typography>
-                                <Typography variant="caption" display="block">
-                                  {t('position.languages')}: {Math.round(matched.breakdown.languageScore * 100)}%
-                                </Typography>
-                                <Typography variant="caption" display="block">
-                                  {t('poolCV.aiSimilarity')}: {Math.round(matched.breakdown.semanticScore * 100)}%
-                                </Typography>
-                              </Box>
-                            }
-                          >
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Typography variant="body2" fontWeight="bold">
-                                {t('common.score')}:
-                              </Typography>
-                              <Chip
-                                label={`${matched.matchScore ?? '--'}%`}
-                                color={getMatchColor(matched.matchScore ?? 0)}
-                                size="small"
-                              />
-                            </Box>
-                          </MuiTooltip>
-                          
-                          <Chip
-                            label={t(`poolCV.matchLevel.${matched.matchLevel?.toUpperCase() || 'UNKNOWN'}`) || matched.matchLevel}
-                            variant="outlined"
-                            size="small"
-                            color={getMatchColor(matched.matchScore ?? 0)}
-                          />
+                    <Card 
+                      key={matched.position.id}
+                      sx={{ 
+                        border: isAlreadyMatched ? '2px solid' : '1px solid',
+                        borderColor: isAlreadyMatched ? 'success.main' : 'divider',
+                        backgroundColor: isAlreadyMatched ? 'success.50' : 'background.paper',
+                        position: 'relative'
+                      }}
+                      elevation={isAlreadyMatched ? 2 : 1}
+                    >
+                      {isAlreadyMatched && (
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: 8,
+                            right: 8,
+                            backgroundColor: 'success.main',
+                            color: 'white',
+                            px: 1.5,
+                            py: 0.5,
+                            borderRadius: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 0.5
+                          }}
+                        >
+                          <ActiveIcon sx={{ fontSize: 16 }} />
+                          <Typography variant="caption" fontWeight="bold">
+                            {t('poolCV.alreadyMatched')}
+                          </Typography>
+                        </Box>
+                      )}
+                      
+                      <CardContent>
+                        {/* Position Header */}
+                        <Box sx={{ mb: 2, pr: isAlreadyMatched ? 10 : 0 }}>
+                          <Typography variant="h6" fontWeight="bold" gutterBottom>
+                            {matched.position.title}
+                          </Typography>
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
+                            <Chip 
+                              label={matched.position.department || t('position.noDepartment')} 
+                              size="small" 
+                              variant="outlined"
+                            />
+                            <Chip 
+                              label={matched.position.location || t('position.noLocation')} 
+                              size="small" 
+                              variant="outlined"
+                            />
+                          </Box>
                         </Box>
                         
-                        {matched.missingRequiredSkills && matched.missingRequiredSkills.length > 0 && (
-                          <Box sx={{ mt: 1 }}>
-                            <Typography variant="caption" color="error">
-                              {t('poolCV.missing')}: {matched.missingRequiredSkills.join(', ')}
+                        <Divider sx={{ my: 2 }} />
+                        
+                        {/* Match Score Section */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography variant="body2" color="text.secondary" gutterBottom>
+                              {t('common.score')}
                             </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Chip
+                                label={`${matched.matchScore ?? '--'}%`}
+                                color={matchColor}
+                                size="medium"
+                                sx={{ fontSize: '1rem', fontWeight: 'bold', px: 1 }}
+                              />
+                              <Chip
+                                label={t(`poolCV.matchLevel.${matched.matchLevel?.toUpperCase() || 'UNKNOWN'}`) || matched.matchLevel}
+                                variant="outlined"
+                                size="small"
+                                color={matchColor}
+                              />
+                            </Box>
+                          </Box>
+                        </Box>
+                        
+                        {/* Breakdown Details */}
+                        {matched.breakdown && (
+                          <Box sx={{ mb: 2 }}>
+                            <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                              {t('poolCV.breakdown')}
+                            </Typography>
+                            <Grid container spacing={1} sx={{ mt: 0.5 }}>
+                              <Grid item xs={6} sm={3}>
+                                <Box>
+                                  <Typography variant="caption" color="text.secondary">
+                                    {t('position.skills')}
+                                  </Typography>
+                                  <Typography 
+                                    variant="body2" 
+                                    fontWeight="medium"
+                                    color={(!matched.position.skills || matched.position.skills.length === 0) ? 'text.secondary' : 'text.primary'}
+                                  >
+                                    {(!matched.position.skills || matched.position.skills.length === 0) 
+                                      ? t('common.notSpecified')
+                                      : `${Math.round((matched.breakdown.skillsScore || 0) * 100)}%`}
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                              <Grid item xs={6} sm={3}>
+                                <Box>
+                                  <Typography variant="caption" color="text.secondary">
+                                    {t('position.experienceYears')}
+                                  </Typography>
+                                  <Typography 
+                                    variant="body2" 
+                                    fontWeight="medium"
+                                    color={(!matched.position.minExperience || matched.position.minExperience === 0) ? 'text.secondary' : 'text.primary'}
+                                  >
+                                    {(!matched.position.minExperience || matched.position.minExperience === 0)
+                                      ? t('common.notSpecified')
+                                      : `${Math.round((matched.breakdown.experienceScore || 0) * 100)}%`}
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                              <Grid item xs={6} sm={3}>
+                                <Box>
+                                  <Typography variant="caption" color="text.secondary">
+                                    {t('position.languages')}
+                                  </Typography>
+                                  <Typography 
+                                    variant="body2" 
+                                    fontWeight="medium"
+                                    color={(!matched.position.languages || matched.position.languages.length === 0) ? 'text.secondary' : 'text.primary'}
+                                  >
+                                    {(!matched.position.languages || matched.position.languages.length === 0)
+                                      ? t('common.notSpecified')
+                                      : `${Math.round((matched.breakdown.languageScore || 0) * 100)}%`}
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                              <Grid item xs={6} sm={3}>
+                                <Box>
+                                  <Typography variant="caption" color="text.secondary">
+                                    {t('poolCV.aiSimilarity')}
+                                  </Typography>
+                                  <Typography variant="body2" fontWeight="medium">
+                                    {Math.round((matched.breakdown.semanticScore || 0) * 100)}%
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                            </Grid>
                           </Box>
                         )}
                         
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                          {(() => {
-                            // Map backend recommendation strings to translation keys
-                            const recommendationMap: Record<string, string> = {
-                              'Highly recommended candidate. Strong match across all criteria.': t('poolCV.highlyRecommended'),
-                              'Good candidate with some skill gaps. Consider for interview with skills assessment.': t('poolCV.goodCandidateSkillGaps'),
-                              'Strong skills but limited experience. Good potential for growth.': t('poolCV.strongSkillsLimitedExperience'),
-                              'Solid candidate. Recommended for interview.': t('poolCV.solidCandidate'),
-                              'Moderate match. Review specific requirements before proceeding.': t('poolCV.moderateMatch'),
-                              'Limited match. Consider only if other candidates unavailable.': t('poolCV.limitedMatch'),
-                            };
-                            return recommendationMap[matched.recommendation] || matched.recommendation;
-                          })()}
-                        </Typography>
-                      </Box>
+                        {/* Missing Skills */}
+                        {matched.missingRequiredSkills && matched.missingRequiredSkills.length > 0 && (
+                          <Box sx={{ mb: 2, p: 1.5, bgcolor: 'error.50', borderRadius: 1, border: '1px solid', borderColor: 'error.200' }}>
+                            <Typography variant="subtitle2" color="error.main" fontWeight="bold" gutterBottom>
+                              {t('poolCV.missingRequiredSkills')}
+                            </Typography>
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                              {matched.missingRequiredSkills.map((skill, idx) => (
+                                <Chip
+                                  key={idx}
+                                  label={skill}
+                                  size="small"
+                                  color="error"
+                                  variant="outlined"
+                                />
+                              ))}
+                            </Box>
+                          </Box>
+                        )}
+                        
+                        {/* Matched Skills */}
+                        {matched.matchedSkills && matched.matchedSkills.length > 0 && (
+                          <Box sx={{ mb: 2 }}>
+                            <Typography variant="subtitle2" color="success.main" fontWeight="bold" gutterBottom>
+                              {t('poolCV.matchedSkills')} ({matched.matchedSkills.length})
+                            </Typography>
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                              {matched.matchedSkills.slice(0, 10).map((skill, idx) => (
+                                <Chip
+                                  key={idx}
+                                  label={skill}
+                                  size="small"
+                                  color="success"
+                                  variant="outlined"
+                                />
+                              ))}
+                              {matched.matchedSkills.length > 10 && (
+                                <Chip
+                                  label={`+${matched.matchedSkills.length - 10} ${t('common.more')}`}
+                                  size="small"
+                                  variant="outlined"
+                                />
+                              )}
+                            </Box>
+                          </Box>
+                        )}
+                        
+                        {/* Recommendation */}
+                        {matched.recommendation && (
+                          <Box sx={{ 
+                            mt: 2, 
+                            p: 2, 
+                            bgcolor: 'info.50', 
+                            borderRadius: 1,
+                            borderLeft: '4px solid',
+                            borderColor: matchColor === 'success' ? 'success.main' : 
+                                       matchColor === 'primary' ? 'primary.main' :
+                                       matchColor === 'warning' ? 'warning.main' : 'error.main'
+                          }}>
+                            <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                              {t('poolCV.recommendation')}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-wrap' }}>
+                              {matched.recommendation}
+                            </Typography>
+                          </Box>
+                        )}
+                      </CardContent>
                       
-                      <Stack direction="row" spacing={1} alignItems="center">
+                      <CardActions sx={{ justifyContent: 'flex-end', gap: 1, px: 2, pb: 2 }}>
                         <Button
-                          size="small"
                           variant="outlined"
+                          startIcon={<ViewIcon />}
                           onClick={() => navigate(`/cv-sharing/positions/${matched.position.id}`)}
                         >
                           {t('position.viewPosition')}
                         </Button>
-                        {!existingMatches[matched.position.id] && (
+                        {!isAlreadyMatched && (
                           <Button
-                            size="small"
                             variant="contained"
+                            color={matchColor}
                             onClick={() => handleConfirmMatch(matchDialog.poolCVId!, matched.position.id, matched.matchScore)}
                             disabled={confirmBusyId === matched.position.id || matchStatusLoading}
                           >
                             {confirmBusyId === matched.position.id ? t('common.matching') : t('poolCV.confirmMatch')}
                           </Button>
                         )}
-                      </Stack>
-                      {existingMatches[matched.position.id] && (
-                        <Typography variant="caption" color="success.main" sx={{ mt: 0.5, display: 'block' }}>
-                          {t('poolCV.alreadyMatched')}
-                        </Typography>
-                      )}
-                    </ListItem>
+                      </CardActions>
+                    </Card>
                   );
                 })}
-              </List>
+              </Stack>
             ) : (
-              <Typography>{t('poolCV.noMatchingPositions')}</Typography>
+              <Box sx={{ textAlign: 'center', py: 4 }}>
+                <Typography variant="h6" color="text.secondary">
+                  {t('poolCV.noMatchingPositions')}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  {t('poolCV.tryAdjustingFilters')}
+                </Typography>
+              </Box>
             )}
           </DialogContent>
           <DialogActions>
