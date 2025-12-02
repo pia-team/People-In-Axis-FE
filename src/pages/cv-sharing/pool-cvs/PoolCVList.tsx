@@ -474,7 +474,7 @@ const PoolCVList: React.FC = () => {
                         />
                       </ListItem>
                     )}
-                    {cv.experienceYears !== undefined && (
+                    {cv.experienceYears != null && cv.experienceYears > 0 && (
                       <ListItem disableGutters>
                         <SchoolIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
                         <ListItemText>
