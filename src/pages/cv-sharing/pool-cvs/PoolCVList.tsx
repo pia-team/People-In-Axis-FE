@@ -250,17 +250,20 @@ const PoolCVList: React.FC = () => {
         if (!row) return '';
         return `${row.firstName || ''} ${row.lastName || ''}`.trim();
       },
-      renderCell: (params: GridRenderCellParams) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Avatar sx={{ width: 28, height: 28 }}>
-            {String((params.row as PoolCV).firstName || '').charAt(0)}
-            {String((params.row as PoolCV).lastName || '').charAt(0)}
-          </Avatar>
-          <Typography variant="body2">
-            {(params.row as PoolCV).firstName} {(params.row as PoolCV).lastName}
-          </Typography>
-        </Box>
-      )
+      renderCell: (params: GridRenderCellParams) => {
+        const cv = params.row as PoolCV;
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Avatar sx={{ width: 28, height: 28 }}>
+              {String(cv.firstName || '').charAt(0)}
+              {String(cv.lastName || '').charAt(0)}
+            </Avatar>
+            <Typography variant="body2">
+              {cv.firstName} {cv.lastName}
+            </Typography>
+          </Box>
+        );
+      }
     },
     { field: 'email', headerName: t('poolCV.email'), flex: 1, minWidth: 200 },
     { 
@@ -563,7 +566,13 @@ const PoolCVList: React.FC = () => {
                     pagination: { paginationModel: { pageSize: 100 } },
                     sorting: { sortModel: [{ field: 'name', sort: 'asc' }] }
                   }}
-                sx={{ border: 'none' }}
+                onRowClick={(params) => navigate(`/cv-sharing/pool-cvs/${params.row.id}`)}
+                sx={{ 
+                  border: 'none',
+                  '& .MuiDataGrid-row': {
+                    cursor: 'pointer'
+                  }
+                }}
               />
             </Box>
           )}
