@@ -62,6 +62,18 @@ export const KeycloakProvider: React.FC<KeycloakProviderProps> = ({
       return;
     }
 
+    // Skip Keycloak for public system pages (like /system/events)
+    const publicPaths = ['/system/events', '/system/'];
+    const currentPath = window.location.pathname;
+    if (publicPaths.some(p => currentPath.startsWith(p))) {
+      setInitialized(true);
+      setAuthenticated(false); // Not authenticated but allow access
+      setToken(undefined);
+      setAuthToken(null);
+      setTokenParsed(undefined);
+      return;
+    }
+
     const initKeycloak = async () => {
       try {
         const kc = new Keycloak(keycloakConfig);
