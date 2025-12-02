@@ -402,7 +402,9 @@
     "minExperienceYears": "Minimum Experience (years)",
     "minSalary": "Min Salary",
     "maxSalary": "Max Salary",
-    "onsite": "Onsite"
+    "onsite": "Onsite",
+    "noDepartment": "No department",
+    "noLocation": "No location"
   },
   "application": {
     "failedToLoadPosition": "Failed to load position details",
