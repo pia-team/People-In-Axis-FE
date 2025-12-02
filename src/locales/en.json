@@ -405,8 +405,8 @@
     "minSalary": "Min Salary",
     "maxSalary": "Max Salary",
     "onsite": "Onsite",
-    "noDepartment": "No department specified",
-    "noLocation": "No location specified"
+    "noDepartment": "No department",
+    "noLocation": "No location"
   },
   "application": {
     "failedToLoadPosition": "Failed to load position details",

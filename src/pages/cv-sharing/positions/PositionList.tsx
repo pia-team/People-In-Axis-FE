@@ -25,9 +25,9 @@ import {
   Archive as ArchiveIcon,
   MoreVert as MoreVertIcon
 } from '@mui/icons-material';
-import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridRenderCellParams, GridSortModel } from '@mui/x-data-grid';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { positionService } from '@/services/cv-sharing/positionService';
 import { Position, PositionStatus, WorkType } from '@/types/cv-sharing';
@@ -54,17 +54,25 @@ const PositionList: React.FC = () => {
   const [departments, setDepartments] = useState<string[]>([]);
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
+  const [sortModel, setSortModel] = useState<GridSortModel>([]);
+
+  // Build sort parameter from sortModel (e.g. "title,asc")
+  const sortParam = sortModel.length > 0 
+    ? `${sortModel[0].field},${sortModel[0].sort}` 
+    : undefined;
 
   // Fetch positions
   const { data, isPending, isError, refetch } = useQuery({
-    queryKey: ['positions', page, pageSize, searchQuery, statusFilter, departmentFilter],
+    queryKey: ['positions', page, pageSize, searchQuery, statusFilter, departmentFilter, sortParam],
     queryFn: () => positionService.getPositions({
       page,
       size: pageSize,
       q: searchQuery,
       status: isHR ? (statusFilter || undefined) : PositionStatus.ACTIVE,
-      department: departmentFilter || undefined
-    })
+      department: departmentFilter || undefined,
+      sort: sortParam
+    }),
+    placeholderData: keepPreviousData
   });
 
   // Ensure non-HR users are locked to ACTIVE status
@@ -392,12 +400,18 @@ const PositionList: React.FC = () => {
               getRowId={(row) => row.id}
               loading={isPending}
               paginationMode="server"
+              sortingMode="server"
               rowCount={data?.pageInfo?.totalElements || 0}
               pageSizeOptions={[5, 10, 25, 50]}
               paginationModel={{ page, pageSize }}
               onPaginationModelChange={(model) => {
                 setPage(model.page);
                 setPageSize(model.pageSize);
+              }}
+              sortModel={sortModel}
+              onSortModelChange={(model) => {
+                setSortModel(model);
+                setPage(0); // Sort değiştiğinde ilk sayfaya dön
               }}
               localeText={{
                 MuiTablePagination: {

@@ -411,6 +411,7 @@ export interface PositionFilter {
   q?: string;
   page?: number;
   size?: number;
+  sort?: string; // e.g. "createdAt,asc" or "title,desc"
 }
 
 export interface ApplicationFilter {
