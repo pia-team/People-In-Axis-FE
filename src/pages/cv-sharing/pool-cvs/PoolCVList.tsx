@@ -111,11 +111,11 @@ const PoolCVList: React.FC = () => {
 
 
   const poolCVs = (data?.content || []);
-  
+
   // Backend now handles COMPANY_MANAGER filtering server-side
   // No need for client-side filtering as backend returns only CVs created by COMPANY_MANAGER
   const companyManagerFilteredCVs = poolCVs;
-  
+
   const filteredPoolCVs = companyManagerFilteredCVs.filter(cv =>
     cv.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     cv.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -184,15 +184,16 @@ const PoolCVList: React.FC = () => {
 
   const handleDelete = async () => {
     if (!selectedCV) return;
-    
+
     try {
       await poolCVService.deletePoolCV(selectedCV.id);
       enqueueSnackbar(t('poolCV.poolCVDeleted'), { variant: 'success' });
       setDeleteDialogOpen(false);
       setSelectedCV(null);
       await queryClient.invalidateQueries({ queryKey: ['poolCVs'] });
-    } catch (error) {
-      enqueueSnackbar(t('error.deleteFailed'), { variant: 'error' });
+    } catch (error: any) {
+      const message = error.response?.data?.message || t('error.deleteFailed');
+      enqueueSnackbar(message, { variant: 'error' });
     }
   };
 
@@ -271,16 +272,16 @@ const PoolCVList: React.FC = () => {
       }
     },
     { field: 'email', headerName: t('poolCV.email'), flex: 1, minWidth: 200 },
-    { 
-      field: 'phone', 
-      headerName: t('poolCV.phone'), 
-      width: 140, 
+    {
+      field: 'phone',
+      headerName: t('poolCV.phone'),
+      width: 140,
       valueGetter: (params) => (params.row as PoolCV)?.phone || ''
     },
     {
-      field: 'role', 
-      headerName: t('position.title'), 
-      flex: 1, 
+      field: 'role',
+      headerName: t('position.title'),
+      flex: 1,
       minWidth: 180,
       valueGetter: (params) => {
         const row = params.row as PoolCV;
@@ -289,8 +290,8 @@ const PoolCVList: React.FC = () => {
       }
     },
     {
-      field: 'isActive', 
-      headerName: t('common.status'), 
+      field: 'isActive',
+      headerName: t('common.status'),
       width: 120,
       valueGetter: (params) => (params.row as PoolCV)?.isActive ? 1 : 0,
       renderCell: (params: GridRenderCellParams) => {
@@ -305,10 +306,10 @@ const PoolCVList: React.FC = () => {
         );
       }
     },
-    { 
-      field: 'fileCount', 
-      headerName: t('poolCV.files'), 
-      width: 90, 
+    {
+      field: 'fileCount',
+      headerName: t('poolCV.files'),
+      width: 90,
       type: 'number',
       valueGetter: (params) => (params.row as PoolCV)?.fileCount ?? 0
     },
@@ -387,43 +388,43 @@ const PoolCVList: React.FC = () => {
                 )
               }}
             />
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>{t('poolCV.experienceYears')}</InputLabel>
-            <Select
-              value={experienceFilter}
-              onChange={(e) => setExperienceFilter(e.target.value)}
-              label={t('poolCV.experienceYears')}
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <InputLabel>{t('poolCV.experienceYears')}</InputLabel>
+              <Select
+                value={experienceFilter}
+                onChange={(e) => setExperienceFilter(e.target.value)}
+                label={t('poolCV.experienceYears')}
+              >
+                <MenuItem value="all">{t('common.all')}</MenuItem>
+                <MenuItem value="0-2">0-2 {t('common.years')}</MenuItem>
+                <MenuItem value="2-5">2-5 {t('common.years')}</MenuItem>
+                <MenuItem value="5-10">5-10 {t('common.years')}</MenuItem>
+                <MenuItem value="10-99">10+ {t('common.years')}</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <InputLabel>{t('common.status')}</InputLabel>
+              <Select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
+                label={t('common.status')}
+              >
+                <MenuItem value="all">{t('common.all')}</MenuItem>
+                <MenuItem value="active">{t('poolCV.active')}</MenuItem>
+                <MenuItem value="inactive">{t('poolCV.inactive')}</MenuItem>
+              </Select>
+            </FormControl>
+            <ToggleButtonGroup
+              size="small"
+              exclusive
+              value={viewMode}
+              onChange={(_, v) => v && setViewMode(v)}
+              sx={{ ml: 'auto' }}
             >
-              <MenuItem value="all">{t('common.all')}</MenuItem>
-              <MenuItem value="0-2">0-2 {t('common.years')}</MenuItem>
-              <MenuItem value="2-5">2-5 {t('common.years')}</MenuItem>
-              <MenuItem value="5-10">5-10 {t('common.years')}</MenuItem>
-              <MenuItem value="10-99">10+ {t('common.years')}</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ minWidth: 120 }}>
-            <InputLabel>{t('common.status')}</InputLabel>
-            <Select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
-              label={t('common.status')}
-            >
-              <MenuItem value="all">{t('common.all')}</MenuItem>
-              <MenuItem value="active">{t('poolCV.active')}</MenuItem>
-              <MenuItem value="inactive">{t('poolCV.inactive')}</MenuItem>
-            </Select>
-          </FormControl>
-          <ToggleButtonGroup
-            size="small"
-            exclusive
-            value={viewMode}
-            onChange={(_, v) => v && setViewMode(v)}
-            sx={{ ml: 'auto' }}
-          >
-            <ToggleButton value="card"><ViewIcon fontSize="small" /></ToggleButton>
-            <ToggleButton value="list"><ViewIcon fontSize="small" /></ToggleButton>
-            <ToggleButton value="compact"><WorkIcon fontSize="small" /></ToggleButton>
-          </ToggleButtonGroup>
+              <ToggleButton value="card"><ViewIcon fontSize="small" /></ToggleButton>
+              <ToggleButton value="list"><ViewIcon fontSize="small" /></ToggleButton>
+              <ToggleButton value="compact"><WorkIcon fontSize="small" /></ToggleButton>
+            </ToggleButtonGroup>
           </Stack>
         </SectionCard>
         <SectionCard>
@@ -432,130 +433,130 @@ const PoolCVList: React.FC = () => {
               {filteredPoolCVs.map((cv) => (
                 <Grid item xs={12} md={6} lg={4} key={cv.id}>
                   <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <Avatar sx={{ width: 56, height: 56, mr: 2 }}>
-                        {cv.firstName[0]}{cv.lastName[0]}
-                      </Avatar>
-                      <Box sx={{ flexGrow: 1 }}>
-                        <Typography variant="h6">
-                          {cv.firstName} {cv.lastName}
-                        </Typography>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Chip
-                            size="small"
-                            icon={cv.isActive ? <ActiveIcon /> : <InactiveIcon />}
-                            label={cv.isActive ? t('poolCV.active') : t('poolCV.inactive')}
-                            color={cv.isActive ? 'success' : 'default'}
-                          />
-                          {(cv.fileCount ?? 0) > 0 && (
-                            <Badge badgeContent={cv.fileCount} color="primary">
-                              <FileIcon fontSize="small" />
-                            </Badge>
-                          )}
+                    <CardContent sx={{ flexGrow: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <Avatar sx={{ width: 56, height: 56, mr: 2 }}>
+                          {cv.firstName[0]}{cv.lastName[0]}
+                        </Avatar>
+                        <Box sx={{ flexGrow: 1 }}>
+                          <Typography variant="h6">
+                            {cv.firstName} {cv.lastName}
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Chip
+                              size="small"
+                              icon={cv.isActive ? <ActiveIcon /> : <InactiveIcon />}
+                              label={cv.isActive ? t('poolCV.active') : t('poolCV.inactive')}
+                              color={cv.isActive ? 'success' : 'default'}
+                            />
+                            {(cv.fileCount ?? 0) > 0 && (
+                              <Badge badgeContent={cv.fileCount} color="primary">
+                                <FileIcon fontSize="small" />
+                              </Badge>
+                            )}
+                          </Box>
                         </Box>
                       </Box>
-                    </Box>
 
-                  <List dense>
-                    <ListItem disableGutters>
-                      <EmailIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
-                      <ListItemText primary={cv.email} />
-                    </ListItem>
-                    {cv.phone && (
-                      <ListItem disableGutters>
-                        <PhoneIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
-                        <ListItemText primary={cv.phone} />
-                      </ListItem>
-                    )}
-                    {cv.currentPosition && (
-                      <ListItem disableGutters>
-                        <WorkIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
-                        <ListItemText 
-                          primary={cv.currentPosition}
-                          secondary={cv.currentCompany}
-                        />
-                      </ListItem>
-                    )}
-                    {cv.experienceYears != null && cv.experienceYears !== undefined && (
-                      <ListItem disableGutters>
-                        <SchoolIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
-                        <ListItemText>
-                          <Chip
+                      <List dense>
+                        <ListItem disableGutters>
+                          <EmailIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
+                          <ListItemText primary={cv.email} />
+                        </ListItem>
+                        {cv.phone && (
+                          <ListItem disableGutters>
+                            <PhoneIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
+                            <ListItemText primary={cv.phone} />
+                          </ListItem>
+                        )}
+                        {cv.currentPosition && (
+                          <ListItem disableGutters>
+                            <WorkIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
+                            <ListItemText
+                              primary={cv.currentPosition}
+                              secondary={cv.currentCompany}
+                            />
+                          </ListItem>
+                        )}
+                        {cv.experienceYears != null && cv.experienceYears !== undefined && (
+                          <ListItem disableGutters>
+                            <SchoolIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
+                            <ListItemText>
+                              <Chip
+                                size="small"
+                                label={`${cv.experienceYears} ${t('common.years')} ${t('poolCV.experience')}`}
+                                color={getExperienceColor(cv.experienceYears)}
+                              />
+                            </ListItemText>
+                          </ListItem>
+                        )}
+                      </List>
+                    </CardContent>
+
+                    <Divider />
+
+                    <CardActions sx={{ justifyContent: 'space-between', px: 2 }}>
+                      <Box>
+                        <Tooltip title={t('common.view')}>
+                          <IconButton
                             size="small"
-                            label={`${cv.experienceYears} ${t('common.years')} ${t('poolCV.experience')}`}
-                            color={getExperienceColor(cv.experienceYears)}
-                          />
-                        </ListItemText>
-                      </ListItem>
-                    )}
-                  </List>
-                </CardContent>
-
-                <Divider />
-
-                <CardActions sx={{ justifyContent: 'space-between', px: 2 }}>
-                  <Box>
-                    <Tooltip title={t('common.view')}>
-                      <IconButton
-                        size="small"
-                        onClick={() => navigate(`/cv-sharing/pool-cvs/${cv.id}`)}
-                      >
-                        <ViewIcon />
-                      </IconButton>
-                    </Tooltip>
-                    {canEdit && (
-                      <Tooltip title={t('common.edit')}>
-                        <IconButton
+                            onClick={() => navigate(`/cv-sharing/pool-cvs/${cv.id}`)}
+                          >
+                            <ViewIcon />
+                          </IconButton>
+                        </Tooltip>
+                        {canEdit && (
+                          <Tooltip title={t('common.edit')}>
+                            <IconButton
+                              size="small"
+                              onClick={() => navigate(`/cv-sharing/pool-cvs/${cv.id}/edit`)}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                        <Tooltip title={t('poolCV.downloadCV')}>
+                          <IconButton size="small" onClick={() => handleDownload(cv.id)}>
+                            <DownloadIcon />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                      <Box>
+                        <Button
                           size="small"
-                          onClick={() => navigate(`/cv-sharing/pool-cvs/${cv.id}/edit`)}
+                          onClick={() => handleMatchPositions(cv.id)}
+                          disabled={matchBusyId === cv.id}
                         >
-                          <EditIcon />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                    <Tooltip title={t('poolCV.downloadCV')}>
-                      <IconButton size="small" onClick={() => handleDownload(cv.id)}>
-                        <DownloadIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                  <Box>
-                    <Button
-                      size="small"
-                      onClick={() => handleMatchPositions(cv.id)}
-                      disabled={matchBusyId === cv.id}
-                    >
-                      {t('poolCV.matchPositions')}
-                    </Button>
-                    {canEdit && (
-                      <>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleToggleStatus(cv.id, cv.isActive)}
-                          color={cv.isActive ? 'default' : 'primary'}
-                          disabled={toggleBusyId === cv.id}
-                        >
-                          {cv.isActive ? <InactiveIcon /> : <ActiveIcon />}
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={() => {
-                            setSelectedCV(cv);
-                            setDeleteDialogOpen(true);
-                          }}
-                          color="error"
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </>
-                    )}
-                  </Box>
-                </CardActions>
-              </Card>
+                          {t('poolCV.matchPositions')}
+                        </Button>
+                        {canEdit && (
+                          <>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleToggleStatus(cv.id, cv.isActive)}
+                              color={cv.isActive ? 'default' : 'primary'}
+                              disabled={toggleBusyId === cv.id}
+                            >
+                              {cv.isActive ? <InactiveIcon /> : <ActiveIcon />}
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={() => {
+                                setSelectedCV(cv);
+                                setDeleteDialogOpen(true);
+                              }}
+                              color="error"
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </>
+                        )}
+                      </Box>
+                    </CardActions>
+                  </Card>
+                </Grid>
+              ))}
             </Grid>
-          ))}
-        </Grid>
           )}
 
           {viewMode === 'list' && (
@@ -568,9 +569,9 @@ const PoolCVList: React.FC = () => {
                 disableRowSelectionOnClick
                 pageSizeOptions={[10, 25, 50, 100]}
                 initialState={{
-                    pagination: { paginationModel: { pageSize: 100 } },
-                    sorting: { sortModel: [{ field: 'name', sort: 'asc' }] }
-                  }}
+                  pagination: { paginationModel: { pageSize: 100 } },
+                  sorting: { sortModel: [{ field: 'name', sort: 'asc' }] }
+                }}
                 onRowClick={(params) => navigate(`/cv-sharing/pool-cvs/${params.row.id}`)}
                 localeText={{
                   MuiTablePagination: {
@@ -582,7 +583,7 @@ const PoolCVList: React.FC = () => {
                   columnMenuHideColumn: t('common.hideColumn'),
                   columnMenuManageColumns: t('common.manageColumns'),
                 } as any}
-                sx={{ 
+                sx={{
                   border: 'none',
                   '& .MuiDataGrid-row': {
                     cursor: 'pointer'
@@ -625,316 +626,316 @@ const PoolCVList: React.FC = () => {
         </SectionCard>
       </Stack>
 
-        {/* Delete Confirmation Dialog */}
-        <Dialog
-          open={deleteDialogOpen}
-          onClose={() => setDeleteDialogOpen(false)}
-        >
-          <DialogTitle>{t('poolCV.deletePoolCV')}</DialogTitle>
-          <DialogContent>
-            <Typography>
-              {t('poolCV.deleteConfirm')}
-            </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setDeleteDialogOpen(false)}>{t('common.cancel')}</Button>
-            <Button onClick={handleDelete} color="error" variant="contained">
-              {t('common.delete')}
-            </Button>
-          </DialogActions>
-        </Dialog>
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+      >
+        <DialogTitle>{t('poolCV.deletePoolCV')}</DialogTitle>
+        <DialogContent>
+          <Typography>
+            {t('poolCV.deleteConfirm')}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>{t('common.cancel')}</Button>
+          <Button onClick={handleDelete} color="error" variant="contained">
+            {t('common.delete')}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-        {/* Match Positions Dialog */}
-        <Dialog
-          open={matchDialog.open}
-          onClose={() => {
-            setMatchDialog({ open: false, poolCVId: null, positions: [] });
-            setExistingMatches({});
-          }}
-          maxWidth="md"
-          fullWidth
-        >
-          <DialogTitle>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Typography variant="h6" fontWeight="bold">
-                {t('poolCV.matchedPositions')}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {matchDialog.positions.length} {t('poolCV.positionsFound')}
-              </Typography>
-            </Box>
-          </DialogTitle>
-          <DialogContent>
-            {matchDialog.positions.length > 0 ? (
-              <Stack spacing={2} sx={{ mt: 1 }}>
-                {matchDialog.positions.map((matched) => {
-                  const getMatchColor = (score: number) => {
-                    if (score >= 80) return 'success';
-                    if (score >= 65) return 'primary';
-                    if (score >= 50) return 'warning';
-                    return 'error';
-                  };
-                  
-                  const isAlreadyMatched = existingMatches[matched.position.id];
-                  const matchColor = getMatchColor(matched.matchScore ?? 0);
-                  
-                  return (
-                    <Card 
-                      key={matched.position.id}
-                      sx={{ 
-                        border: isAlreadyMatched ? '2px solid' : '1px solid',
-                        borderColor: isAlreadyMatched ? 'success.main' : 'divider',
-                        backgroundColor: isAlreadyMatched ? 'success.50' : 'background.paper',
-                        position: 'relative'
-                      }}
-                      elevation={isAlreadyMatched ? 2 : 1}
-                    >
-                      {isAlreadyMatched && (
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            top: 8,
-                            right: 8,
-                            backgroundColor: 'success.main',
-                            color: 'white',
-                            px: 1.5,
-                            py: 0.5,
-                            borderRadius: 1,
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 0.5
-                          }}
-                        >
-                          <ActiveIcon sx={{ fontSize: 16 }} />
-                          <Typography variant="caption" fontWeight="bold">
-                            {t('poolCV.alreadyMatched')}
+      {/* Match Positions Dialog */}
+      <Dialog
+        open={matchDialog.open}
+        onClose={() => {
+          setMatchDialog({ open: false, poolCVId: null, positions: [] });
+          setExistingMatches({});
+        }}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Typography variant="h6" fontWeight="bold">
+              {t('poolCV.matchedPositions')}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {matchDialog.positions.length} {t('poolCV.positionsFound')}
+            </Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {matchDialog.positions.length > 0 ? (
+            <Stack spacing={2} sx={{ mt: 1 }}>
+              {matchDialog.positions.map((matched) => {
+                const getMatchColor = (score: number) => {
+                  if (score >= 80) return 'success';
+                  if (score >= 65) return 'primary';
+                  if (score >= 50) return 'warning';
+                  return 'error';
+                };
+
+                const isAlreadyMatched = existingMatches[matched.position.id];
+                const matchColor = getMatchColor(matched.matchScore ?? 0);
+
+                return (
+                  <Card
+                    key={matched.position.id}
+                    sx={{
+                      border: isAlreadyMatched ? '2px solid' : '1px solid',
+                      borderColor: isAlreadyMatched ? 'success.main' : 'divider',
+                      backgroundColor: isAlreadyMatched ? 'success.50' : 'background.paper',
+                      position: 'relative'
+                    }}
+                    elevation={isAlreadyMatched ? 2 : 1}
+                  >
+                    {isAlreadyMatched && (
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: 8,
+                          right: 8,
+                          backgroundColor: 'success.main',
+                          color: 'white',
+                          px: 1.5,
+                          py: 0.5,
+                          borderRadius: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 0.5
+                        }}
+                      >
+                        <ActiveIcon sx={{ fontSize: 16 }} />
+                        <Typography variant="caption" fontWeight="bold">
+                          {t('poolCV.alreadyMatched')}
+                        </Typography>
+                      </Box>
+                    )}
+
+                    <CardContent>
+                      {/* Position Header */}
+                      <Box sx={{ mb: 2, pr: isAlreadyMatched ? 10 : 0 }}>
+                        <Typography variant="h6" fontWeight="bold" gutterBottom>
+                          {matched.position.title}
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
+                          <Chip
+                            label={matched.position.department || t('position.noDepartment')}
+                            size="small"
+                            variant="outlined"
+                          />
+                          <Chip
+                            label={matched.position.location || t('position.noLocation')}
+                            size="small"
+                            variant="outlined"
+                          />
+                        </Box>
+                      </Box>
+
+                      <Divider sx={{ my: 2 }} />
+
+                      {/* Match Score Section */}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="body2" color="text.secondary" gutterBottom>
+                            {t('common.score')}
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Chip
+                              label={`${matched.matchScore ?? '--'}%`}
+                              color={matchColor}
+                              size="medium"
+                              sx={{ fontSize: '1rem', fontWeight: 'bold', px: 1 }}
+                            />
+                            <Chip
+                              label={t(`poolCV.matchLevel.${matched.matchLevel?.toUpperCase() || 'UNKNOWN'}`) || matched.matchLevel}
+                              variant="outlined"
+                              size="small"
+                              color={matchColor}
+                            />
+                          </Box>
+                        </Box>
+                      </Box>
+
+                      {/* Breakdown Details */}
+                      {matched.breakdown && (
+                        <Box sx={{ mb: 2 }}>
+                          <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                            {t('poolCV.breakdown')}
+                          </Typography>
+                          <Grid container spacing={1} sx={{ mt: 0.5 }}>
+                            <Grid item xs={6} sm={3}>
+                              <Box>
+                                <Typography variant="caption" color="text.secondary">
+                                  {t('position.skills')}
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  fontWeight="medium"
+                                  color={(!matched.position.skills || matched.position.skills.length === 0) ? 'text.secondary' : 'text.primary'}
+                                >
+                                  {(!matched.position.skills || matched.position.skills.length === 0)
+                                    ? t('common.notSpecified')
+                                    : `${Math.round((matched.breakdown.skillsScore || 0) * 100)}%`}
+                                </Typography>
+                              </Box>
+                            </Grid>
+                            <Grid item xs={6} sm={3}>
+                              <Box>
+                                <Typography variant="caption" color="text.secondary">
+                                  {t('position.experienceYears')}
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  fontWeight="medium"
+                                  color={(!matched.position.minExperience || matched.position.minExperience === 0) ? 'text.secondary' : 'text.primary'}
+                                >
+                                  {(!matched.position.minExperience || matched.position.minExperience === 0)
+                                    ? t('common.notSpecified')
+                                    : `${Math.round((matched.breakdown.experienceScore || 0) * 100)}%`}
+                                </Typography>
+                              </Box>
+                            </Grid>
+                            <Grid item xs={6} sm={3}>
+                              <Box>
+                                <Typography variant="caption" color="text.secondary">
+                                  {t('position.languages')}
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  fontWeight="medium"
+                                  color={(!matched.position.languages || matched.position.languages.length === 0) ? 'text.secondary' : 'text.primary'}
+                                >
+                                  {(!matched.position.languages || matched.position.languages.length === 0)
+                                    ? t('common.notSpecified')
+                                    : `${Math.round((matched.breakdown.languageScore || 0) * 100)}%`}
+                                </Typography>
+                              </Box>
+                            </Grid>
+                            <Grid item xs={6} sm={3}>
+                              <Box>
+                                <Typography variant="caption" color="text.secondary">
+                                  {t('poolCV.aiSimilarity')}
+                                </Typography>
+                                <Typography variant="body2" fontWeight="medium">
+                                  {Math.round((matched.breakdown.semanticScore || 0) * 100)}%
+                                </Typography>
+                              </Box>
+                            </Grid>
+                          </Grid>
+                        </Box>
+                      )}
+
+                      {/* Missing Skills */}
+                      {matched.missingRequiredSkills && matched.missingRequiredSkills.length > 0 && (
+                        <Box sx={{ mb: 2, p: 1.5, bgcolor: 'error.50', borderRadius: 1, border: '1px solid', borderColor: 'error.200' }}>
+                          <Typography variant="subtitle2" color="error.main" fontWeight="bold" gutterBottom>
+                            {t('poolCV.missingRequiredSkills')}
+                          </Typography>
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                            {matched.missingRequiredSkills.map((skill, idx) => (
+                              <Chip
+                                key={idx}
+                                label={skill}
+                                size="small"
+                                color="error"
+                                variant="outlined"
+                              />
+                            ))}
+                          </Box>
+                        </Box>
+                      )}
+
+                      {/* Matched Skills */}
+                      {matched.matchedSkills && matched.matchedSkills.length > 0 && (
+                        <Box sx={{ mb: 2 }}>
+                          <Typography variant="subtitle2" color="success.main" fontWeight="bold" gutterBottom>
+                            {t('poolCV.matchedSkills')} ({matched.matchedSkills.length})
+                          </Typography>
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                            {matched.matchedSkills.slice(0, 10).map((skill, idx) => (
+                              <Chip
+                                key={idx}
+                                label={skill}
+                                size="small"
+                                color="success"
+                                variant="outlined"
+                              />
+                            ))}
+                            {matched.matchedSkills.length > 10 && (
+                              <Chip
+                                label={`+${matched.matchedSkills.length - 10} ${t('common.more')}`}
+                                size="small"
+                                variant="outlined"
+                              />
+                            )}
+                          </Box>
+                        </Box>
+                      )}
+
+                      {/* Recommendation */}
+                      {matched.recommendation && (
+                        <Box sx={{
+                          mt: 2,
+                          p: 2,
+                          bgcolor: 'info.50',
+                          borderRadius: 1,
+                          borderLeft: '4px solid',
+                          borderColor: matchColor === 'success' ? 'success.main' :
+                            matchColor === 'primary' ? 'primary.main' :
+                              matchColor === 'warning' ? 'warning.main' : 'error.main'
+                        }}>
+                          <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                            {t('poolCV.recommendation')}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-wrap' }}>
+                            {matched.recommendation}
                           </Typography>
                         </Box>
                       )}
-                      
-                      <CardContent>
-                        {/* Position Header */}
-                        <Box sx={{ mb: 2, pr: isAlreadyMatched ? 10 : 0 }}>
-                          <Typography variant="h6" fontWeight="bold" gutterBottom>
-                            {matched.position.title}
-                          </Typography>
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
-                            <Chip 
-                              label={matched.position.department || t('position.noDepartment')} 
-                              size="small" 
-                              variant="outlined"
-                            />
-                            <Chip 
-                              label={matched.position.location || t('position.noLocation')} 
-                              size="small" 
-                              variant="outlined"
-                            />
-                          </Box>
-                        </Box>
-                        
-                        <Divider sx={{ my: 2 }} />
-                        
-                        {/* Match Score Section */}
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                          <Box sx={{ flex: 1 }}>
-                            <Typography variant="body2" color="text.secondary" gutterBottom>
-                              {t('common.score')}
-                            </Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Chip
-                                label={`${matched.matchScore ?? '--'}%`}
-                                color={matchColor}
-                                size="medium"
-                                sx={{ fontSize: '1rem', fontWeight: 'bold', px: 1 }}
-                              />
-                              <Chip
-                                label={t(`poolCV.matchLevel.${matched.matchLevel?.toUpperCase() || 'UNKNOWN'}`) || matched.matchLevel}
-                                variant="outlined"
-                                size="small"
-                                color={matchColor}
-                              />
-                            </Box>
-                          </Box>
-                        </Box>
-                        
-                        {/* Breakdown Details */}
-                        {matched.breakdown && (
-                          <Box sx={{ mb: 2 }}>
-                            <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                              {t('poolCV.breakdown')}
-                            </Typography>
-                            <Grid container spacing={1} sx={{ mt: 0.5 }}>
-                              <Grid item xs={6} sm={3}>
-                                <Box>
-                                  <Typography variant="caption" color="text.secondary">
-                                    {t('position.skills')}
-                                  </Typography>
-                                  <Typography 
-                                    variant="body2" 
-                                    fontWeight="medium"
-                                    color={(!matched.position.skills || matched.position.skills.length === 0) ? 'text.secondary' : 'text.primary'}
-                                  >
-                                    {(!matched.position.skills || matched.position.skills.length === 0) 
-                                      ? t('common.notSpecified')
-                                      : `${Math.round((matched.breakdown.skillsScore || 0) * 100)}%`}
-                                  </Typography>
-                                </Box>
-                              </Grid>
-                              <Grid item xs={6} sm={3}>
-                                <Box>
-                                  <Typography variant="caption" color="text.secondary">
-                                    {t('position.experienceYears')}
-                                  </Typography>
-                                  <Typography 
-                                    variant="body2" 
-                                    fontWeight="medium"
-                                    color={(!matched.position.minExperience || matched.position.minExperience === 0) ? 'text.secondary' : 'text.primary'}
-                                  >
-                                    {(!matched.position.minExperience || matched.position.minExperience === 0)
-                                      ? t('common.notSpecified')
-                                      : `${Math.round((matched.breakdown.experienceScore || 0) * 100)}%`}
-                                  </Typography>
-                                </Box>
-                              </Grid>
-                              <Grid item xs={6} sm={3}>
-                                <Box>
-                                  <Typography variant="caption" color="text.secondary">
-                                    {t('position.languages')}
-                                  </Typography>
-                                  <Typography 
-                                    variant="body2" 
-                                    fontWeight="medium"
-                                    color={(!matched.position.languages || matched.position.languages.length === 0) ? 'text.secondary' : 'text.primary'}
-                                  >
-                                    {(!matched.position.languages || matched.position.languages.length === 0)
-                                      ? t('common.notSpecified')
-                                      : `${Math.round((matched.breakdown.languageScore || 0) * 100)}%`}
-                                  </Typography>
-                                </Box>
-                              </Grid>
-                              <Grid item xs={6} sm={3}>
-                                <Box>
-                                  <Typography variant="caption" color="text.secondary">
-                                    {t('poolCV.aiSimilarity')}
-                                  </Typography>
-                                  <Typography variant="body2" fontWeight="medium">
-                                    {Math.round((matched.breakdown.semanticScore || 0) * 100)}%
-                                  </Typography>
-                                </Box>
-                              </Grid>
-                            </Grid>
-                          </Box>
-                        )}
-                        
-                        {/* Missing Skills */}
-                        {matched.missingRequiredSkills && matched.missingRequiredSkills.length > 0 && (
-                          <Box sx={{ mb: 2, p: 1.5, bgcolor: 'error.50', borderRadius: 1, border: '1px solid', borderColor: 'error.200' }}>
-                            <Typography variant="subtitle2" color="error.main" fontWeight="bold" gutterBottom>
-                              {t('poolCV.missingRequiredSkills')}
-                            </Typography>
-                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                              {matched.missingRequiredSkills.map((skill, idx) => (
-                                <Chip
-                                  key={idx}
-                                  label={skill}
-                                  size="small"
-                                  color="error"
-                                  variant="outlined"
-                                />
-                              ))}
-                            </Box>
-                          </Box>
-                        )}
-                        
-                        {/* Matched Skills */}
-                        {matched.matchedSkills && matched.matchedSkills.length > 0 && (
-                          <Box sx={{ mb: 2 }}>
-                            <Typography variant="subtitle2" color="success.main" fontWeight="bold" gutterBottom>
-                              {t('poolCV.matchedSkills')} ({matched.matchedSkills.length})
-                            </Typography>
-                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                              {matched.matchedSkills.slice(0, 10).map((skill, idx) => (
-                                <Chip
-                                  key={idx}
-                                  label={skill}
-                                  size="small"
-                                  color="success"
-                                  variant="outlined"
-                                />
-                              ))}
-                              {matched.matchedSkills.length > 10 && (
-                                <Chip
-                                  label={`+${matched.matchedSkills.length - 10} ${t('common.more')}`}
-                                  size="small"
-                                  variant="outlined"
-                                />
-                              )}
-                            </Box>
-                          </Box>
-                        )}
-                        
-                        {/* Recommendation */}
-                        {matched.recommendation && (
-                          <Box sx={{ 
-                            mt: 2, 
-                            p: 2, 
-                            bgcolor: 'info.50', 
-                            borderRadius: 1,
-                            borderLeft: '4px solid',
-                            borderColor: matchColor === 'success' ? 'success.main' : 
-                                       matchColor === 'primary' ? 'primary.main' :
-                                       matchColor === 'warning' ? 'warning.main' : 'error.main'
-                          }}>
-                            <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                              {t('poolCV.recommendation')}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-wrap' }}>
-                              {matched.recommendation}
-                            </Typography>
-                          </Box>
-                        )}
-                      </CardContent>
-                      
-                      <CardActions sx={{ justifyContent: 'flex-end', gap: 1, px: 2, pb: 2 }}>
+                    </CardContent>
+
+                    <CardActions sx={{ justifyContent: 'flex-end', gap: 1, px: 2, pb: 2 }}>
+                      <Button
+                        variant="outlined"
+                        startIcon={<ViewIcon />}
+                        onClick={() => navigate(`/cv-sharing/positions/${matched.position.id}`)}
+                      >
+                        {t('position.viewPosition')}
+                      </Button>
+                      {!isAlreadyMatched && (
                         <Button
-                          variant="outlined"
-                          startIcon={<ViewIcon />}
-                          onClick={() => navigate(`/cv-sharing/positions/${matched.position.id}`)}
+                          variant="contained"
+                          color={matchColor}
+                          onClick={() => handleConfirmMatch(matchDialog.poolCVId!, matched.position.id, matched.matchScore)}
+                          disabled={confirmBusyId === matched.position.id || matchStatusLoading}
                         >
-                          {t('position.viewPosition')}
+                          {confirmBusyId === matched.position.id ? t('common.matching') : t('poolCV.confirmMatch')}
                         </Button>
-                        {!isAlreadyMatched && (
-                          <Button
-                            variant="contained"
-                            color={matchColor}
-                            onClick={() => handleConfirmMatch(matchDialog.poolCVId!, matched.position.id, matched.matchScore)}
-                            disabled={confirmBusyId === matched.position.id || matchStatusLoading}
-                          >
-                            {confirmBusyId === matched.position.id ? t('common.matching') : t('poolCV.confirmMatch')}
-                          </Button>
-                        )}
-                      </CardActions>
-                    </Card>
-                  );
-                })}
-              </Stack>
-            ) : (
-              <Box sx={{ textAlign: 'center', py: 4 }}>
-                <Typography variant="h6" color="text.secondary">
-                  {t('poolCV.noMatchingPositions')}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  {t('poolCV.tryAdjustingFilters')}
-                </Typography>
-              </Box>
-            )}
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setMatchDialog({ open: false, poolCVId: null, positions: [] })}>
-              {t('common.close')}
-            </Button>
-          </DialogActions>
-        </Dialog>
+                      )}
+                    </CardActions>
+                  </Card>
+                );
+              })}
+            </Stack>
+          ) : (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <Typography variant="h6" color="text.secondary">
+                {t('poolCV.noMatchingPositions')}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                {t('poolCV.tryAdjustingFilters')}
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setMatchDialog({ open: false, poolCVId: null, positions: [] })}>
+            {t('common.close')}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </PageContainer>
   );
 };

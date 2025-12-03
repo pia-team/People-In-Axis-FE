@@ -34,11 +34,11 @@ class ApplicationService {
       params: filter
     });
     const data = response.data;
-    
+
     // Normalize Spring Page or already-normalized payload
     let content: Application[];
     let pageInfo: PagedResponse<Application>["pageInfo"];
-    
+
     if (isSpringPageResponse<Application>(data)) {
       content = data.content;
       pageInfo = {
@@ -64,7 +64,7 @@ class ApplicationService {
         totalPages: 1,
       };
     }
-    
+
     return { content, pageInfo };
   }
 
@@ -107,6 +107,13 @@ class ApplicationService {
    */
   async withdrawApplication(id: string): Promise<void> {
     await this.updateApplicationStatus(id, { status: ApplicationStatus.WITHDRAWN });
+  }
+
+  /**
+   * Withdraw application by Company Manager
+   */
+  async withdrawApplicationByCompanyManager(id: string): Promise<void> {
+    await axios.post(`${this.baseUrl}/${id}/withdraw-manager`);
   }
 
   /**
@@ -338,16 +345,16 @@ class ApplicationService {
    */
   private isValidTCKN(tckn: string): boolean {
     if (!tckn || tckn.length !== 11) return false;
-    
+
     const digits = tckn.split('').map(Number);
     if (digits[0] === 0) return false;
-    
+
     const oddSum = digits[0] + digits[2] + digits[4] + digits[6] + digits[8];
     const evenSum = digits[1] + digits[3] + digits[5] + digits[7];
-    
+
     const digit10 = ((oddSum * 7) - evenSum) % 10;
     const digit11 = (digits.slice(0, 10).reduce((a, b) => a + b, 0)) % 10;
-    
+
     return digits[9] === digit10 && digits[10] === digit11;
   }
 }

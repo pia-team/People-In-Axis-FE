@@ -39,7 +39,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import FileUpload from '@/components/ui/FileUpload';
 import PoolCVTags from '@/components/cv-sharing/PoolCVTags';
-import { poolCVService } from '@/services/cv-sharing';
+import { poolCVService, positionService } from '@/services/cv-sharing';
 import { PoolCVDetail as PoolCVDetailType } from '@/types/cv-sharing';
 import { useKeycloak } from '@/hooks/useKeycloak';
 import { Fingerprint as IdIcon } from '@mui/icons-material';
@@ -141,7 +141,7 @@ const PoolCVDetail: React.FC = () => {
     }
   };
 
-  
+
 
   const handleMatchPositions = async () => {
     if (!id) return;
@@ -155,6 +155,19 @@ const PoolCVDetail: React.FC = () => {
       enqueueSnackbar(t('error.loadFailed', { item: t('position.titlePlural').toLowerCase() }), { variant: 'error' });
     } finally {
       setMatching(false);
+    }
+  };
+
+  const handleRemoveMatch = async (positionId: string) => {
+    if (!detail) return;
+    try {
+      await positionService.removeMatch(positionId, detail.id);
+      enqueueSnackbar(t('position.applicationRemoved'), { variant: 'success' });
+      // Refresh matches
+      const positions = await poolCVService.matchPositionsForPoolCV(detail.id);
+      setMatchedPositions(positions || []);
+    } catch (e) {
+      enqueueSnackbar(t('error.deleteFailed'), { variant: 'error' });
     }
   };
 
@@ -324,7 +337,12 @@ const PoolCVDetail: React.FC = () => {
                 {matchedPositions.map((matched) => (
                   <ListItem key={matched.position.id}
                     secondaryAction={
-                      <Button size="small" onClick={() => navigate(`/cv-sharing/positions/${matched.position.id}`)}>{t('common.view')}</Button>
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Button size="small" onClick={() => navigate(`/cv-sharing/positions/${matched.position.id}`)}>{t('common.view')}</Button>
+                        {canEdit && (
+                          <Button size="small" color="error" onClick={() => handleRemoveMatch(matched.position.id)}>{t('common.remove')}</Button>
+                        )}
+                      </Box>
                     }
                   >
                     <ListItemText
@@ -343,7 +361,7 @@ const PoolCVDetail: React.FC = () => {
           </DialogActions>
         </Dialog>
       </Paper>
-    </Box>
+    </Box >
   );
 };
 

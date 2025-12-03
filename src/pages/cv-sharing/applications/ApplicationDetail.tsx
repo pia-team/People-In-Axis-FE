@@ -41,7 +41,9 @@ import {
   ForwardToInbox as ForwardIcon,
   Fingerprint as IdIcon,
   Edit as EditIcon,
-  AccountCircle as AccountCircleIcon
+  AccountCircle as AccountCircleIcon,
+  Block as BlockIcon,
+  RemoveCircle as RemoveCircleIcon
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
@@ -149,6 +151,36 @@ const ApplicationDetail: React.FC = () => {
       await applicationService.updateApplicationStatus(detail.id, { status: newStatus });
       enqueueSnackbar(t('success.updated'), { variant: 'success' });
       // Invalidate both detail and list caches
+      await queryClient.invalidateQueries({ queryKey: ['application', id] });
+      await queryClient.invalidateQueries({ queryKey: ['applications'] });
+    } catch (error) {
+      enqueueSnackbar(t('error.updateFailed'), { variant: 'error' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!detail) return;
+    try {
+      setSaving(true);
+      await applicationService.updateApplicationStatus(detail.id, { status: ApplicationStatus.REJECTED });
+      enqueueSnackbar(t('application.rejected'), { variant: 'success' });
+      await queryClient.invalidateQueries({ queryKey: ['application', id] });
+      await queryClient.invalidateQueries({ queryKey: ['applications'] });
+    } catch (error) {
+      enqueueSnackbar(t('error.updateFailed'), { variant: 'error' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleWithdraw = async () => {
+    if (!detail) return;
+    try {
+      setSaving(true);
+      await applicationService.withdrawApplicationByCompanyManager(detail.id);
+      enqueueSnackbar(t('application.withdrawn'), { variant: 'success' });
       await queryClient.invalidateQueries({ queryKey: ['application', id] });
       await queryClient.invalidateQueries({ queryKey: ['applications'] });
     } catch (error) {
@@ -447,37 +479,37 @@ const ApplicationDetail: React.FC = () => {
                 <FormControl fullWidth size="small">
                   <InputLabel>{t('common.status')}</InputLabel>
                   <Select
-                value={newStatus}
-                label={t('common.status')}
-                onChange={(e) => setNewStatus(e.target.value as ApplicationStatus)}
-                renderValue={(value) => {
-                  // Map status enum values to translation keys for display
-                  const statusMap: Record<ApplicationStatus, string> = {
-                    [ApplicationStatus.NEW]: t('application.new'),
-                    [ApplicationStatus.IN_REVIEW]: t('application.inReview'),
-                    [ApplicationStatus.FORWARDED]: t('application.forwarded'),
-                    [ApplicationStatus.MEETING_SCHEDULED]: t('application.meetingScheduled'),
-                    [ApplicationStatus.ACCEPTED]: t('application.accepted'),
-                    [ApplicationStatus.REJECTED]: t('application.rejected'),
-                    [ApplicationStatus.WITHDRAWN]: t('application.withdrawn'),
-                    [ApplicationStatus.ARCHIVED]: t('application.archived'),
-                  };
-                  return statusMap[value as ApplicationStatus] || (value as string).replace(/_/g, ' ');
-                }}
-              >
-                    {statusOptions.map(s => {
-                  // Map status enum values to translation keys
+                    value={newStatus}
+                    label={t('common.status')}
+                    onChange={(e) => setNewStatus(e.target.value as ApplicationStatus)}
+                    renderValue={(value) => {
+                      // Map status enum values to translation keys for display
                       const statusMap: Record<ApplicationStatus, string> = {
-                    [ApplicationStatus.NEW]: t('application.new'),
-                    [ApplicationStatus.IN_REVIEW]: t('application.inReview'),
-                    [ApplicationStatus.FORWARDED]: t('application.forwarded'),
-                    [ApplicationStatus.MEETING_SCHEDULED]: t('application.meetingScheduled'),
-                    [ApplicationStatus.ACCEPTED]: t('application.accepted'),
-                    [ApplicationStatus.REJECTED]: t('application.rejected'),
-                    [ApplicationStatus.WITHDRAWN]: t('application.withdrawn'),
-                    [ApplicationStatus.ARCHIVED]: t('application.archived'),
-                  };
-                  const label = statusMap[s] || s.replace(/_/g, ' ');
+                        [ApplicationStatus.NEW]: t('application.new'),
+                        [ApplicationStatus.IN_REVIEW]: t('application.inReview'),
+                        [ApplicationStatus.FORWARDED]: t('application.forwarded'),
+                        [ApplicationStatus.MEETING_SCHEDULED]: t('application.meetingScheduled'),
+                        [ApplicationStatus.ACCEPTED]: t('application.accepted'),
+                        [ApplicationStatus.REJECTED]: t('application.rejected'),
+                        [ApplicationStatus.WITHDRAWN]: t('application.withdrawn'),
+                        [ApplicationStatus.ARCHIVED]: t('application.archived'),
+                      };
+                      return statusMap[value as ApplicationStatus] || (value as string).replace(/_/g, ' ');
+                    }}
+                  >
+                    {statusOptions.map(s => {
+                      // Map status enum values to translation keys
+                      const statusMap: Record<ApplicationStatus, string> = {
+                        [ApplicationStatus.NEW]: t('application.new'),
+                        [ApplicationStatus.IN_REVIEW]: t('application.inReview'),
+                        [ApplicationStatus.FORWARDED]: t('application.forwarded'),
+                        [ApplicationStatus.MEETING_SCHEDULED]: t('application.meetingScheduled'),
+                        [ApplicationStatus.ACCEPTED]: t('application.accepted'),
+                        [ApplicationStatus.REJECTED]: t('application.rejected'),
+                        [ApplicationStatus.WITHDRAWN]: t('application.withdrawn'),
+                        [ApplicationStatus.ARCHIVED]: t('application.archived'),
+                      };
+                      const label = statusMap[s] || s.replace(/_/g, ' ');
                       return (
                         <MenuItem key={s} value={s}>{label}</MenuItem>
                       );
@@ -495,17 +527,48 @@ const ApplicationDetail: React.FC = () => {
               </Typography>
             )}
             <Box sx={{ display: 'flex', gap: 1, mt: 1, flexDirection: 'column' }}>
-              <Button 
+              <Button
                 fullWidth
-                size="small" 
-                startIcon={<ForwardIcon />} 
-                onClick={() => navigate(`/cv-sharing/applications/${detail.id}/forward`)} 
+                size="small"
+                startIcon={<ForwardIcon />}
+                onClick={() => navigate(`/cv-sharing/applications/${detail.id}/forward`)}
                 disabled={isCompanyManager}
                 variant="outlined"
               >
                 {t('application.forwardToReviewer')}
               </Button>
             </Box>
+
+            {/* Reject Button for HR */}
+            {!isCompanyManager && detail.status !== ApplicationStatus.REJECTED && detail.status !== ApplicationStatus.ACCEPTED && (
+              <Button
+                fullWidth
+                variant="outlined"
+                color="error"
+                startIcon={<BlockIcon />}
+                onClick={handleReject}
+                disabled={saving}
+                sx={{ mt: 1 }}
+              >
+                {t('application.reject')}
+              </Button>
+            )}
+
+            {/* Withdraw Button for Company Manager */}
+            {isCompanyManager && detail.status !== ApplicationStatus.WITHDRAWN && detail.status !== ApplicationStatus.ACCEPTED && detail.status !== ApplicationStatus.REJECTED && (
+              <Button
+                fullWidth
+                variant="outlined"
+                color="error"
+                startIcon={<RemoveCircleIcon />}
+                onClick={handleWithdraw}
+                disabled={saving}
+                sx={{ mt: 1 }}
+              >
+                {t('application.withdraw')}
+              </Button>
+            )}
+
 
             <Typography variant="h6" sx={{ mt: 3 }}>{t('application.ratings')}</Typography>
             <Divider sx={{ mb: 2 }} />
@@ -517,12 +580,12 @@ const ApplicationDetail: React.FC = () => {
               <List>
                 {detail.ratings.map(r => {
                   const isOwnRating = currentUserId === r.userId;
-                  
+
                   const handleEditRating = () => {
                     setEditingRating(r.id);
                     setEditScore(r.score);
                   };
-                  
+
                   const handleSaveRating = async () => {
                     if (!editScore || editingRating !== r.id) return;
                     try {
@@ -538,34 +601,34 @@ const ApplicationDetail: React.FC = () => {
                       setRatingSaving(false);
                     }
                   };
-                  
+
                   const handleCancelEdit = () => {
                     setEditingRating(null);
                     setEditScore(null);
                   };
-                  
+
                   return (
-                    <ListItem 
+                    <ListItem
                       key={r.id}
                       secondaryAction={
                         isOwnRating && !isCompanyManager && (
                           editingRating === r.id ? (
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Rating 
-                                value={editScore || 0} 
-                                onChange={(_, v) => setEditScore(v)} 
+                              <Rating
+                                value={editScore || 0}
+                                onChange={(_, v) => setEditScore(v)}
                                 size="small"
                               />
-                              <IconButton 
-                                size="small" 
-                                onClick={handleSaveRating} 
+                              <IconButton
+                                size="small"
+                                onClick={handleSaveRating}
                                 disabled={ratingSaving || !editScore}
                                 color="primary"
                               >
                                 <SaveIcon />
                               </IconButton>
-                              <IconButton 
-                                size="small" 
+                              <IconButton
+                                size="small"
                                 onClick={handleCancelEdit}
                                 disabled={ratingSaving}
                               >
@@ -573,8 +636,8 @@ const ApplicationDetail: React.FC = () => {
                               </IconButton>
                             </Box>
                           ) : (
-                            <IconButton 
-                              size="small" 
+                            <IconButton
+                              size="small"
                               onClick={handleEditRating}
                               disabled={isCompanyManager || ratingSaving}
                             >
@@ -585,9 +648,9 @@ const ApplicationDetail: React.FC = () => {
                       }
                     >
                       <ListItemIcon><StarIcon /></ListItemIcon>
-                      <ListItemText 
-                        primary={editingRating === r.id ? t('common.editing') : `${r.score}/5 ${t('common.by')} ${r.userName || r.userId}`} 
-                        secondary={new Date(r.createdAt).toLocaleString()} 
+                      <ListItemText
+                        primary={editingRating === r.id ? t('common.editing') : `${r.score}/5 ${t('common.by')} ${r.userName || r.userId}`}
+                        secondary={new Date(r.createdAt).toLocaleString()}
                       />
                     </ListItem>
                   );
@@ -731,7 +794,7 @@ const ApplicationDetail: React.FC = () => {
         }}
         onConfirm={handleCancelMeeting}
       />
-    </Box>
+    </Box >
   );
 };
 
