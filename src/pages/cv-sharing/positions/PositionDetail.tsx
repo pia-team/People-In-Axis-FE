@@ -483,7 +483,7 @@ const PositionDetail: React.FC = () => {
                     {t('position.requiredSkills')}
                   </Typography>
                   <Divider sx={{ my: 2 }} />
-                      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} flexWrap="wrap" useFlexGap>
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} flexWrap="wrap" useFlexGap>
                     {position.skills.map((skill, index) => {
                       const label = `${skill.name}${skill.proficiencyLevel ? ` (${skill.proficiencyLevel})` : ''}`;
                       return (
@@ -583,13 +583,15 @@ const PositionDetail: React.FC = () => {
                           <Chip label={t('common.notAvailable')} size="small" variant="outlined" />
                         )}
                         {!isCompanyManager && (
-                          <IconButton
-                            edge="end"
-                            aria-label="view"
-                            onClick={() => navigate(`/cv-sharing/applications?positionId=${id}`)}
-                          >
-                            <ViewIcon />
-                          </IconButton>
+                          <Tooltip title={t('poolCV.viewMatches')}>
+                            <IconButton
+                              edge="end"
+                              aria-label="view"
+                              onClick={() => navigate(`/cv-sharing/pool-cvs/${m.poolCvId}`)}
+                            >
+                              <ViewIcon />
+                            </IconButton>
+                          </Tooltip>
                         )}
                         {isHR && (
                           <Tooltip title={t('position.removeApplication')}>
