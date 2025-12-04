@@ -356,9 +356,20 @@ const ApplicationDetail: React.FC = () => {
                       size="small"
                       startIcon={<AccountCircleIcon />}
                       onClick={() => navigate(`/cv-sharing/pool-cvs/${detail.poolCvId}`)}
-                      sx={{ mt: 1 }}
+                      sx={{ mt: 1, mr: 1 }}
                     >
                       {t('application.viewApplicantProfile')}
+                    </Button>
+                  )}
+                  {detail.positionId && (
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      size="small"
+                      onClick={() => navigate(`/cv-sharing/positions/${detail.positionId}`)}
+                      sx={{ mt: 1 }}
+                    >
+                      {t('position.viewPosition')}
                     </Button>
                   )}
                 </Box>
