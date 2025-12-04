@@ -518,6 +518,7 @@
     "meetingScheduledSuccess": "Toplantı başarıyla planlandı",
     "rejected": "Reddedildi",
     "withdrawn": "Geri Çekildi",
+    "withdraw": "Geri Çek",
     "forwardApplication": "Başvuruyu Yönlendir",
     "recipients": "Alıcılar (virgülle ayrılmış e-postalar)",
     "messageOptional": "Mesaj (isteğe bağlı)",
