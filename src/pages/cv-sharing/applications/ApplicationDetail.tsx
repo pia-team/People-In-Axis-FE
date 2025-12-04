@@ -526,18 +526,19 @@ const ApplicationDetail: React.FC = () => {
                 {t(`application.${detail.status?.toLowerCase().replace(/_/g, '') || ''}`) || detail.status.replace('_', ' ')}
               </Typography>
             )}
-            <Box sx={{ display: 'flex', gap: 1, mt: 1, flexDirection: 'column' }}>
-              <Button
-                fullWidth
-                size="small"
-                startIcon={<ForwardIcon />}
-                onClick={() => navigate(`/cv-sharing/applications/${detail.id}/forward`)}
-                disabled={isCompanyManager}
-                variant="outlined"
-              >
-                {t('application.forwardToReviewer')}
-              </Button>
-            </Box>
+            {!isCompanyManager && (
+              <Box sx={{ display: 'flex', gap: 1, mt: 1, flexDirection: 'column' }}>
+                <Button
+                  fullWidth
+                  size="small"
+                  startIcon={<ForwardIcon />}
+                  onClick={() => navigate(`/cv-sharing/applications/${detail.id}/forward`)}
+                  variant="outlined"
+                >
+                  {t('application.forwardToReviewer')}
+                </Button>
+              </Box>
+            )}
 
             {/* Reject Button for HR */}
             {!isCompanyManager && detail.status !== ApplicationStatus.REJECTED && detail.status !== ApplicationStatus.ACCEPTED && (
@@ -675,12 +676,14 @@ const ApplicationDetail: React.FC = () => {
 
             <Typography variant="h6" sx={{ mt: 3 }}>{t('application.comments')}</Typography>
             <Divider sx={{ mb: 2 }} />
-            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-              <TextField fullWidth size="small" placeholder={t('application.commentPlaceholder')} value={commentText} onChange={(e) => setCommentText(e.target.value)} disabled={isCompanyManager} />
-              <Button variant="outlined" startIcon={<CommentIcon />} onClick={handleAddComment} disabled={commentSaving || !commentText.trim() || isCompanyManager}>
-                {t('common.add')}
-              </Button>
-            </Box>
+            {!isCompanyManager && (
+              <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                <TextField fullWidth size="small" placeholder={t('application.commentPlaceholder')} value={commentText} onChange={(e) => setCommentText(e.target.value)} />
+                <Button variant="outlined" startIcon={<CommentIcon />} onClick={handleAddComment} disabled={commentSaving || !commentText.trim()}>
+                  {t('common.add')}
+                </Button>
+              </Box>
+            )}
             {detail.comments && detail.comments.length > 0 && (
               <List>
                 {detail.comments.map(c => (

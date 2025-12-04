@@ -100,7 +100,7 @@ const ApplicationList: React.FC = () => {
   const positionOptions = positionsPage?.content ?? [];
   const departmentOptions: string[] = React.useMemo(() => {
     const set = new Set<string>();
-    positionOptions.forEach((p) => { 
+    positionOptions.forEach((p) => {
       if (p?.department) {
         set.add(p.department);
       }
@@ -201,7 +201,7 @@ const ApplicationList: React.FC = () => {
 
   const handleAddComment = async () => {
     if (!commentDialog.applicationId || !commentDialog.comment) return;
-    
+
     try {
       await applicationService.addComment(commentDialog.applicationId, {
         content: commentDialog.comment,
@@ -217,7 +217,7 @@ const ApplicationList: React.FC = () => {
 
   const handleAddRating = async () => {
     if (!ratingDialog.applicationId || !ratingDialog.score) return;
-    
+
     try {
       await applicationService.addRating(ratingDialog.applicationId, { score: ratingDialog.score });
       enqueueSnackbar(t('application.ratingAdded'), { variant: 'success' });
@@ -293,7 +293,7 @@ const ApplicationList: React.FC = () => {
       renderCell: (params: GridRenderCellParams) => {
         const status = params.row.status;
         if (!status) return null;
-        
+
         // Map status enum values to translation keys
         const statusMap: Record<ApplicationStatus, string> = {
           [ApplicationStatus.NEW]: t('application.new'),
@@ -305,14 +305,14 @@ const ApplicationList: React.FC = () => {
           [ApplicationStatus.WITHDRAWN]: t('application.withdrawn'),
           [ApplicationStatus.ARCHIVED]: t('application.archived'),
         };
-        
+
         const label = statusMap[status as ApplicationStatus] || status.replace(/_/g, ' ');
         return (
-        <Chip
-          label={label}
-          color={getStatusColor(status as ApplicationStatus)}
-          size="small"
-        />
+          <Chip
+            label={label}
+            color={getStatusColor(status as ApplicationStatus)}
+            size="small"
+          />
         );
       }
     },
@@ -369,46 +369,49 @@ const ApplicationList: React.FC = () => {
               <ViewIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-          <Tooltip title={t('application.addComment')}>
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                setCommentDialog({
-                  open: true,
-                  applicationId: params.row.id,
-                  comment: ''
-                });
-              }}
-            >
-              <CommentIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={t('application.addRating')}>
-            <IconButton
-              size="small"
-              disabled={isCompanyManager}
-              onClick={(e) => {
-                e.stopPropagation();
-                setRatingDialog({
-                  open: true,
-                  applicationId: params.row.id,
-                  score: 0
-                });
-              }}
-            >
-              <StarIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <IconButton
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleMenuOpen(e, params.row);
-            }}
-          >
-            <MoreIcon fontSize="small" />
-          </IconButton>
+          {!isCompanyManager && (
+            <>
+              <Tooltip title={t('application.addComment')}>
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCommentDialog({
+                      open: true,
+                      applicationId: params.row.id,
+                      comment: ''
+                    });
+                  }}
+                >
+                  <CommentIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title={t('application.addRating')}>
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setRatingDialog({
+                      open: true,
+                      applicationId: params.row.id,
+                      score: 0
+                    });
+                  }}
+                >
+                  <StarIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleMenuOpen(e, params.row);
+                }}
+              >
+                <MoreIcon fontSize="small" />
+              </IconButton>
+            </>
+          )}
         </Box>
       )
     }
@@ -583,108 +586,108 @@ const ApplicationList: React.FC = () => {
         )}
       </Stack>
 
-        {/* Action Menu */}
-        <Menu
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={handleMenuClose}
-        >
-          <MenuItem onClick={() => {
-            if (selectedApplication) {
-              navigate(`/cv-sharing/applications/${selectedApplication.id}/forward`);
+      {/* Action Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+      >
+        <MenuItem onClick={() => {
+          if (selectedApplication) {
+            navigate(`/cv-sharing/applications/${selectedApplication.id}/forward`);
+          }
+          handleMenuClose();
+        }}>
+          <ForwardIcon fontSize="small" sx={{ mr: 1 }} />
+          {t('application.forwardToReviewer')}
+        </MenuItem>
+        <MenuItem onClick={() => {
+          if (selectedApplication) {
+            handleStatusChange(selectedApplication.id, ApplicationStatus.IN_REVIEW);
+          }
+          handleMenuClose();
+        }}>
+          {(() => {
+            const translation = t('common.setAsInReview');
+            if (translation && translation !== 'common.setAsInReview') {
+              return translation;
             }
-            handleMenuClose();
-          }}>
-            <ForwardIcon fontSize="small" sx={{ mr: 1 }} />
-            {t('application.forwardToReviewer')}
-          </MenuItem>
-          <MenuItem onClick={() => {
-            if (selectedApplication) {
-              handleStatusChange(selectedApplication.id, ApplicationStatus.IN_REVIEW);
-            }
-            handleMenuClose();
-          }}>
-            {(() => {
-              const translation = t('common.setAsInReview');
-              if (translation && translation !== 'common.setAsInReview') {
-                return translation;
-              }
-              return `${t('common.setAs')} ${t('application.inReview')}`;
-            })()}
-          </MenuItem>
-          <MenuItem onClick={() => {
-            if (selectedApplication) {
-              handleStatusChange(selectedApplication.id, ApplicationStatus.ACCEPTED);
-            }
-            handleMenuClose();
-          }}>
-            {t('application.acceptApplication')}
-          </MenuItem>
-          <MenuItem onClick={() => {
-            if (selectedApplication) {
-              handleStatusChange(selectedApplication.id, ApplicationStatus.REJECTED);
-            }
-            handleMenuClose();
-          }}>
-            {t('application.rejectApplication')}
-          </MenuItem>
-        </Menu>
+            return `${t('common.setAs')} ${t('application.inReview')}`;
+          })()}
+        </MenuItem>
+        <MenuItem onClick={() => {
+          if (selectedApplication) {
+            handleStatusChange(selectedApplication.id, ApplicationStatus.ACCEPTED);
+          }
+          handleMenuClose();
+        }}>
+          {t('application.acceptApplication')}
+        </MenuItem>
+        <MenuItem onClick={() => {
+          if (selectedApplication) {
+            handleStatusChange(selectedApplication.id, ApplicationStatus.REJECTED);
+          }
+          handleMenuClose();
+        }}>
+          {t('application.rejectApplication')}
+        </MenuItem>
+      </Menu>
 
-        {/* Comment Dialog */}
-        <Dialog
-          open={commentDialog.open}
-          onClose={() => setCommentDialog({ open: false, applicationId: null, comment: '' })}
-          maxWidth="sm"
-          fullWidth
-        >
-          <DialogTitle>{t('application.addComment')}</DialogTitle>
-          <DialogContent>
-            <TextField
-              fullWidth
-              multiline
-              rows={4}
-              placeholder={t('application.commentPlaceholder')}
-              value={commentDialog.comment}
-              onChange={(e) => setCommentDialog({ ...commentDialog, comment: e.target.value })}
-              sx={{ mt: 2 }}
+      {/* Comment Dialog */}
+      <Dialog
+        open={commentDialog.open}
+        onClose={() => setCommentDialog({ open: false, applicationId: null, comment: '' })}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>{t('application.addComment')}</DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth
+            multiline
+            rows={4}
+            placeholder={t('application.commentPlaceholder')}
+            value={commentDialog.comment}
+            onChange={(e) => setCommentDialog({ ...commentDialog, comment: e.target.value })}
+            sx={{ mt: 2 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCommentDialog({ open: false, applicationId: null, comment: '' })}>
+            {t('common.cancel')}
+          </Button>
+          <Button variant="contained" onClick={handleAddComment}>
+            {t('application.addComment')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Rating Dialog */}
+      <Dialog
+        open={ratingDialog.open}
+        onClose={() => setRatingDialog({ open: false, applicationId: null, score: 0 })}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>{t('application.addRating')}</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+            <Rating
+              value={ratingDialog.score}
+              onChange={(_, value) => setRatingDialog({ ...ratingDialog, score: value || 0 })}
+              size="large"
             />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setCommentDialog({ open: false, applicationId: null, comment: '' })}>
-              {t('common.cancel')}
-            </Button>
-            <Button variant="contained" onClick={handleAddComment}>
-              {t('application.addComment')}
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Rating Dialog */}
-        <Dialog
-          open={ratingDialog.open}
-          onClose={() => setRatingDialog({ open: false, applicationId: null, score: 0 })}
-          maxWidth="xs"
-          fullWidth
-        >
-          <DialogTitle>{t('application.addRating')}</DialogTitle>
-          <DialogContent>
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-              <Rating
-                value={ratingDialog.score}
-                onChange={(_, value) => setRatingDialog({ ...ratingDialog, score: value || 0 })}
-                size="large"
-              />
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setRatingDialog({ open: false, applicationId: null, score: 0 })}>
-              {t('common.cancel')}
-            </Button>
-            <Button variant="contained" onClick={handleAddRating} disabled={isCompanyManager || !ratingDialog.score}>
-              {t('application.addRating')}
-            </Button>
-          </DialogActions>
-        </Dialog>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRatingDialog({ open: false, applicationId: null, score: 0 })}>
+            {t('common.cancel')}
+          </Button>
+          <Button variant="contained" onClick={handleAddRating} disabled={isCompanyManager || !ratingDialog.score}>
+            {t('application.addRating')}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </PageContainer>
   );
 };
