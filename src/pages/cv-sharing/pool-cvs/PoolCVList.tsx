@@ -186,8 +186,16 @@ const PoolCVList: React.FC = () => {
       setDeleteDialogOpen(false);
       setSelectedCV(null);
       await queryClient.invalidateQueries({ queryKey: ['poolCVs'] });
-    } catch (error) {
-      enqueueSnackbar(t('error.deleteFailed'), { variant: 'error' });
+    } catch (error: any) {
+      // Check if the error is due to matched positions or active applications
+      const errorMessage = error?.response?.data?.message || error?.message || '';
+      if (errorMessage.includes('POOL_CV_HAS_MATCHED_POSITIONS')) {
+        enqueueSnackbar(t('poolCV.cannotDeleteHasMatchedPositions'), { variant: 'error' });
+      } else if (errorMessage.includes('POOL_CV_HAS_ACTIVE_APPLICATIONS') || errorMessage.includes('active')) {
+        enqueueSnackbar(t('poolCV.cannotDeleteHasActiveApplications'), { variant: 'error' });
+      } else {
+        enqueueSnackbar(t('error.deleteFailed'), { variant: 'error' });
+      }
     }
   };
 
@@ -662,8 +670,8 @@ const PoolCVList: React.FC = () => {
                   };
                   
                   return (
-                    <ListItem key={matched.position.id}>
-                      <Box sx={{ flex: 1 }}>
+                    <ListItem key={matched.position.id} sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
                         <Typography variant="subtitle1" fontWeight="bold">
                           {matched.position.title}
                         </Typography>
@@ -734,11 +742,12 @@ const PoolCVList: React.FC = () => {
                         </Typography>
                       </Box>
                       
-                      <Stack direction="row" spacing={1} alignItems="center">
+                      <Stack direction="column" spacing={1} alignItems="flex-end" sx={{ flexShrink: 0, minWidth: 160 }}>
                         <Button
                           size="small"
                           variant="outlined"
                           onClick={() => navigate(`/cv-sharing/positions/${matched.position.id}`)}
+                          sx={{ minWidth: 150 }}
                         >
                           {t('position.viewPosition')}
                         </Button>
@@ -748,16 +757,17 @@ const PoolCVList: React.FC = () => {
                             variant="contained"
                             onClick={() => handleConfirmMatch(matchDialog.poolCVId!, matched.position.id, matched.matchScore)}
                             disabled={confirmBusyId === matched.position.id || matchStatusLoading}
+                            sx={{ minWidth: 150 }}
                           >
                             {confirmBusyId === matched.position.id ? t('common.matching') : t('poolCV.confirmMatch')}
                           </Button>
                         )}
+                        {existingMatches[matched.position.id] && (
+                          <Typography variant="caption" color="success.main">
+                            {t('poolCV.alreadyMatched')}
+                          </Typography>
+                        )}
                       </Stack>
-                      {existingMatches[matched.position.id] && (
-                        <Typography variant="caption" color="success.main" sx={{ mt: 0.5, display: 'block' }}>
-                          {t('poolCV.alreadyMatched')}
-                        </Typography>
-                      )}
                     </ListItem>
                   );
                 })}

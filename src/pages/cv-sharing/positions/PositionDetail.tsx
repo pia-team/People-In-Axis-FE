@@ -204,12 +204,15 @@ const PositionDetail: React.FC = () => {
     try {
       setIsRemovingApplicant(true);
       await positionService.removeMatch(id, removeDialog.poolCvId);
-      enqueueSnackbar(t('position.applicationRemoved'), { variant: 'success' });
+      enqueueSnackbar(t('position.applicationRejected'), { variant: 'success' });
+      // Invalidate all related caches so UI updates correctly
       queryClient.invalidateQueries({ queryKey: ['position-matches'] });
       queryClient.invalidateQueries({ queryKey: ['position', id] });
+      queryClient.invalidateQueries({ queryKey: ['applications'] }); // Update applications list
+      queryClient.invalidateQueries({ queryKey: ['poolCVs'] }); // Pool CV can be matched again
       setRemoveDialog({ open: false });
     } catch (error) {
-      enqueueSnackbar(t('error.deleteFailed'), { variant: 'error' });
+      enqueueSnackbar(t('error.updateFailed'), { variant: 'error' });
     } finally {
       setIsRemovingApplicant(false);
     }
@@ -586,17 +589,17 @@ const PositionDetail: React.FC = () => {
                           <IconButton
                             edge="end"
                             aria-label="view"
-                            onClick={() => navigate(`/cv-sharing/applications?positionId=${id}`)}
+                            onClick={() => navigate(`/cv-sharing/pool-cvs/${m.poolCvId}`)}
                           >
                             <ViewIcon />
                           </IconButton>
                         )}
                         {isHR && (
-                          <Tooltip title={t('position.removeApplication')}>
+                          <Tooltip title={t('position.rejectApplication')}>
                             <IconButton
                               edge="end"
                               color="error"
-                              aria-label="remove-application"
+                              aria-label="reject-application"
                               onClick={() => setRemoveDialog({
                                 open: true,
                                 poolCvId: m.poolCvId,
@@ -740,9 +743,9 @@ const PositionDetail: React.FC = () => {
       </Menu>
       <ConfirmDialog
         open={removeDialog.open}
-        title={t('position.removeApplication')}
-        description={t('position.removeApplicationConfirm', { name: removeDialog.name ?? t('common.applicant') })}
-        confirmLabel={t('common.delete')}
+        title={t('position.rejectApplication')}
+        description={t('position.rejectApplicationConfirm', { name: removeDialog.name ?? t('common.applicant') })}
+        confirmLabel={t('application.reject')}
         cancelLabel={t('common.cancel')}
         confirmColor="error"
         loading={isRemovingApplicant}

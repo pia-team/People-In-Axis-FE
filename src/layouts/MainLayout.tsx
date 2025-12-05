@@ -211,11 +211,12 @@ const getMenuItems = (t: (key: string) => string): MenuItemType[] => [
   {
     title: t('navigation.admin'),
     icon: <Settings />,
-    roles: ['HUMAN_RESOURCES','MANAGER'],
+    roles: ['HUMAN_RESOURCES','MANAGER','ADMIN'],
     children: [
       { title: t('navigation.users'), path: '/admin/users', icon: <ManageAccounts /> },
       { title: t('navigation.roles'), path: '/admin/roles', icon: <Settings /> },
       { title: t('navigation.settings'), path: '/admin/settings', icon: <Settings /> },
+      { title: t('navigation.auditLogs'), path: '/admin/audit-logs', icon: <History />, roles: ['ADMIN'] },
     ],
   },
 ];

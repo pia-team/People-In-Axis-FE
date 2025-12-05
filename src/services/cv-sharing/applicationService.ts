@@ -110,6 +110,24 @@ class ApplicationService {
   }
 
   /**
+   * Reject application (HR only)
+   * Sets application status to REJECTED and removes the match record
+   */
+  async rejectApplication(id: string): Promise<Application> {
+    const response = await axios.post<Application>(`${this.baseUrl}/${id}/reject`);
+    return response.data;
+  }
+
+  /**
+   * Withdraw application by Company Manager
+   * Company Manager can only withdraw applications created from their own Pool CVs
+   */
+  async withdrawApplicationByManager(id: string): Promise<Application> {
+    const response = await axios.post<Application>(`${this.baseUrl}/${id}/withdraw-by-manager`);
+    return response.data;
+  }
+
+  /**
    * Forward application to reviewers
    */
   async forwardApplication(id: string, data: ForwardApplicationRequest): Promise<ApiResponse<void>> {
