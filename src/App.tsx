@@ -98,7 +98,11 @@ const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 const UserManagement = lazy(() => import('@/pages/admin/UserManagement'));
 const RoleManagement = lazy(() => import('@/pages/admin/RoleManagement'));
 const Settings = lazy(() => import('@/pages/admin/Settings'));
+const AuditLogList = lazy(() => import('@/pages/admin/AuditLogList'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
+
+// System pages (hidden from menu)
+const EventLog = lazy(() => import('@/pages/system/EventLog'));
 
 const LoadingScreen: React.FC = () => (
   <Box
@@ -365,6 +369,7 @@ const App: React.FC = () => {
               <Route path="users" element={<UserManagement />} />
               <Route path="roles" element={<RoleManagement />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="audit-logs" element={<AuditLogList />} />
             </Route>
 
             {/* Notifications */}
@@ -372,6 +377,9 @@ const App: React.FC = () => {
 
           </Route>
         </Route>
+
+        {/* System Events - Completely public, no auth required, no layout */}
+        <Route path="/system/events" element={<EventLog />} />
 
         {/* 404 */}
         <Route path="*" element={<NotFound />} />

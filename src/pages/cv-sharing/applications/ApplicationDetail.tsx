@@ -41,11 +41,14 @@ import {
   ForwardToInbox as ForwardIcon,
   Fingerprint as IdIcon,
   Edit as EditIcon,
-  AccountCircle as AccountCircleIcon
+  Undo as UndoIcon,
+  Work as WorkIcon,
+  AccountCircle as AccountCircleIcon,
+  Person as PersonIcon
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
-import { applicationService } from '@/services/cv-sharing';
+import { applicationService, poolCVService } from '@/services/cv-sharing';
 import { ApplicationDetail as ApplicationDetailType, ApplicationStatus, CreateMeetingRequest, MeetingProvider, MeetingStatus } from '@/types/cv-sharing';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useKeycloak } from '@/hooks/useKeycloak';
@@ -93,6 +96,7 @@ const ApplicationDetail: React.FC = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { hasRole, tokenParsed } = useKeycloak();
   const isCompanyManager = hasRole('COMPANY_MANAGER');
+  const isHR = hasRole('HUMAN_RESOURCES');
   const currentUserId = tokenParsed?.sub;
   const [saving, setSaving] = useState(false);
   const queryClient = useQueryClient();
@@ -130,6 +134,10 @@ const ApplicationDetail: React.FC = () => {
   const [isDeletingFile, setIsDeletingFile] = useState(false);
   const [cancelMeetingDialogOpen, setCancelMeetingDialogOpen] = useState(false);
   const [meetingToCancel, setMeetingToCancel] = useState<string | null>(null);
+  const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
 
   useEffect(() => {
     if (detail) setNewStatus(detail.status);
@@ -173,6 +181,68 @@ const ApplicationDetail: React.FC = () => {
       setMeetingToCancel(null);
     } catch (error) {
       enqueueSnackbar(t('error.updateFailed'), { variant: 'error' });
+    }
+  };
+
+  const handleWithdrawApplication = async () => {
+    if (!detail) return;
+    try {
+      setIsWithdrawing(true);
+
+      // Use different endpoint based on role
+      if (isCompanyManager) {
+        // Company Manager uses the special endpoint that validates ownership
+        await applicationService.withdrawApplicationByManager(detail.id);
+      } else {
+        // Other roles use the standard withdraw
+        await applicationService.withdrawApplication(detail.id);
+      }
+
+      // If there's a linked pool CV, reactivate it so it can be matched again
+      if (detail.poolCvId) {
+        try {
+          await poolCVService.togglePoolCVStatus(detail.poolCvId, true);
+        } catch (poolCvError) {
+          console.warn('Failed to reactivate pool CV:', poolCvError);
+          // Don't fail the withdraw if pool CV reactivation fails
+        }
+      }
+
+      enqueueSnackbar(t('application.applicationWithdrawn'), { variant: 'success' });
+      setWithdrawDialogOpen(false);
+      // Refetch to update the UI with new status
+      await queryClient.refetchQueries({ queryKey: ['application', id] });
+      await queryClient.invalidateQueries({ queryKey: ['applications'] });
+      await queryClient.invalidateQueries({ queryKey: ['pool-cvs'] });
+      // Also invalidate position matches since the match is deleted on withdraw
+      await queryClient.invalidateQueries({ queryKey: ['position-matches'] });
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || t('application.failedToWithdraw');
+      enqueueSnackbar(errorMessage, { variant: 'error' });
+    } finally {
+      setIsWithdrawing(false);
+    }
+  };
+
+  const handleRejectApplication = async () => {
+    if (!detail) return;
+    try {
+      setIsRejecting(true);
+      await applicationService.rejectApplication(detail.id);
+
+      enqueueSnackbar(t('application.applicationRejected'), { variant: 'success' });
+      setRejectDialogOpen(false);
+      // Refetch to update the UI with new status
+      await queryClient.refetchQueries({ queryKey: ['application', id] });
+      await queryClient.invalidateQueries({ queryKey: ['applications'] });
+      await queryClient.invalidateQueries({ queryKey: ['pool-cvs'] });
+      // Also invalidate position matches since the match is deleted on reject
+      await queryClient.invalidateQueries({ queryKey: ['position-matches'] });
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || t('application.failedToReject');
+      enqueueSnackbar(errorMessage, { variant: 'error' });
+    } finally {
+      setIsRejecting(false);
     }
   };
 
@@ -305,6 +375,56 @@ const ApplicationDetail: React.FC = () => {
       <Paper sx={{ p: 3 }}>
         <Grid container spacing={3}>
           <Grid item xs={12}>
+            {/* Top action buttons */}
+            <Box sx={{ mb: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              {/* HR Reject Button - Only for HR and not already REJECTED/WITHDRAWN/ACCEPTED */}
+              {isHR &&
+               detail.status !== ApplicationStatus.REJECTED &&
+               detail.status !== ApplicationStatus.WITHDRAWN &&
+               detail.status !== ApplicationStatus.ACCEPTED && (
+                <Button
+                  variant="contained"
+                  color="error"
+                  startIcon={<DeleteIcon />}
+                  onClick={() => setRejectDialogOpen(true)}
+                  size="small"
+                >
+                  {t('application.rejectApplication')}
+                </Button>
+              )}
+
+              {/* Company Manager Withdraw Button - Only for Company Manager and their own applications */}
+              {isCompanyManager &&
+               detail.status !== ApplicationStatus.WITHDRAWN &&
+               detail.status !== ApplicationStatus.REJECTED &&
+               detail.status !== ApplicationStatus.ACCEPTED && (
+                <Button
+                  variant="outlined"
+                  color="warning"
+                  startIcon={<UndoIcon />}
+                  onClick={() => setWithdrawDialogOpen(true)}
+                  size="small"
+                >
+                  {t('application.withdrawApplication')}
+                </Button>
+              )}
+
+              {/* General Withdraw Button - For non-Company Manager roles */}
+              {!isCompanyManager &&
+               detail.status !== ApplicationStatus.WITHDRAWN &&
+               detail.status !== ApplicationStatus.REJECTED &&
+               detail.status !== ApplicationStatus.ACCEPTED && (
+                <Button
+                  variant="outlined"
+                  color="warning"
+                  startIcon={<UndoIcon />}
+                  onClick={() => setWithdrawDialogOpen(true)}
+                  size="small"
+                >
+                  {t('application.withdrawApplication')}
+                </Button>
+              )}
+            </Box>
             <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
                 <Avatar sx={{ width: 56, height: 56 }}>
@@ -494,17 +614,26 @@ const ApplicationDetail: React.FC = () => {
                 {t(`application.${detail.status?.toLowerCase().replace(/_/g, '') || ''}`) || detail.status.replace('_', ' ')}
               </Typography>
             )}
-            <Box sx={{ display: 'flex', gap: 1, mt: 1, flexDirection: 'column' }}>
-              <Button 
-                fullWidth
-                size="small" 
-                startIcon={<ForwardIcon />} 
-                onClick={() => navigate(`/cv-sharing/applications/${detail.id}/forward`)} 
-                disabled={isCompanyManager}
+            <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap' }}>
+              {detail.poolCvId && (
+                <Button
+                  size="small"
+                  startIcon={<PersonIcon />}
+                  onClick={() => navigate(`/cv-sharing/pool-cvs/${detail.poolCvId}`)}
+                  variant="outlined"
+                >
+                  {t('application.viewApplicantDetails')}
+                </Button>
+              )}
+              <Button
+                size="small"
+                startIcon={<WorkIcon />}
+                onClick={() => navigate(`/cv-sharing/positions/${detail.positionId}`)}
                 variant="outlined"
               >
-                {t('application.forwardToReviewer')}
+                {t('application.viewPositionDetails')}
               </Button>
+              <Button size="small" startIcon={<ForwardIcon />} onClick={() => navigate(`/cv-sharing/applications/${detail.id}/forward`)} disabled={isCompanyManager}>{t('application.forwardToReviewer')}</Button>
             </Box>
 
             <Typography variant="h6" sx={{ mt: 3 }}>{t('application.ratings')}</Typography>
@@ -730,6 +859,32 @@ const ApplicationDetail: React.FC = () => {
           setMeetingToCancel(null);
         }}
         onConfirm={handleCancelMeeting}
+      />
+
+      {/* Withdraw Application Confirmation Dialog */}
+      <ConfirmDialog
+        open={withdrawDialogOpen}
+        title={t('application.withdrawApplication')}
+        description={t('application.withdrawConfirm')}
+        confirmLabel={t('application.withdrawApplication')}
+        cancelLabel={t('common.cancel')}
+        confirmColor="warning"
+        loading={isWithdrawing}
+        onClose={() => setWithdrawDialogOpen(false)}
+        onConfirm={handleWithdrawApplication}
+      />
+
+      {/* Reject Application Confirmation Dialog */}
+      <ConfirmDialog
+        open={rejectDialogOpen}
+        title={t('application.rejectApplication')}
+        description={t('application.rejectConfirm')}
+        confirmLabel={t('application.rejectApplication')}
+        cancelLabel={t('common.cancel')}
+        confirmColor="error"
+        loading={isRejecting}
+        onClose={() => setRejectDialogOpen(false)}
+        onConfirm={handleRejectApplication}
       />
     </Box>
   );

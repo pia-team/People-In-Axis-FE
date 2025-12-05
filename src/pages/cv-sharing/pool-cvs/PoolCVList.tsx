@@ -191,8 +191,16 @@ const PoolCVList: React.FC = () => {
       setDeleteDialogOpen(false);
       setSelectedCV(null);
       await queryClient.invalidateQueries({ queryKey: ['poolCVs'] });
-    } catch (error) {
-      enqueueSnackbar(t('error.deleteFailed'), { variant: 'error' });
+    } catch (error: any) {
+      // Check if the error is due to matched positions or active applications
+      const errorMessage = error?.response?.data?.message || error?.message || '';
+      if (errorMessage.includes('POOL_CV_HAS_MATCHED_POSITIONS')) {
+        enqueueSnackbar(t('poolCV.cannotDeleteHasMatchedPositions'), { variant: 'error' });
+      } else if (errorMessage.includes('POOL_CV_HAS_ACTIVE_APPLICATIONS') || errorMessage.includes('active')) {
+        enqueueSnackbar(t('poolCV.cannotDeleteHasActiveApplications'), { variant: 'error' });
+      } else {
+        enqueueSnackbar(t('error.deleteFailed'), { variant: 'error' });
+      }
     }
   };
 
@@ -677,11 +685,11 @@ const PoolCVList: React.FC = () => {
                   
                   const isAlreadyMatched = existingMatches[matched.position.id];
                   const matchColor = getMatchColor(matched.matchScore ?? 0);
-                  
+
                   return (
-                    <Card 
+                    <Card
                       key={matched.position.id}
-                      sx={{ 
+                      sx={{
                         border: isAlreadyMatched ? '2px solid' : '1px solid',
                         borderColor: isAlreadyMatched ? 'success.main' : 'divider',
                         backgroundColor: isAlreadyMatched ? 'success.50' : 'background.paper',
@@ -711,7 +719,7 @@ const PoolCVList: React.FC = () => {
                           </Typography>
                         </Box>
                       )}
-                      
+
                       <CardContent>
                         {/* Position Header */}
                         <Box sx={{ mb: 2, pr: isAlreadyMatched ? 10 : 0 }}>
@@ -719,21 +727,21 @@ const PoolCVList: React.FC = () => {
                             {matched.position.title}
                           </Typography>
                           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
-                            <Chip 
-                              label={matched.position.department || t('position.noDepartment')} 
-                              size="small" 
+                            <Chip
+                              label={matched.position.department || t('position.noDepartment')}
+                              size="small"
                               variant="outlined"
                             />
-                            <Chip 
-                              label={matched.position.location || t('position.noLocation')} 
-                              size="small" 
+                            <Chip
+                              label={matched.position.location || t('position.noLocation')}
+                              size="small"
                               variant="outlined"
                             />
                           </Box>
                         </Box>
-                        
+
                         <Divider sx={{ my: 2 }} />
-                        
+
                         {/* Match Score Section */}
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                           <Box sx={{ flex: 1 }}>
@@ -756,7 +764,7 @@ const PoolCVList: React.FC = () => {
                             </Box>
                           </Box>
                         </Box>
-                        
+
                         {/* Breakdown Details */}
                         {matched.breakdown && (
                           <Box sx={{ mb: 2 }}>
@@ -769,12 +777,12 @@ const PoolCVList: React.FC = () => {
                                   <Typography variant="caption" color="text.secondary">
                                     {t('position.skills')}
                                   </Typography>
-                                  <Typography 
-                                    variant="body2" 
+                                  <Typography
+                                    variant="body2"
                                     fontWeight="medium"
                                     color={(!matched.position.skills || matched.position.skills.length === 0) ? 'text.secondary' : 'text.primary'}
                                   >
-                                    {(!matched.position.skills || matched.position.skills.length === 0) 
+                                    {(!matched.position.skills || matched.position.skills.length === 0)
                                       ? t('common.notSpecified')
                                       : `${Math.round((matched.breakdown.skillsScore || 0) * 100)}%`}
                                   </Typography>
@@ -785,8 +793,8 @@ const PoolCVList: React.FC = () => {
                                   <Typography variant="caption" color="text.secondary">
                                     {t('position.experienceYears')}
                                   </Typography>
-                                  <Typography 
-                                    variant="body2" 
+                                  <Typography
+                                    variant="body2"
                                     fontWeight="medium"
                                     color={(!matched.position.minExperience || matched.position.minExperience === 0) ? 'text.secondary' : 'text.primary'}
                                   >
@@ -801,8 +809,8 @@ const PoolCVList: React.FC = () => {
                                   <Typography variant="caption" color="text.secondary">
                                     {t('position.languages')}
                                   </Typography>
-                                  <Typography 
-                                    variant="body2" 
+                                  <Typography
+                                    variant="body2"
                                     fontWeight="medium"
                                     color={(!matched.position.languages || matched.position.languages.length === 0) ? 'text.secondary' : 'text.primary'}
                                   >
@@ -825,7 +833,7 @@ const PoolCVList: React.FC = () => {
                             </Grid>
                           </Box>
                         )}
-                        
+
                         {/* Missing Skills */}
                         {matched.missingRequiredSkills && matched.missingRequiredSkills.length > 0 && (
                           <Box sx={{ mb: 2, p: 1.5, bgcolor: 'error.50', borderRadius: 1, border: '1px solid', borderColor: 'error.200' }}>
@@ -845,7 +853,7 @@ const PoolCVList: React.FC = () => {
                             </Box>
                           </Box>
                         )}
-                        
+
                         {/* Matched Skills */}
                         {matched.matchedSkills && matched.matchedSkills.length > 0 && (
                           <Box sx={{ mb: 2 }}>
@@ -875,13 +883,13 @@ const PoolCVList: React.FC = () => {
                         
                         {/* Recommendation */}
                         {matched.recommendation && (
-                          <Box sx={{ 
-                            mt: 2, 
-                            p: 2, 
-                            bgcolor: 'info.50', 
+                          <Box sx={{
+                            mt: 2,
+                            p: 2,
+                            bgcolor: 'info.50',
                             borderRadius: 1,
                             borderLeft: '4px solid',
-                            borderColor: matchColor === 'success' ? 'success.main' : 
+                            borderColor: matchColor === 'success' ? 'success.main' :
                                        matchColor === 'primary' ? 'primary.main' :
                                        matchColor === 'warning' ? 'warning.main' : 'error.main'
                           }}>
@@ -900,6 +908,7 @@ const PoolCVList: React.FC = () => {
                           variant="outlined"
                           startIcon={<ViewIcon />}
                           onClick={() => navigate(`/cv-sharing/positions/${matched.position.id}`)}
+                          sx={{ minWidth: 150 }}
                         >
                           {t('position.viewPosition')}
                         </Button>
@@ -909,6 +918,7 @@ const PoolCVList: React.FC = () => {
                             color={matchColor}
                             onClick={() => handleConfirmMatch(matchDialog.poolCVId!, matched.position.id, matched.matchScore)}
                             disabled={confirmBusyId === matched.position.id || matchStatusLoading}
+                            sx={{ minWidth: 150 }}
                           >
                             {confirmBusyId === matched.position.id ? t('common.matching') : t('poolCV.confirmMatch')}
                           </Button>

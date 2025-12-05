@@ -242,177 +242,184 @@ const ApplicationList: React.FC = () => {
     return statusColors[status] || 'default';
   };
 
-  const columns: GridColDef[] = React.useMemo(() => [
-    {
-      field: 'applicant',
-      headerName: t('application.applicant'),
-      //sortField: 'surname'
-      flex: 1.5,
-      minWidth: 250,
-      renderCell: (params: GridRenderCellParams) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Avatar sx={{ width: 32, height: 32 }}>
-            {params.row.firstName[0]}{params.row.lastName[0]}
-          </Avatar>
-          <Box>
-            <Typography variant="body2" fontWeight="medium">
-              {params.row.firstName} {params.row.lastName}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {params.row.email}
-            </Typography>
-          </Box>
-        </Box>
-      )
-    },
-    {
-      field: 'positionTitle',
-      headerName: t('application.position'),
-      flex: 1,
-      minWidth: 150,
-      renderCell: (params: GridRenderCellParams) => (
-        <Typography variant="body2">
-          {params.row.positionTitle || t('common.notAvailable')}
-        </Typography>
-      )
-    },
-    {
-      field: 'appliedAt',
-      headerName: t('application.appliedAt'),
-      width: 130,
-      renderCell: (params: GridRenderCellParams) => (
-        <Typography variant="body2">
-          {new Date(params.row.appliedAt).toLocaleDateString()}
-        </Typography>
-      )
-    },
-    {
-      field: 'status',
-      headerName: t('common.status'),
-      width: 140,
-      renderCell: (params: GridRenderCellParams) => {
-        const status = params.row.status;
-        if (!status) return null;
-        
-        // Map status enum values to translation keys
-        const statusMap: Record<ApplicationStatus, string> = {
-          [ApplicationStatus.NEW]: t('application.new'),
-          [ApplicationStatus.IN_REVIEW]: t('application.inReview'),
-          [ApplicationStatus.FORWARDED]: t('application.forwarded'),
-          [ApplicationStatus.MEETING_SCHEDULED]: t('application.meetingScheduled'),
-          [ApplicationStatus.ACCEPTED]: t('application.accepted'),
-          [ApplicationStatus.REJECTED]: t('application.rejected'),
-          [ApplicationStatus.WITHDRAWN]: t('application.withdrawn'),
-          [ApplicationStatus.ARCHIVED]: t('application.archived'),
-        };
-        
-        const label = statusMap[status as ApplicationStatus] || status.replace(/_/g, ' ');
-        return (
-        <Chip
-          label={label}
-          color={getStatusColor(status as ApplicationStatus)}
-          size="small"
-        />
-        );
-      }
-    },
-    {
-      field: 'rating',
-      headerName: t('application.ratings'),
-      width: 140,
-      sortable: false,
-      renderCell: (params: GridRenderCellParams) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          {params.row.averageRating ? (
-            <>
-              <Rating value={params.row.averageRating} readOnly size="small" />
-              <Typography variant="caption">
-                {params.row.ratingCount ?? 0}
+  const columns: GridColDef[] = React.useMemo(() => {
+    const baseColumns: GridColDef[] = [
+      {
+        field: 'applicant',
+        headerName: t('application.applicant'),
+        //sortField: 'surname'
+        flex: 1.5,
+        minWidth: 250,
+        renderCell: (params: GridRenderCellParams) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Avatar sx={{ width: 32, height: 32 }}>
+              {params.row.firstName[0]}{params.row.lastName[0]}
+            </Avatar>
+            <Box>
+              <Typography variant="body2" fontWeight="medium">
+                {params.row.firstName} {params.row.lastName}
               </Typography>
-            </>
-          ) : (
-            <Typography variant="caption" color="text.secondary">
-              {t('application.noRatings')}
-            </Typography>
-          )}
-        </Box>
-      )
-    },
-    {
-      field: 'comments',
-      headerName: t('application.comments'),
-      width: 110,
-      sortable: false,
-      align: 'center',
-      headerAlign: 'center',
-      renderCell: (params: GridRenderCellParams) => (
-        <Badge badgeContent={params.row.commentCount} color="primary">
-          <CommentIcon fontSize="small" />
-        </Badge>
-      )
-    },
-    {
-      field: 'actions',
-      headerName: t('common.actions'),
-      width: 160,
-      sortable: false,
-      renderCell: (params: GridRenderCellParams) => (
-        <Box>
-          <Tooltip title={t('common.view')}>
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/cv-sharing/applications/${params.row.id}`);
-              }}
-            >
-              <ViewIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={t('application.addComment')}>
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                setCommentDialog({
-                  open: true,
-                  applicationId: params.row.id,
-                  comment: ''
-                });
-              }}
-            >
-              <CommentIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={t('application.addRating')}>
-            <IconButton
-              size="small"
-              disabled={isCompanyManager}
-              onClick={(e) => {
-                e.stopPropagation();
-                setRatingDialog({
-                  open: true,
-                  applicationId: params.row.id,
-                  score: 0
-                });
-              }}
-            >
-              <StarIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <IconButton
+              <Typography variant="caption" color="text.secondary">
+                {params.row.email}
+              </Typography>
+            </Box>
+          </Box>
+        )
+      },
+      {
+        field: 'positionTitle',
+        headerName: t('application.position'),
+        flex: 1,
+        minWidth: 150,
+        renderCell: (params: GridRenderCellParams) => (
+          <Typography variant="body2">
+            {params.row.positionTitle || t('common.notAvailable')}
+          </Typography>
+        )
+      },
+      {
+        field: 'appliedAt',
+        headerName: t('application.appliedAt'),
+        width: 130,
+        renderCell: (params: GridRenderCellParams) => (
+          <Typography variant="body2">
+            {new Date(params.row.appliedAt).toLocaleDateString()}
+          </Typography>
+        )
+      },
+      {
+        field: 'status',
+        headerName: t('common.status'),
+        width: 140,
+        renderCell: (params: GridRenderCellParams) => {
+          const status = params.row.status;
+          if (!status) return null;
+          
+          // Map status enum values to translation keys
+          const statusMap: Record<ApplicationStatus, string> = {
+            [ApplicationStatus.NEW]: t('application.new'),
+            [ApplicationStatus.IN_REVIEW]: t('application.inReview'),
+            [ApplicationStatus.FORWARDED]: t('application.forwarded'),
+            [ApplicationStatus.MEETING_SCHEDULED]: t('application.meetingScheduled'),
+            [ApplicationStatus.ACCEPTED]: t('application.accepted'),
+            [ApplicationStatus.REJECTED]: t('application.rejected'),
+            [ApplicationStatus.WITHDRAWN]: t('application.withdrawn'),
+            [ApplicationStatus.ARCHIVED]: t('application.archived'),
+          };
+          
+          const label = statusMap[status as ApplicationStatus] || status.replace(/_/g, ' ');
+          return (
+          <Chip
+            label={label}
+            color={getStatusColor(status as ApplicationStatus)}
             size="small"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleMenuOpen(e, params.row);
-            }}
-          >
-            <MoreIcon fontSize="small" />
-          </IconButton>
-        </Box>
-      )
+          />
+          );
+        }
+      },
+      {
+        field: 'rating',
+        headerName: t('application.ratings'),
+        width: 140,
+        sortable: false,
+        renderCell: (params: GridRenderCellParams) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            {params.row.averageRating ? (
+              <>
+                <Rating value={params.row.averageRating} readOnly size="small" />
+                <Typography variant="caption">
+                  {params.row.ratingCount ?? 0}
+                </Typography>
+              </>
+            ) : (
+              <Typography variant="caption" color="text.secondary">
+                {t('application.noRatings')}
+              </Typography>
+            )}
+          </Box>
+        )
+      },
+      {
+        field: 'comments',
+        headerName: t('application.comments'),
+        width: 110,
+        sortable: false,
+        align: 'center',
+        headerAlign: 'center',
+        renderCell: (params: GridRenderCellParams) => (
+          <Badge badgeContent={params.row.commentCount} color="primary">
+            <CommentIcon fontSize="small" />
+          </Badge>
+        )
+      }
+    ];
+
+    // Only add actions column for non-COMPANY_MANAGER users
+    if (!isCompanyManager) {
+      baseColumns.push({
+        field: 'actions',
+        headerName: t('common.actions'),
+        width: 160,
+        sortable: false,
+        renderCell: (params: GridRenderCellParams) => (
+          <Box>
+            <Tooltip title={t('common.view')}>
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/cv-sharing/applications/${params.row.id}`);
+                }}
+              >
+                <ViewIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={t('application.addComment')}>
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCommentDialog({
+                    open: true,
+                    applicationId: params.row.id,
+                    comment: ''
+                  });
+                }}
+              >
+                <CommentIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={t('application.addRating')}>
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setRatingDialog({
+                    open: true,
+                    applicationId: params.row.id,
+                    score: 0
+                  });
+                }}
+              >
+                <StarIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleMenuOpen(e, params.row);
+              }}
+            >
+              <MoreIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        )
+      });
     }
-  ], [t, navigate, isCompanyManager, setCommentDialog, setRatingDialog, handleMenuOpen]);
+
+    return baseColumns;
+  }, [t, navigate, isCompanyManager, setCommentDialog, setRatingDialog, handleMenuOpen]);
 
   const NoApplicationsOverlay = React.useCallback(() => (
     <EmptyState
