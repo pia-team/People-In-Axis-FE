@@ -139,7 +139,10 @@ const PoolCVForm: React.FC = () => {
 
       // Invalidate cache to ensure updated data is shown
       await queryClient.invalidateQueries({ queryKey: ['poolCV', poolCvId || id] });
+      // Invalidate all poolCVs queries (with any filters)
       await queryClient.invalidateQueries({ queryKey: ['poolCVs'] });
+      // Also refetch the list to ensure new CV appears
+      await queryClient.refetchQueries({ queryKey: ['poolCVs'] });
 
       enqueueSnackbar(id ? t('poolCV.poolCVUpdated') : t('poolCV.poolCVCreated'), { variant: 'success' });
       const targetId = poolCvId || id;

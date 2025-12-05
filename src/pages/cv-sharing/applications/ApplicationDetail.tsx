@@ -39,11 +39,12 @@ import {
   Schedule as ScheduleIcon,
   Save as SaveIcon,
   ForwardToInbox as ForwardIcon,
-  Person as PersonIcon,
   Fingerprint as IdIcon,
   Edit as EditIcon,
   Undo as UndoIcon,
-  Work as WorkIcon
+  Work as WorkIcon,
+  AccountCircle as AccountCircleIcon,
+  Person as PersonIcon
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
@@ -187,7 +188,7 @@ const ApplicationDetail: React.FC = () => {
     if (!detail) return;
     try {
       setIsWithdrawing(true);
-      
+
       // Use different endpoint based on role
       if (isCompanyManager) {
         // Company Manager uses the special endpoint that validates ownership
@@ -196,7 +197,7 @@ const ApplicationDetail: React.FC = () => {
         // Other roles use the standard withdraw
         await applicationService.withdrawApplication(detail.id);
       }
-      
+
       // If there's a linked pool CV, reactivate it so it can be matched again
       if (detail.poolCvId) {
         try {
@@ -206,7 +207,7 @@ const ApplicationDetail: React.FC = () => {
           // Don't fail the withdraw if pool CV reactivation fails
         }
       }
-      
+
       enqueueSnackbar(t('application.applicationWithdrawn'), { variant: 'success' });
       setWithdrawDialogOpen(false);
       // Refetch to update the UI with new status
@@ -228,7 +229,7 @@ const ApplicationDetail: React.FC = () => {
     try {
       setIsRejecting(true);
       await applicationService.rejectApplication(detail.id);
-      
+
       enqueueSnackbar(t('application.applicationRejected'), { variant: 'success' });
       setRejectDialogOpen(false);
       // Refetch to update the UI with new status
@@ -377,9 +378,9 @@ const ApplicationDetail: React.FC = () => {
             {/* Top action buttons */}
             <Box sx={{ mb: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
               {/* HR Reject Button - Only for HR and not already REJECTED/WITHDRAWN/ACCEPTED */}
-              {isHR && 
-               detail.status !== ApplicationStatus.REJECTED && 
-               detail.status !== ApplicationStatus.WITHDRAWN && 
+              {isHR &&
+               detail.status !== ApplicationStatus.REJECTED &&
+               detail.status !== ApplicationStatus.WITHDRAWN &&
                detail.status !== ApplicationStatus.ACCEPTED && (
                 <Button
                   variant="contained"
@@ -391,11 +392,11 @@ const ApplicationDetail: React.FC = () => {
                   {t('application.rejectApplication')}
                 </Button>
               )}
-              
+
               {/* Company Manager Withdraw Button - Only for Company Manager and their own applications */}
-              {isCompanyManager && 
-               detail.status !== ApplicationStatus.WITHDRAWN && 
-               detail.status !== ApplicationStatus.REJECTED && 
+              {isCompanyManager &&
+               detail.status !== ApplicationStatus.WITHDRAWN &&
+               detail.status !== ApplicationStatus.REJECTED &&
                detail.status !== ApplicationStatus.ACCEPTED && (
                 <Button
                   variant="outlined"
@@ -407,11 +408,11 @@ const ApplicationDetail: React.FC = () => {
                   {t('application.withdrawApplication')}
                 </Button>
               )}
-              
+
               {/* General Withdraw Button - For non-Company Manager roles */}
-              {!isCompanyManager && 
-               detail.status !== ApplicationStatus.WITHDRAWN && 
-               detail.status !== ApplicationStatus.REJECTED && 
+              {!isCompanyManager &&
+               detail.status !== ApplicationStatus.WITHDRAWN &&
+               detail.status !== ApplicationStatus.REJECTED &&
                detail.status !== ApplicationStatus.ACCEPTED && (
                 <Button
                   variant="outlined"
@@ -425,17 +426,29 @@ const ApplicationDetail: React.FC = () => {
               )}
             </Box>
             <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Avatar>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
+                <Avatar sx={{ width: 56, height: 56 }}>
                   {detail.firstName[0]}{detail.lastName[0]}
                 </Avatar>
-                <Box>
-                  <Typography variant="h5">
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="h5" gutterBottom>
                     {detail.firstName} {detail.lastName}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
                     {t('application.applyingFor')}: {detail.positionTitle || detail.positionId}
                   </Typography>
+                  {detail.poolCvId && (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      size="small"
+                      startIcon={<AccountCircleIcon />}
+                      onClick={() => navigate(`/cv-sharing/pool-cvs/${detail.poolCvId}`)}
+                      sx={{ mt: 1 }}
+                    >
+                      {t('application.viewApplicantProfile')}
+                    </Button>
+                  )}
                 </Box>
               </Box>
               <Chip label={t(`application.${detail.status?.toLowerCase().replace(/_/g, '') || ''}`) || detail.status.replace('_', ' ')} color={statusColor(detail.status)} />
@@ -603,18 +616,18 @@ const ApplicationDetail: React.FC = () => {
             )}
             <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap' }}>
               {detail.poolCvId && (
-                <Button 
-                  size="small" 
-                  startIcon={<PersonIcon />} 
+                <Button
+                  size="small"
+                  startIcon={<PersonIcon />}
                   onClick={() => navigate(`/cv-sharing/pool-cvs/${detail.poolCvId}`)}
                   variant="outlined"
                 >
                   {t('application.viewApplicantDetails')}
                 </Button>
               )}
-              <Button 
-                size="small" 
-                startIcon={<WorkIcon />} 
+              <Button
+                size="small"
+                startIcon={<WorkIcon />}
                 onClick={() => navigate(`/cv-sharing/positions/${detail.positionId}`)}
                 variant="outlined"
               >
