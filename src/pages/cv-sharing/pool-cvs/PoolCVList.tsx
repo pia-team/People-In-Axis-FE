@@ -26,7 +26,8 @@ import {
   List,
   ListItem,
   ListItemText,
-  Divider
+  Divider,
+  TablePagination
 } from '@mui/material';
 import { ToggleButton, ToggleButtonGroup, ListItemAvatar } from '@mui/material';
 import {
@@ -84,6 +85,8 @@ const PoolCVList: React.FC = () => {
   const [confirmBusyId, setConfirmBusyId] = useState<string | null>(null);
   const [toggleBusyId, setToggleBusyId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'card' | 'list' | 'compact'>('card');
+  const [cardPage, setCardPage] = useState(0);
+  const [cardRowsPerPage, setCardRowsPerPage] = useState(12);
   const [existingMatches, setExistingMatches] = useState<Record<string, boolean>>({});
   const [matchStatusLoading, setMatchStatusLoading] = useState(false);
 
@@ -123,6 +126,11 @@ const PoolCVList: React.FC = () => {
     cv.currentPosition?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     cv.currentCompany?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Reset card pagination when filters change
+  React.useEffect(() => {
+    setCardPage(0);
+  }, [searchTerm, experienceFilter, statusFilter]);
 
   const handleToggleStatus = async (cvId: string, currentStatus: boolean) => {
     try {
@@ -436,8 +444,11 @@ const PoolCVList: React.FC = () => {
         </SectionCard>
         <SectionCard>
           {viewMode === 'card' && (
+            <>
             <Grid container spacing={3}>
-              {filteredPoolCVs.map((cv) => (
+              {filteredPoolCVs
+                .slice(cardPage * cardRowsPerPage, cardPage * cardRowsPerPage + cardRowsPerPage)
+                .map((cv) => (
                 <Grid item xs={12} md={6} lg={4} key={cv.id}>
                   <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                   <CardContent sx={{ flexGrow: 1 }}>
@@ -564,6 +575,21 @@ const PoolCVList: React.FC = () => {
             </Grid>
           ))}
         </Grid>
+            <TablePagination
+              component="div"
+              count={filteredPoolCVs.length}
+              page={cardPage}
+              onPageChange={(_, newPage) => setCardPage(newPage)}
+              rowsPerPage={cardRowsPerPage}
+              onRowsPerPageChange={(e) => {
+                setCardRowsPerPage(parseInt(e.target.value, 10));
+                setCardPage(0);
+              }}
+              rowsPerPageOptions={[6, 12, 24, 48]}
+              labelRowsPerPage={t('common.rowsPerPage')}
+              sx={{ mt: 2 }}
+            />
+            </>
           )}
 
           {viewMode === 'list' && (
