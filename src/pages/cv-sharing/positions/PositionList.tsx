@@ -43,9 +43,13 @@ const PositionList: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  const { hasRole } = useKeycloak();
+  const { hasRole, hasAnyRole } = useKeycloak();
   const isHR = hasRole('HUMAN_RESOURCES');
   const isCompanyManager = hasRole('COMPANY_MANAGER');
+  // EMPLOYEE can only view positions (no edit, duplicate, archive, status change)
+  const isEmployee = hasRole('EMPLOYEE') && !hasAnyRole(['HUMAN_RESOURCES', 'MANAGER', 'COMPANY_MANAGER']);
+  // Can edit positions (HR/MANAGER but not COMPANY_MANAGER or EMPLOYEE-only)
+  const canEditPositions = (isHR || hasRole('MANAGER')) && !isCompanyManager && !isEmployee;
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
@@ -222,7 +226,7 @@ const PositionList: React.FC = () => {
     {
       field: 'actions',
       headerName: t('common.actions'),
-      width: 200,
+      width: isEmployee ? 80 : 200,
       sortable: false,
       renderCell: (params: GridRenderCellParams) => {
         const position = params.row as Position;
@@ -239,67 +243,72 @@ const PositionList: React.FC = () => {
                 <ViewIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-            <Tooltip title={isCompanyManager ? t('common.viewOnly') : (isHR ? t('common.edit') : t('common.onlyHR'))}>
-              <span>
-                <IconButton
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/cv-sharing/positions/${position.id}/edit`);
-                  }}
-                  disabled={!isHR || isCompanyManager}
-                >
-                  <EditIcon fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
-            <Tooltip title={isCompanyManager ? t('common.viewOnly') : (isHR ? t('position.duplicatePosition') : t('common.onlyHR'))}>
-              <span>
-                <IconButton
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDuplicate(position.id);
-                  }}
-                  disabled={!isHR || isCompanyManager}
-                >
-                  <DuplicateIcon fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
-            <Tooltip title={isCompanyManager ? t('common.viewOnly') : (isHR ? t('position.archivePosition') : t('common.onlyHR'))}>
-              <span>
-                <IconButton
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleArchive(position.id);
-                  }}
-                  disabled={!isHR || isCompanyManager || position.status === PositionStatus.ARCHIVED}
-                >
-                  <ArchiveIcon fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
-            <Tooltip title={isCompanyManager ? t('common.viewOnly') : (isHR ? t('common.changeStatus') : t('common.onlyHR'))}>
-              <span>
-                <IconButton
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleMenuOpen(e, position);
-                  }}
-                  disabled={!isHR || isCompanyManager}
-                >
-                  <MoreVertIcon fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
+            {/* Edit, Duplicate, Archive, Status change buttons - hidden for EMPLOYEE */}
+            {!isEmployee && (
+              <>
+                <Tooltip title={!canEditPositions ? t('common.viewOnly') : t('common.edit')}>
+                  <span>
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/cv-sharing/positions/${position.id}/edit`);
+                      }}
+                      disabled={!canEditPositions}
+                    >
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+                <Tooltip title={!canEditPositions ? t('common.viewOnly') : t('position.duplicatePosition')}>
+                  <span>
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDuplicate(position.id);
+                      }}
+                      disabled={!canEditPositions}
+                    >
+                      <DuplicateIcon fontSize="small" />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+                <Tooltip title={!canEditPositions ? t('common.viewOnly') : t('position.archivePosition')}>
+                  <span>
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleArchive(position.id);
+                      }}
+                      disabled={!canEditPositions || position.status === PositionStatus.ARCHIVED}
+                    >
+                      <ArchiveIcon fontSize="small" />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+                <Tooltip title={!canEditPositions ? t('common.viewOnly') : t('common.changeStatus')}>
+                  <span>
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMenuOpen(e, position);
+                      }}
+                      disabled={!canEditPositions}
+                    >
+                      <MoreVertIcon fontSize="small" />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+              </>
+            )}
           </Box>
         );
       }
     }
-  ], [t, isHR, isCompanyManager, navigate]);
+  ], [t, isHR, isCompanyManager, isEmployee, canEditPositions, navigate]);
 
   const NoPositionsOverlay = React.useCallback(() => (
     <EmptyState
@@ -314,18 +323,21 @@ const PositionList: React.FC = () => {
       actions={
         <Stack direction="row" spacing={1}>
           <Button variant="outlined" onClick={() => refetch()}>{t('common.refresh')}</Button>
-          <Tooltip title={isHR ? '' : t('common.onlyHR')}>
-            <span>
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => navigate('/cv-sharing/positions/new')}
-                disabled={!isHR}
-              >
-                {t('position.createPosition')}
-              </Button>
-            </span>
-          </Tooltip>
+          {/* Create Position button - hidden for EMPLOYEE */}
+          {!isEmployee && (
+            <Tooltip title={canEditPositions ? '' : t('common.onlyHR')}>
+              <span>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => navigate('/cv-sharing/positions/new')}
+                  disabled={!canEditPositions}
+                >
+                  {t('position.createPosition')}
+                </Button>
+              </span>
+            </Tooltip>
+          )}
         </Stack>
       }
     >
