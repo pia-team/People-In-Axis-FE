@@ -540,6 +540,9 @@
     "pleaseEnterRecipientEmail": "Please enter at least one recipient email",
     "applicationForwarded": "Application forwarded",
     "failedToForwardApplication": "Failed to forward application",
+    "partialForwardSuccess": "Forwarded to {{successCount}} people. Already forwarded to: {{alreadyForwardedNames}}",
+    "allAlreadyForwarded": "All selected users were already forwarded: {{names}}",
+    "alreadyForwardedToUser": "This application was already forwarded to {{userName}} by {{forwardedBy}}",
     "withdrawApplication": "Withdraw Application",
     "withdrawConfirm": "Are you sure you want to withdraw this application? The linked pool CV will be reactivated and can be matched again.",
     "applicationWithdrawn": "Application withdrawn successfully. Pool CV is now active for matching.",
@@ -548,7 +551,11 @@
     "rejectApplication": "Reject Application",
     "rejectConfirm": "Are you sure you want to reject this application? The match record will be deleted and the applicant can apply again.",
     "applicationRejected": "Application rejected successfully.",
-    "failedToReject": "Failed to reject application"
+    "failedToReject": "Failed to reject application",
+    "forwardedBy": "Forwarded By",
+    "forwardingInfo": "Forwarding Information",
+    "forwardedByLabel": "Forwarded By",
+    "noForwardMessage": "No message"
   },
   "poolCV": {
     "title": "Pool CV",
@@ -581,6 +588,7 @@
     "matchedPositions": "Matched Positions",
     "viewMatches": "View Matches",
     "confirmMatch": "Confirm Match",
+    "employeeCannotConfirmMatch": "Employees cannot confirm matches. Please contact your manager.",
     "alreadyMatched": "This CV is already matched with the selected position",
     "downloadCV": "Download CV",
     "uploadFiles": "Upload Files",

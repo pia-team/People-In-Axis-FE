@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { Box, Paper, Typography, TextField, Button, Stack, Autocomplete, CircularProgress, Chip } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Paper, Typography, TextField, Button, Stack, Autocomplete, CircularProgress, Chip, Alert, Tooltip } from '@mui/material';
+import { Warning as WarningIcon } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { applicationService } from '@/services/cv-sharing';
 import { userService } from '@/services/userService';
 import type { KeycloakUser } from '@/types/user';
+import type { Forwarding } from '@/types/cv-sharing';
 
 const ForwardDialog: React.FC = () => {
   const { t } = useTranslation();
@@ -19,6 +21,35 @@ const ForwardDialog: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [inviting, setInviting] = useState(false);
+  const [existingForwardings, setExistingForwardings] = useState<Forwarding[]>([]);
+  const [loadingForwardings, setLoadingForwardings] = useState(true);
+
+  // Load existing forwardings for this application
+  useEffect(() => {
+    const loadExistingForwardings = async () => {
+      if (!id) return;
+      try {
+        setLoadingForwardings(true);
+        const detail = await applicationService.getApplicationById(id);
+        setExistingForwardings(detail.forwardings || []);
+      } catch (e) {
+        console.error('Failed to load existing forwardings', e);
+      } finally {
+        setLoadingForwardings(false);
+      }
+    };
+    loadExistingForwardings();
+  }, [id]);
+
+  // Check if a user is already forwarded
+  const isAlreadyForwarded = (userId: string) => {
+    return existingForwardings.some(f => f.forwardedTo === userId);
+  };
+
+  // Get forwarding info for a user
+  const getForwardingInfo = (userId: string): Forwarding | undefined => {
+    return existingForwardings.find(f => f.forwardedTo === userId);
+  };
 
   const fetchUsers = React.useCallback(async (q: string, allowEmpty = false) => {
     const term = q.trim();
@@ -97,8 +128,31 @@ const ForwardDialog: React.FC = () => {
     try {
       setSaving(true);
       const recipientIds = selectedUsers.map(u => u.id);
-      await applicationService.forwardApplication(id, { recipients: recipientIds, message });
-      enqueueSnackbar(t('application.applicationForwarded'), { variant: 'success' });
+      const response = await applicationService.forwardApplication(id, { recipients: recipientIds, message });
+      
+      // Show appropriate messages based on response
+      if (response.alreadyForwardedCount > 0 && response.successCount > 0) {
+        // Some successful, some already forwarded
+        const alreadyNames = response.alreadyForwardedRecipients.map(r => r.userName || r.email).join(', ');
+        enqueueSnackbar(
+          t('application.partialForwardSuccess', { 
+            successCount: response.successCount,
+            alreadyForwardedNames: alreadyNames 
+          }),
+          { variant: 'warning' }
+        );
+      } else if (response.alreadyForwardedCount > 0 && response.successCount === 0) {
+        // All were already forwarded
+        const alreadyNames = response.alreadyForwardedRecipients.map(r => r.userName || r.email).join(', ');
+        enqueueSnackbar(
+          t('application.allAlreadyForwarded', { names: alreadyNames }),
+          { variant: 'warning' }
+        );
+      } else if (response.successCount > 0) {
+        // All successful
+        enqueueSnackbar(t('application.applicationForwarded'), { variant: 'success' });
+      }
+      
       navigate(`/cv-sharing/applications/${id}`);
     } catch (e) {
       enqueueSnackbar(t('application.failedToForwardApplication'), { variant: 'error' });
@@ -148,13 +202,29 @@ const ForwardDialog: React.FC = () => {
               />
             )}
             renderTags={(value, getTagProps) =>
-              value.map((option, index) => (
-                <Chip
-                  label={formatLabel(option)}
-                  {...getTagProps({ index })}
-                  key={option.id}
-                />
-              ))
+              value.map((option, index) => {
+                const alreadyForwarded = isAlreadyForwarded(option.id);
+                const forwardingInfo = getForwardingInfo(option.id);
+                return (
+                  <Tooltip 
+                    key={option.id}
+                    title={alreadyForwarded 
+                      ? t('application.alreadyForwardedToUser', { 
+                          userName: option.firstName || option.email,
+                          forwardedBy: forwardingInfo?.forwardedByName || '-'
+                        }) 
+                      : ''
+                    }
+                  >
+                    <Chip
+                      label={formatLabel(option)}
+                      {...getTagProps({ index })}
+                      color={alreadyForwarded ? 'warning' : 'default'}
+                      icon={alreadyForwarded ? <WarningIcon /> : undefined}
+                    />
+                  </Tooltip>
+                );
+              })
             }
             noOptionsText={
               inputValue.trim() && isValidEmail(inputValue.trim()) ? (

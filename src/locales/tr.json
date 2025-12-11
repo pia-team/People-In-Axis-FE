@@ -529,6 +529,9 @@
     "pleaseEnterRecipientEmail": "Lütfen en az bir alıcı e-postası girin",
     "applicationForwarded": "Başvuru yönlendirildi",
     "failedToForwardApplication": "Başvuru yönlendirilemedi",
+    "partialForwardSuccess": "{{successCount}} kişiye yönlendirildi. Şu kişilere daha önce yönlendirilmişti: {{alreadyForwardedNames}}",
+    "allAlreadyForwarded": "Seçilen tüm kullanıcılara daha önce yönlendirilmiş: {{names}}",
+    "alreadyForwardedToUser": "Bu başvuru daha önce {{userName}} kişisine {{forwardedBy}} tarafından yönlendirildi",
     "submitApplication": "Başvuruyu Gönder",
     "recentComments": "Son Yorumlar",
     "rate": "Değerlendir",
@@ -549,7 +552,11 @@
     "rejectApplication": "Başvuruyu Reddet",
     "rejectConfirm": "Bu başvuruyu reddetmek istediğinizden emin misiniz? Eşleşme kaydı silinecek ve başvuran tekrar başvuru yapabilecek.",
     "applicationRejected": "Başvuru başarıyla reddedildi.",
-    "failedToReject": "Başvuru reddedilemedi"
+    "failedToReject": "Başvuru reddedilemedi",
+    "forwardedBy": "Yönlendiren",
+    "forwardingInfo": "Yönlendirme Bilgisi",
+    "forwardedByLabel": "Yönlendiren Kişi",
+    "noForwardMessage": "Mesaj yok"
   },
   "poolCV": {
     "title": "Havuz CV",
@@ -581,6 +588,7 @@
     "matchedPositions": "Eşleşen Pozisyonlar",
     "viewMatches": "Eşleşmeleri Görüntüle",
     "confirmMatch": "Eşleşmeyi Onayla",
+    "employeeCannotConfirmMatch": "Çalışanlar eşleşme onaylayamaz. Lütfen yöneticinizle iletişime geçin.",
     "alreadyMatched": "Bu CV mevcut pozisyonla zaten eşleştirilmiş",
     "downloadCV": "CV İndir",
     "uploadFiles": "Dosya Yükle",
