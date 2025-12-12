@@ -234,6 +234,8 @@ export interface PoolCV {
   fileCount?: number;
   createdById?: string;
   createdByName?: string;
+  companyId?: string;
+  companyName?: string;
 }
 
 export interface PoolCVDetail extends PoolCV {

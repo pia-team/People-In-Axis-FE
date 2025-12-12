@@ -44,6 +44,8 @@ import {
   AttachFile as FileIcon,
   CheckCircle as ActiveIcon,
   Cancel as InactiveIcon,
+  Person as PersonIcon,
+  Business as BusinessIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
@@ -76,6 +78,8 @@ const PoolCVList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [experienceFilter, setExperienceFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [createdByFilter, setCreatedByFilter] = useState<string>('all');
+  const [companyFilter, setCompanyFilter] = useState<string>('all');
   const [selectedCV, setSelectedCV] = useState<PoolCV | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [matchDialog, setMatchDialog] = useState<MatchDialogData>({
@@ -92,8 +96,33 @@ const PoolCVList: React.FC = () => {
   const [existingMatches, setExistingMatches] = useState<Record<string, boolean>>({});
   const [matchStatusLoading, setMatchStatusLoading] = useState(false);
 
+  // Fetch all data for filter options (without createdBy and company filters)
+  const { data: allDataForFilters } = useQuery<PagedResponse<PoolCV>>({
+    queryKey: ['poolCVs', 'all-for-filters', statusFilter, experienceFilter, searchTerm],
+    queryFn: async () => {
+      const params: Record<string, unknown> = {
+        size: 1000, // Get all records to extract filter options
+        page: 0
+      };
+      if (statusFilter !== 'all') {
+        params.active = statusFilter === 'active';
+      }
+      if (experienceFilter !== 'all') {
+        const [min, max] = experienceFilter.split('-').map(Number);
+        params.minExperience = min;
+        params.maxExperience = max || 99;
+      }
+      if (searchTerm) {
+        params.q = searchTerm;
+      }
+      // Don't apply createdBy and company filters here - we need all options
+      return await poolCVService.getPoolCVs(params);
+    }
+  });
+
+  // Fetch filtered data
   const { data, isPending, refetch } = useQuery<PagedResponse<PoolCV>>({
-    queryKey: ['poolCVs', statusFilter, experienceFilter, searchTerm],
+    queryKey: ['poolCVs', statusFilter, experienceFilter, searchTerm, createdByFilter, companyFilter],
     queryFn: async () => {
       const params: Record<string, unknown> = {
         size: 1000, // Get all records to support client-side filtering
@@ -110,16 +139,44 @@ const PoolCVList: React.FC = () => {
       if (searchTerm) {
         params.q = searchTerm;
       }
+      if (createdByFilter !== 'all') {
+        params.createdById = createdByFilter;
+      }
+      if (companyFilter !== 'all') {
+        params.companyId = companyFilter;
+      }
       return await poolCVService.getPoolCVs(params);
     }
   });
 
 
   const poolCVs = (data?.content || []);
+  const allPoolCVsForFilters = (allDataForFilters?.content || []);
   
   // Backend now handles COMPANY_MANAGER filtering server-side
   // No need for client-side filtering as backend returns only CVs created by COMPANY_MANAGER
   const companyManagerFilteredCVs = poolCVs;
+  
+  // Extract unique createdBy and company options from ALL data (not filtered by createdBy/company)
+  const createdByOptions = React.useMemo(() => {
+    const unique = new Map<string, { id: string; name: string }>();
+    allPoolCVsForFilters.forEach(cv => {
+      if (cv.createdById && cv.createdByName) {
+        unique.set(cv.createdById, { id: cv.createdById, name: cv.createdByName });
+      }
+    });
+    return Array.from(unique.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [allPoolCVsForFilters]);
+
+  const companyOptions = React.useMemo(() => {
+    const unique = new Map<string, { id: string; name: string }>();
+    allPoolCVsForFilters.forEach(cv => {
+      if (cv.companyId && cv.companyName) {
+        unique.set(cv.companyId, { id: cv.companyId, name: cv.companyName });
+      }
+    });
+    return Array.from(unique.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [allPoolCVsForFilters]);
   
   const filteredPoolCVs = companyManagerFilteredCVs.filter(cv =>
     cv.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -132,7 +189,7 @@ const PoolCVList: React.FC = () => {
   // Reset card pagination when filters change
   React.useEffect(() => {
     setCardPage(0);
-  }, [searchTerm, experienceFilter, statusFilter]);
+  }, [searchTerm, experienceFilter, statusFilter, createdByFilter, companyFilter]);
 
   const handleToggleStatus = async (cvId: string, currentStatus: boolean) => {
     try {
@@ -331,45 +388,99 @@ const PoolCVList: React.FC = () => {
       valueGetter: (params) => (params.row as PoolCV)?.fileCount ?? 0
     },
     {
-      field: 'actions', headerName: t('common.actions'), width: 220, sortable: false,
+      field: 'createdBy',
+      headerName: t('poolCV.createdBy'),
+      flex: 1,
+      minWidth: 150,
+      valueGetter: (params) => {
+        const row = params.row as PoolCV;
+        return row.createdByName || '';
+      },
+      renderCell: (params: GridRenderCellParams) => {
+        const cv = params.row as PoolCV;
+        if (!cv.createdByName) return '';
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Avatar sx={{ width: 24, height: 24, fontSize: '0.75rem' }}>
+              {cv.createdByName.charAt(0)}
+            </Avatar>
+            <Typography variant="body2">
+              {cv.createdByName}
+            </Typography>
+          </Box>
+        );
+      }
+    },
+    {
+      field: 'company',
+      headerName: t('common.company'),
+      flex: 1,
+      minWidth: 150,
+      valueGetter: (params) => {
+        const row = params.row as PoolCV;
+        return row.companyName || '';
+      },
+      renderCell: (params: GridRenderCellParams) => {
+        const cv = params.row as PoolCV;
+        if (!cv.companyName) return '';
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <BusinessIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+            <Typography variant="body2">
+              {cv.companyName}
+            </Typography>
+          </Box>
+        );
+      }
+    },
+    {
+      field: 'actions', 
+      headerName: t('common.actions'), 
+      width: 180, 
+      sortable: false,
       renderCell: (params: GridRenderCellParams) => {
         const cv = params.row as PoolCV;
         return (
-          <Box>
+          <Box onClick={(e) => e.stopPropagation()}>
             <Tooltip title={t('common.view')}>
-              <IconButton size="small" onClick={() => navigate(`/cv-sharing/pool-cvs/${cv.id}`)}>
+              <IconButton 
+                size="small" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/cv-sharing/pool-cvs/${cv.id}`);
+                }}
+              >
                 <ViewIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-            {canEdit && (
-              <Tooltip title={t('common.edit')}>
-                <IconButton size="small" onClick={() => navigate(`/cv-sharing/pool-cvs/${cv.id}/edit`)}>
-                  <EditIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
             <Tooltip title={t('poolCV.matchPositions')}>
-              <IconButton size="small" onClick={() => handleMatchPositions(cv.id)} disabled={matchBusyId === cv.id}>
+              <IconButton 
+                size="small" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleMatchPositions(cv.id);
+                }} 
+                disabled={matchBusyId === cv.id}
+              >
                 <WorkIcon fontSize="small" />
               </IconButton>
             </Tooltip>
             <Tooltip title={t('poolCV.downloadCV')}>
-              <IconButton size="small" onClick={() => handleDownload(cv.id)}>
+              <IconButton 
+                size="small" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDownload(cv.id);
+                }}
+              >
                 <DownloadIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-            {canEdit && (
-              <Tooltip title={cv.isActive ? t('common.deactivate') : t('common.activate')}>
-                <IconButton size="small" onClick={() => handleToggleStatus(cv.id, cv.isActive)} disabled={toggleBusyId === cv.id}>
-                  {cv.isActive ? <InactiveIcon fontSize="small" /> : <ActiveIcon fontSize="small" />}
-                </IconButton>
-              </Tooltip>
-            )}
           </Box>
         );
       }
     }
-  ], [t, navigate, canEdit, handleMatchPositions, handleDownload, handleToggleStatus, matchBusyId, toggleBusyId]);
+  ], [t, navigate, handleMatchPositions, handleDownload, matchBusyId]);
 
 
   return (
@@ -432,6 +543,32 @@ const PoolCVList: React.FC = () => {
               <MenuItem value="all">{t('common.all')}</MenuItem>
               <MenuItem value="active">{t('poolCV.active')}</MenuItem>
               <MenuItem value="inactive">{t('poolCV.inactive')}</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel>{t('poolCV.createdBy')}</InputLabel>
+            <Select
+              value={createdByFilter}
+              onChange={(e) => setCreatedByFilter(e.target.value)}
+              label={t('poolCV.createdBy')}
+            >
+              <MenuItem value="all">{t('common.all')}</MenuItem>
+              {createdByOptions.map(option => (
+                <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel>{t('common.company')}</InputLabel>
+            <Select
+              value={companyFilter}
+              onChange={(e) => setCompanyFilter(e.target.value)}
+              label={t('common.company')}
+            >
+              <MenuItem value="all">{t('common.all')}</MenuItem>
+              {companyOptions.map(option => (
+                <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+              ))}
             </Select>
           </FormControl>
           <ToggleButtonGroup
@@ -511,6 +648,28 @@ const PoolCVList: React.FC = () => {
                             color={getExperienceColor(cv.experienceYears)}
                           />
                         </ListItemText>
+                      </ListItem>
+                    )}
+                    {cv.createdByName && (
+                      <ListItem disableGutters>
+                        <PersonIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
+                        <ListItemText 
+                          primary={cv.createdByName}
+                          secondary={t('poolCV.createdBy')}
+                          primaryTypographyProps={{ variant: 'body2' }}
+                          secondaryTypographyProps={{ variant: 'caption' }}
+                        />
+                      </ListItem>
+                    )}
+                    {cv.companyName && (
+                      <ListItem disableGutters>
+                        <BusinessIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
+                        <ListItemText 
+                          primary={cv.companyName}
+                          secondary={t('common.company')}
+                          primaryTypographyProps={{ variant: 'body2' }}
+                          secondaryTypographyProps={{ variant: 'caption' }}
+                        />
                       </ListItem>
                     )}
                   </List>
@@ -610,7 +769,14 @@ const PoolCVList: React.FC = () => {
                     pagination: { paginationModel: { pageSize: 100 } },
                     sorting: { sortModel: [{ field: 'name', sort: 'asc' }] }
                   }}
-                onRowClick={(params) => navigate(`/cv-sharing/pool-cvs/${params.row.id}`)}
+                onRowClick={(params, event) => {
+                  // Only navigate if clicking on the row itself, not on action buttons
+                  const target = event.target as HTMLElement;
+                  if (target.closest('.MuiIconButton-root') || target.closest('.MuiButton-root')) {
+                    return; // Don't navigate if clicking on buttons
+                  }
+                  navigate(`/cv-sharing/pool-cvs/${params.row.id}`);
+                }}
                 localeText={{
                   MuiTablePagination: {
                     labelRowsPerPage: t('common.rowsPerPage'),
@@ -632,23 +798,62 @@ const PoolCVList: React.FC = () => {
           )}
 
           {viewMode === 'compact' && (
-            <List>
-              {filteredPoolCVs.map((cv) => (
-                <ListItem key={cv.id}
-                  secondaryAction={
-                    <Button size="small" onClick={() => navigate(`/cv-sharing/pool-cvs/${cv.id}`)}>{t('common.view')}</Button>
-                  }
-                >
-                  <ListItemAvatar>
-                    <Avatar>{cv.firstName[0]}{cv.lastName[0]}</Avatar>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={`${cv.firstName} ${cv.lastName}`}
-                    secondary={`${cv.email}${cv.currentPosition ? ' • ' + cv.currentPosition : ''}${cv.currentCompany ? ' @ ' + cv.currentCompany : ''}`}
-                  />
-                </ListItem>
-              ))}
-            </List>
+            <>
+              <List>
+                {filteredPoolCVs
+                  .slice(cardPage * cardRowsPerPage, cardPage * cardRowsPerPage + cardRowsPerPage)
+                  .map((cv) => (
+                    <ListItem key={cv.id}
+                      secondaryAction={
+                        <Button size="small" onClick={() => navigate(`/cv-sharing/pool-cvs/${cv.id}`)}>{t('common.view')}</Button>
+                      }
+                    >
+                      <ListItemAvatar>
+                        <Avatar>{cv.firstName[0]}{cv.lastName[0]}</Avatar>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={`${cv.firstName} ${cv.lastName}`}
+                        secondary={
+                          <Box>
+                            <Typography variant="body2" component="span">
+                              {cv.email}
+                            </Typography>
+                            {cv.currentPosition && (
+                              <Typography variant="body2" component="span" sx={{ display: 'block' }}>
+                                {cv.currentPosition}{cv.currentCompany ? ' @ ' + cv.currentCompany : ''}
+                              </Typography>
+                            )}
+                            {cv.createdByName && (
+                              <Typography variant="caption" color="text.secondary" component="span" sx={{ display: 'block' }}>
+                                {t('poolCV.createdBy')}: {cv.createdByName}
+                              </Typography>
+                            )}
+                            {cv.companyName && (
+                              <Typography variant="caption" color="text.secondary" component="span" sx={{ display: 'block' }}>
+                                {t('common.company')}: {cv.companyName}
+                              </Typography>
+                            )}
+                          </Box>
+                        }
+                      />
+                    </ListItem>
+                  ))}
+              </List>
+              <TablePagination
+                component="div"
+                count={filteredPoolCVs.length}
+                page={cardPage}
+                onPageChange={(_, newPage) => setCardPage(newPage)}
+                rowsPerPage={cardRowsPerPage}
+                onRowsPerPageChange={(e) => {
+                  setCardRowsPerPage(parseInt(e.target.value, 10));
+                  setCardPage(0);
+                }}
+                rowsPerPageOptions={[6, 12, 24, 48]}
+                labelRowsPerPage={t('common.rowsPerPage')}
+                sx={{ mt: 2 }}
+              />
+            </>
           )}
 
           {filteredPoolCVs.length === 0 && !isPending && (

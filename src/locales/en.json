@@ -113,7 +113,8 @@
     "changeStatus": "Change Status",
     "education": "Education",
     "visibility": "Visibility",
-    "id": "ID"
+    "id": "ID",
+    "company": "Company"
   },
   "navigation": {
     "dashboard": "Dashboard",
