@@ -43,6 +43,9 @@ import SectionCard from '@/components/ui/SectionCard';
 import EmptyState from '@/components/ui/EmptyState';
 import { useKeycloak } from '@/hooks/useKeycloak';
 import { useTranslation } from 'react-i18next';
+import { EvaluationFormModal } from '@/components/cv-sharing/evaluation';
+import { evaluationService } from '@/services/cv-sharing/evaluationService';
+import { Assignment as AssignmentIcon } from '@mui/icons-material';
 
 interface CommentDialogData {
   open: boolean;
@@ -89,6 +92,8 @@ const ApplicationList: React.FC = () => {
     applicationId: null,
     score: 0
   });
+  const [evaluationModalOpen, setEvaluationModalOpen] = useState(false);
+  const [selectedApplicationForEvaluation, setSelectedApplicationForEvaluation] = useState<string | null>(null);
   const { hasRole, hasAnyRole } = useKeycloak();
   const isCompanyManager = hasRole('COMPANY_MANAGER');
   // EMPLOYEE role: can only view, add comments, rate, and add files (no status change, no forward)
@@ -398,12 +403,12 @@ const ApplicationList: React.FC = () => {
       });
     }
 
-    // Add actions column - for EMPLOYEE: only view, comment, rate; for others: all actions
+    // Add actions column - for EMPLOYEE: view, comment, rate, evaluate; for others: all actions
     if (!isCompanyManager) {
       baseColumns.push({
         field: 'actions',
         headerName: t('common.actions'),
-        width: isEmployee ? 130 : 160,
+        width: isEmployee ? 170 : 160,
         sortable: false,
         renderCell: (params: GridRenderCellParams) => (
           <Box>
@@ -448,6 +453,31 @@ const ApplicationList: React.FC = () => {
                 <StarIcon fontSize="small" />
               </IconButton>
             </Tooltip>
+            {/* Evaluation button - only for EMPLOYEE users */}
+            {isEmployee && (
+              <Tooltip title={t('application.evaluate') || 'Değerlendir'}>
+                <IconButton
+                  size="small"
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    // Check if user can evaluate this application
+                    try {
+                      const canEvaluate = await evaluationService.canEvaluate(params.row.id);
+                      if (canEvaluate) {
+                        setSelectedApplicationForEvaluation(params.row.id);
+                        setEvaluationModalOpen(true);
+                      } else {
+                        enqueueSnackbar(t('application.cannotEvaluate') || 'Bu başvuruyu değerlendiremezsiniz', { variant: 'warning' });
+                      }
+                    } catch (error) {
+                      console.error('Error checking evaluation permission:', error);
+                    }
+                  }}
+                >
+                  <AssignmentIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
             {/* More actions menu - only for non-EMPLOYEE users */}
             {canPerformActions && (
               <IconButton
@@ -466,7 +496,7 @@ const ApplicationList: React.FC = () => {
     }
 
     return baseColumns;
-  }, [t, navigate, isCompanyManager, isEmployee, canPerformActions, setCommentDialog, setRatingDialog, handleMenuOpen]);
+  }, [t, navigate, isCompanyManager, isEmployee, canPerformActions, setCommentDialog, setRatingDialog, handleMenuOpen, enqueueSnackbar]);
 
   const NoApplicationsOverlay = React.useCallback(() => (
     <EmptyState
@@ -741,6 +771,24 @@ const ApplicationList: React.FC = () => {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Evaluation Form Modal - for EMPLOYEE users */}
+        {selectedApplicationForEvaluation && (
+          <EvaluationFormModal
+            isOpen={evaluationModalOpen}
+            onClose={() => {
+              setEvaluationModalOpen(false);
+              setSelectedApplicationForEvaluation(null);
+            }}
+            applicationId={selectedApplicationForEvaluation}
+            onSuccess={() => {
+              setEvaluationModalOpen(false);
+              setSelectedApplicationForEvaluation(null);
+              refetch();
+              queryClient.invalidateQueries({ queryKey: ['applications'] });
+            }}
+          />
+        )}
     </PageContainer>
   );
 };

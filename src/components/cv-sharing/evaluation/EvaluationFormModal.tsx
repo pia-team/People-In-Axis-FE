@@ -18,8 +18,10 @@ import { evaluationService } from '@/services/cv-sharing/evaluationService';
 import {
   EvaluationQuestion,
   CreateEvaluationRequest,
+  EvaluationResponse,
 } from '@/types/cv-sharing/evaluation';
 import { useSnackbar } from 'notistack';
+import { format } from 'date-fns';
 
 interface Props {
   isOpen: boolean;
@@ -43,30 +45,70 @@ const EvaluationFormModal: React.FC<Props> = ({
   const [generalComment, setGeneralComment] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [existingEvaluation, setExistingEvaluation] = useState<EvaluationResponse | null>(null);
   const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
     if (isOpen) {
-      loadQuestions();
+      loadData();
+    } else {
+      // Reset when modal closes
+      setExistingEvaluation(null);
+      setAnswers({});
+      setGeneralComment('');
     }
   }, [isOpen, applicationId]);
 
-  const loadQuestions = async () => {
+  const loadData = async () => {
     try {
       setLoadingQuestions(true);
-      const data = await evaluationService.getQuestions(applicationId);
-      setQuestions(data);
+      
+      // Load existing evaluation first (404 is expected if no evaluation exists)
+      let evaluation: EvaluationResponse | null = null;
+      try {
+        evaluation = await evaluationService.getMyEvaluation(applicationId);
+      } catch (error: any) {
+        // 404 is expected when no evaluation exists - silently ignore
+        if (error?.response?.status !== 404) {
+          console.error('Error loading existing evaluation:', error);
+        }
+        evaluation = null;
+      }
+      
+      // Load questions
+      const questionsData = await evaluationService.getQuestions(applicationId);
+      setQuestions(questionsData);
 
-      // Initialize answers with default score of 5
-      const initialAnswers: Record<string, { score: number; comment: string }> = {};
-      data.forEach(q => {
-        initialAnswers[q.id] = { score: 5, comment: '' };
-      });
-      setAnswers(initialAnswers);
+      if (evaluation) {
+        // Pre-fill form with existing evaluation data
+        setExistingEvaluation(evaluation);
+        const existingAnswers: Record<string, { score: number; comment: string }> = {};
+        evaluation.answers.forEach(answer => {
+          existingAnswers[answer.questionId] = {
+            score: answer.score,
+            comment: answer.comment || '',
+          };
+        });
+        // Ensure all questions have answers (in case new questions were added)
+        questionsData.forEach(q => {
+          if (!existingAnswers[q.id]) {
+            existingAnswers[q.id] = { score: 5, comment: '' };
+          }
+        });
+        setAnswers(existingAnswers);
+        setGeneralComment(evaluation.generalComment || '');
+      } else {
+        // Initialize answers with default score of 5
+        const initialAnswers: Record<string, { score: number; comment: string }> = {};
+        questionsData.forEach(q => {
+          initialAnswers[q.id] = { score: 5, comment: '' };
+        });
+        setAnswers(initialAnswers);
+      }
     } catch (error: any) {
-      console.error('Error loading questions:', error);
+      console.error('Error loading data:', error);
       enqueueSnackbar(
-        error.response?.data?.message || 'Sorular yüklenirken hata oluştu',
+        error.response?.data?.message || 'Veriler yüklenirken hata oluştu',
         { variant: 'error' }
       );
     } finally {
@@ -107,9 +149,16 @@ const EvaluationFormModal: React.FC<Props> = ({
         generalComment: generalComment || undefined,
       };
 
-      await evaluationService.createEvaluation(applicationId, request);
+      const wasExisting = !!existingEvaluation;
+      const result = await evaluationService.createEvaluation(applicationId, request);
+      
+      // Update existing evaluation state
+      setExistingEvaluation(result);
 
-      enqueueSnackbar('Değerlendirme başarıyla kaydedildi', { variant: 'success' });
+      enqueueSnackbar(
+        wasExisting ? 'Değerlendirme başarıyla güncellendi' : 'Değerlendirme başarıyla kaydedildi',
+        { variant: 'success' }
+      );
 
       onSuccess();
     } catch (error: any) {
@@ -136,6 +185,11 @@ const EvaluationFormModal: React.FC<Props> = ({
     <Dialog open={isOpen} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>Aday Değerlendirme Formu</DialogTitle>
       <DialogContent dividers>
+        {existingEvaluation?.updatedAt && (
+          <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
+            Son kayıt: {format(new Date(existingEvaluation.updatedAt), 'dd/MM/yyyy HH:mm')}
+          </Typography>
+        )}
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
           Lütfen aşağıdaki 10 soruyu 0-10 arası puanlayarak cevaplayınız. Her soru için
           opsiyonel olarak yorum ekleyebilirsiniz.

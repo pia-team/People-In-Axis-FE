@@ -77,5 +77,22 @@ export const evaluationService = {
     );
     return response.data;
   },
+
+  /**
+   * Get current user's evaluation for an application (EMPLOYEE only)
+   */
+  getMyEvaluation: async (applicationId: string): Promise<EvaluationResponse | null> => {
+    try {
+      const response = await api.get<EvaluationResponse>(
+        `/api/applications/${applicationId}/evaluations/my-evaluation`
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return null;
+      }
+      throw error;
+    }
+  },
 };
 

@@ -557,7 +557,15 @@
     "forwardedBy": "Yönlendiren",
     "forwardingInfo": "Yönlendirme Bilgisi",
     "forwardedByLabel": "Yönlendiren Kişi",
-    "noForwardMessage": "Mesaj yok"
+    "noForwardMessage": "Mesaj yok",
+    "evaluationSummary": "Değerlendirme Özeti",
+    "averageScore": "Ortalama Puan",
+    "completedEvaluations": "Tamamlanan Değerlendirme",
+    "evaluators": "Değerlendirenler",
+    "noEvaluations": "Henüz değerlendirme yapılmamış",
+    "andMore": "ve {{count}} kişi daha...",
+    "evaluate": "Değerlendir",
+    "cannotEvaluate": "Bu başvuruyu değerlendiremezsiniz"
   },
   "poolCV": {
     "title": "Havuz CV",
