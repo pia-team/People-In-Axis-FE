@@ -139,7 +139,7 @@ const getMenuItems = (t: (key: string) => string): MenuItemType[] => [
     title: t('navigation.cvSharing'),
     icon: <Share />,
     isModule: true,
-    roles: ['COMPANY_MANAGER', 'HUMAN_RESOURCES','MANAGER'],
+    roles: ['COMPANY_MANAGER', 'HUMAN_RESOURCES','MANAGER','EMPLOYEE'],
     children: [
       {
         title: t('navigation.positions'),

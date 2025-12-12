@@ -12,6 +12,7 @@ import {
   Rating,
   CreateRatingRequest,
   ForwardApplicationRequest,
+  ForwardApplicationResponse,
   Meeting,
   CreateMeetingRequest,
   UpdateApplicationStatusRequest,
@@ -130,8 +131,8 @@ class ApplicationService {
   /**
    * Forward application to reviewers
    */
-  async forwardApplication(id: string, data: ForwardApplicationRequest): Promise<ApiResponse<void>> {
-    const response = await axios.post<ApiResponse<void>>(`${this.baseUrl}/${id}/forward`, data);
+  async forwardApplication(id: string, data: ForwardApplicationRequest): Promise<ForwardApplicationResponse> {
+    const response = await axios.post<ForwardApplicationResponse>(`${this.baseUrl}/${id}/forward`, data);
     return response.data;
   }
 

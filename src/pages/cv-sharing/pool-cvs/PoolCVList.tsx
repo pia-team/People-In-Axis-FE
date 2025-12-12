@@ -67,8 +67,10 @@ const PoolCVList: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  const { hasAnyRole } = useKeycloak();
-  const canEdit = hasAnyRole(['COMPANY_MANAGER', 'ADMIN']);
+  const { hasAnyRole, hasRole } = useKeycloak();
+  // EMPLOYEE can only view pool CVs (no edit, delete, match, toggle)
+  const isEmployee = hasRole('EMPLOYEE') && !hasAnyRole(['HUMAN_RESOURCES', 'MANAGER', 'COMPANY_MANAGER']);
+  const canEdit = hasAnyRole(['COMPANY_MANAGER', 'ADMIN', 'HUMAN_RESOURCES', 'MANAGER']) && !isEmployee;
   // Note: COMPANY_MANAGER filtering is now handled server-side in the backend
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
@@ -376,13 +378,16 @@ const PoolCVList: React.FC = () => {
       actions={
         <Stack direction="row" spacing={1}>
           <Button variant="outlined" onClick={() => refetch()}>{t('common.refresh')}</Button>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => navigate('/cv-sharing/pool-cvs/new')}
-          >
-            {t('poolCV.createPoolCV')}
-          </Button>
+          {/* Create Pool CV button - hidden for EMPLOYEE */}
+          {canEdit && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => navigate('/cv-sharing/pool-cvs/new')}
+            >
+              {t('poolCV.createPoolCV')}
+            </Button>
+          )}
         </Stack>
       }
     >
@@ -939,15 +944,22 @@ const PoolCVList: React.FC = () => {
                           {t('position.viewPosition')}
                         </Button>
                         {!isAlreadyMatched && (
-                          <Button
-                            variant="contained"
-                            color={matchColor}
-                            onClick={() => handleConfirmMatch(matchDialog.poolCVId!, matched.position.id, matched.matchScore)}
-                            disabled={confirmBusyId === matched.position.id || matchStatusLoading}
-                            sx={{ minWidth: 150 }}
+                          <Tooltip
+                            title={isEmployee ? t('poolCV.employeeCannotConfirmMatch') : ''}
+                            arrow
                           >
-                            {confirmBusyId === matched.position.id ? t('common.matching') : t('poolCV.confirmMatch')}
-                          </Button>
+                            <span>
+                              <Button
+                                variant="contained"
+                                color={matchColor}
+                                onClick={() => handleConfirmMatch(matchDialog.poolCVId!, matched.position.id, matched.matchScore)}
+                                disabled={confirmBusyId === matched.position.id || matchStatusLoading || isEmployee}
+                                sx={{ minWidth: 150 }}
+                              >
+                                {confirmBusyId === matched.position.id ? t('common.matching') : t('poolCV.confirmMatch')}
+                              </Button>
+                            </span>
+                          </Tooltip>
                         )}
                       </CardActions>
                     </Card>

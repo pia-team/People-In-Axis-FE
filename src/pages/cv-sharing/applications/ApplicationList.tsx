@@ -30,12 +30,13 @@ import {
   Star as StarIcon,
   Forward as ForwardIcon,
   MoreVert as MoreIcon,
+  ForwardToInbox as ForwardedIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { applicationService, positionService } from '@/services/cv-sharing';
-import { Application, ApplicationStatus, Position } from '@/types/cv-sharing';
+import { Application, ApplicationStatus, Position, ApplicationDetail as ApplicationDetailType } from '@/types/cv-sharing';
 import PageContainer from '@/components/ui/PageContainer';
 import SectionCard from '@/components/ui/SectionCard';
 // import { standardDataGridSx } from '@/components/ui/dataGridStyles';
@@ -88,8 +89,12 @@ const ApplicationList: React.FC = () => {
     applicationId: null,
     score: 0
   });
-  const { hasRole } = useKeycloak();
+  const { hasRole, hasAnyRole } = useKeycloak();
   const isCompanyManager = hasRole('COMPANY_MANAGER');
+  // EMPLOYEE role: can only view, add comments, rate, and add files (no status change, no forward)
+  const isEmployee = hasRole('EMPLOYEE') && !hasAnyRole(['HUMAN_RESOURCES', 'MANAGER', 'COMPANY_MANAGER']);
+  // Can perform actions (not COMPANY_MANAGER and not EMPLOYEE-only)
+  const canPerformActions = !isCompanyManager && !isEmployee;
 
   // Load positions for dropdowns
   const { data: positionsPage } = useQuery({
@@ -233,6 +238,8 @@ const ApplicationList: React.FC = () => {
       [ApplicationStatus.NEW]: 'info',
       [ApplicationStatus.IN_REVIEW]: 'primary',
       [ApplicationStatus.FORWARDED]: 'secondary',
+      [ApplicationStatus.PARTIALLY_EVALUATED]: 'warning',
+      [ApplicationStatus.FULLY_EVALUATED]: 'success',
       [ApplicationStatus.MEETING_SCHEDULED]: 'warning',
       [ApplicationStatus.ACCEPTED]: 'success',
       [ApplicationStatus.REJECTED]: 'error',
@@ -300,6 +307,8 @@ const ApplicationList: React.FC = () => {
             [ApplicationStatus.NEW]: t('application.new'),
             [ApplicationStatus.IN_REVIEW]: t('application.inReview'),
             [ApplicationStatus.FORWARDED]: t('application.forwarded'),
+            [ApplicationStatus.PARTIALLY_EVALUATED]: t('application.partiallyevaluated'),
+            [ApplicationStatus.FULLY_EVALUATED]: t('application.fullyevaluated'),
             [ApplicationStatus.MEETING_SCHEDULED]: t('application.meetingScheduled'),
             [ApplicationStatus.ACCEPTED]: t('application.accepted'),
             [ApplicationStatus.REJECTED]: t('application.rejected'),
@@ -354,12 +363,47 @@ const ApplicationList: React.FC = () => {
       }
     ];
 
-    // Only add actions column for non-COMPANY_MANAGER users
+    // Add forwarding info column for EMPLOYEE users (shows who forwarded to them)
+    if (isEmployee) {
+      baseColumns.push({
+        field: 'forwardings',
+        headerName: t('application.forwardedBy'),
+        width: 200,
+        sortable: false,
+        renderCell: (params: GridRenderCellParams) => {
+          const forwardings = (params.row as ApplicationDetailType).forwardings;
+          if (!forwardings || forwardings.length === 0) {
+            return <Typography variant="caption" color="text.secondary">-</Typography>;
+          }
+          // Show the most recent forwarding
+          const latestForwarding = forwardings[forwardings.length - 1];
+          return (
+            <Tooltip title={latestForwarding.message || t('application.noForwardMessage')}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <ForwardedIcon fontSize="small" color="primary" />
+                <Box>
+                  <Typography variant="caption" fontWeight="medium">
+                    {latestForwarding.forwardedByName || t('common.unknown')}
+                  </Typography>
+                  {latestForwarding.message && (
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {latestForwarding.message}
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+            </Tooltip>
+          );
+        }
+      });
+    }
+
+    // Add actions column - for EMPLOYEE: only view, comment, rate; for others: all actions
     if (!isCompanyManager) {
       baseColumns.push({
         field: 'actions',
         headerName: t('common.actions'),
-        width: 160,
+        width: isEmployee ? 130 : 160,
         sortable: false,
         renderCell: (params: GridRenderCellParams) => (
           <Box>
@@ -404,22 +448,25 @@ const ApplicationList: React.FC = () => {
                 <StarIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleMenuOpen(e, params.row);
-              }}
-            >
-              <MoreIcon fontSize="small" />
-            </IconButton>
+            {/* More actions menu - only for non-EMPLOYEE users */}
+            {canPerformActions && (
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleMenuOpen(e, params.row);
+                }}
+              >
+                <MoreIcon fontSize="small" />
+              </IconButton>
+            )}
           </Box>
         )
       });
     }
 
     return baseColumns;
-  }, [t, navigate, isCompanyManager, setCommentDialog, setRatingDialog, handleMenuOpen]);
+  }, [t, navigate, isCompanyManager, isEmployee, canPerformActions, setCommentDialog, setRatingDialog, handleMenuOpen]);
 
   const NoApplicationsOverlay = React.useCallback(() => (
     <EmptyState
@@ -504,6 +551,8 @@ const ApplicationList: React.FC = () => {
                 <MenuItem value={ApplicationStatus.NEW}>{t('application.new')}</MenuItem>
                 <MenuItem value={ApplicationStatus.IN_REVIEW}>{t('application.inReview')}</MenuItem>
                 <MenuItem value={ApplicationStatus.FORWARDED}>{t('application.forwarded')}</MenuItem>
+                <MenuItem value={ApplicationStatus.PARTIALLY_EVALUATED}>{t('application.partiallyevaluated')}</MenuItem>
+                <MenuItem value={ApplicationStatus.FULLY_EVALUATED}>{t('application.fullyevaluated')}</MenuItem>
                 <MenuItem value={ApplicationStatus.MEETING_SCHEDULED}>{t('application.meetingScheduled')}</MenuItem>
                 <MenuItem value={ApplicationStatus.ACCEPTED}>{t('application.accepted')}</MenuItem>
                 <MenuItem value={ApplicationStatus.REJECTED}>{t('application.rejected')}</MenuItem>

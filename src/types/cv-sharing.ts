@@ -13,6 +13,8 @@ export enum ApplicationStatus {
   NEW = 'NEW',
   IN_REVIEW = 'IN_REVIEW',
   FORWARDED = 'FORWARDED',
+  PARTIALLY_EVALUATED = 'PARTIALLY_EVALUATED',
+  FULLY_EVALUATED = 'FULLY_EVALUATED',
   MEETING_SCHEDULED = 'MEETING_SCHEDULED',
   ACCEPTED = 'ACCEPTED',
   REJECTED = 'REJECTED',
@@ -294,10 +296,12 @@ export interface CreateRatingRequest {
 // Forwarding Types
 export interface Forwarding {
   id: string;
-  applicationId: string;
-  forwardedBy: string;
+  applicationId?: string;
+  forwardedBy?: string;
+  forwardedById?: string;
   forwardedByName?: string;
-  forwardedTo: string;
+  forwardedTo?: string;
+  forwardedToId?: string;
   forwardedToName?: string;
   message?: string;
   forwardedAt: string;
@@ -306,6 +310,19 @@ export interface Forwarding {
 export interface ForwardApplicationRequest {
   recipients: string[];
   message?: string;
+}
+
+export interface ForwardedRecipient {
+  userId: string;
+  userName: string;
+  email: string;
+}
+
+export interface ForwardApplicationResponse {
+  successCount: number;
+  alreadyForwardedCount: number;
+  successfulRecipients: ForwardedRecipient[];
+  alreadyForwardedRecipients: ForwardedRecipient[];
 }
 
 // Meeting Types

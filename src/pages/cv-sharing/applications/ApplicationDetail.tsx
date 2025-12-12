@@ -43,7 +43,6 @@ import {
   Edit as EditIcon,
   Undo as UndoIcon,
   Work as WorkIcon,
-  AccountCircle as AccountCircleIcon,
   Person as PersonIcon
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -54,11 +53,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useKeycloak } from '@/hooks/useKeycloak';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useTranslation } from 'react-i18next';
+import { EvaluationButton } from '@/components/cv-sharing/evaluation';
 
 const statusOptions: ApplicationStatus[] = [
   ApplicationStatus.NEW,
   ApplicationStatus.IN_REVIEW,
   ApplicationStatus.FORWARDED,
+  ApplicationStatus.PARTIALLY_EVALUATED,
+  ApplicationStatus.FULLY_EVALUATED,
   ApplicationStatus.MEETING_SCHEDULED,
   ApplicationStatus.ACCEPTED,
   ApplicationStatus.REJECTED,
@@ -74,6 +76,10 @@ const statusColor = (status: ApplicationStatus): 'default' | 'primary' | 'second
       return 'primary';
     case ApplicationStatus.FORWARDED:
       return 'secondary';
+    case ApplicationStatus.PARTIALLY_EVALUATED:
+      return 'warning';
+    case ApplicationStatus.FULLY_EVALUATED:
+      return 'success';
     case ApplicationStatus.MEETING_SCHEDULED:
       return 'warning';
     case ApplicationStatus.ACCEPTED:
@@ -94,9 +100,13 @@ const ApplicationDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  const { hasRole, tokenParsed } = useKeycloak();
+  const { hasRole, hasAnyRole, tokenParsed } = useKeycloak();
   const isCompanyManager = hasRole('COMPANY_MANAGER');
   const isHR = hasRole('HUMAN_RESOURCES');
+  // EMPLOYEE role: can only view, add comments, rate, and add files (no status change, no forward, no meetings)
+  const isEmployee = hasRole('EMPLOYEE') && !hasAnyRole(['HUMAN_RESOURCES', 'MANAGER', 'COMPANY_MANAGER']);
+  // Can perform advanced actions (not COMPANY_MANAGER and not EMPLOYEE-only)
+  const canPerformAdvancedActions = !isCompanyManager && !isEmployee;
   const currentUserId = tokenParsed?.sub;
   const [saving, setSaving] = useState(false);
   const queryClient = useQueryClient();
@@ -377,6 +387,16 @@ const ApplicationDetail: React.FC = () => {
           <Grid item xs={12}>
             {/* Top action buttons */}
             <Box sx={{ mb: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              {/* Evaluation Button for EMPLOYEE role */}
+              {isEmployee && id && (
+                <EvaluationButton
+                  applicationId={id}
+                  onEvaluationComplete={() => {
+                    queryClient.invalidateQueries({ queryKey: ['application', id] });
+                  }}
+                />
+              )}
+
               {/* HR Reject Button - Only for HR and not already REJECTED/WITHDRAWN/ACCEPTED */}
               {isHR &&
                detail.status !== ApplicationStatus.REJECTED &&
@@ -409,8 +429,8 @@ const ApplicationDetail: React.FC = () => {
                 </Button>
               )}
 
-              {/* General Withdraw Button - For non-Company Manager roles */}
-              {!isCompanyManager &&
+              {/* General Withdraw Button - For HR and MANAGER only (not Company Manager or EMPLOYEE) */}
+              {canPerformAdvancedActions &&
                detail.status !== ApplicationStatus.WITHDRAWN &&
                detail.status !== ApplicationStatus.REJECTED &&
                detail.status !== ApplicationStatus.ACCEPTED && (
@@ -437,18 +457,6 @@ const ApplicationDetail: React.FC = () => {
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     {t('application.applyingFor')}: {detail.positionTitle || detail.positionId}
                   </Typography>
-                  {detail.poolCvId && (
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      size="small"
-                      startIcon={<AccountCircleIcon />}
-                      onClick={() => navigate(`/cv-sharing/pool-cvs/${detail.poolCvId}`)}
-                      sx={{ mt: 1 }}
-                    >
-                      {t('application.viewApplicantProfile')}
-                    </Button>
-                  )}
                 </Box>
               </Box>
               <Chip label={t(`application.${detail.status?.toLowerCase().replace(/_/g, '') || ''}`) || detail.status.replace('_', ' ')} color={statusColor(detail.status)} />
@@ -456,6 +464,43 @@ const ApplicationDetail: React.FC = () => {
           </Grid>
 
           <Grid item xs={12} md={8}>
+            {/* Forwarding Information Section - Show prominently for EMPLOYEE */}
+            {detail.forwardings && detail.forwardings.length > 0 && (
+              <>
+                <Typography variant="h6" sx={{ color: 'primary.main' }}>
+                  <ForwardIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                  {t('application.forwardingInfo')}
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
+                <List sx={{ bgcolor: 'action.hover', borderRadius: 1, mb: 3 }}>
+                  {detail.forwardings.map((forwarding, index) => (
+                    <ListItem key={forwarding.id || index}>
+                      <ListItemIcon><ForwardIcon color="primary" /></ListItemIcon>
+                      <ListItemText 
+                        primary={
+                          <Typography variant="body2" fontWeight="medium">
+                            {t('application.forwardedByLabel')}: {forwarding.forwardedByName || t('common.unknown')}
+                          </Typography>
+                        }
+                        secondary={
+                          <Box>
+                            {forwarding.message && (
+                              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontStyle: 'italic' }}>
+                                "{forwarding.message}"
+                              </Typography>
+                            )}
+                            <Typography variant="caption" color="text.secondary">
+                              {new Date(forwarding.forwardedAt).toLocaleString()}
+                            </Typography>
+                          </Box>
+                        }
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </>
+            )}
+
             <Typography variant="h6">{t('application.contact')}</Typography>
             <Divider sx={{ mb: 2 }} />
             <List>
@@ -534,15 +579,15 @@ const ApplicationDetail: React.FC = () => {
             <Typography variant="h6" sx={{ mt: 3 }}>{t('application.meetings')}</Typography>
             <Divider sx={{ mb: 2 }} />
             <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-              <Button startIcon={<ScheduleIcon />} variant="outlined" onClick={openMeetingDialog} disabled={isCompanyManager}>{t('application.scheduleMeeting')}</Button>
-              <Button startIcon={<CalendarIcon />} variant="outlined" onClick={() => navigate(`/applications/${detail.id}/meetings`)} disabled={isCompanyManager}>{t('application.openScheduler')}</Button>
+              <Button startIcon={<ScheduleIcon />} variant="outlined" onClick={openMeetingDialog} disabled={!canPerformAdvancedActions}>{t('application.scheduleMeeting')}</Button>
+              <Button startIcon={<CalendarIcon />} variant="outlined" onClick={() => navigate(`/applications/${detail.id}/meetings`)} disabled={!canPerformAdvancedActions}>{t('application.openScheduler')}</Button>
             </Box>
             {detail.meetings && detail.meetings.length > 0 && (
               <List>
                 {detail.meetings.map(m => (
                   <ListItem key={m.id}
                     secondaryAction={
-                      <Button size="small" color="warning" onClick={() => handleCancelMeetingClick(m.id)} disabled={m.status === 'CANCELLED' || isCompanyManager}>
+                      <Button size="small" color="warning" onClick={() => handleCancelMeetingClick(m.id)} disabled={m.status === 'CANCELLED' || !canPerformAdvancedActions}>
                         {m.status === 'CANCELLED' ? t('meeting.cancelled') : t('meeting.cancelMeeting')}
                       </Button>
                     }
@@ -561,8 +606,8 @@ const ApplicationDetail: React.FC = () => {
           <Grid item xs={12} md={4}>
             <Typography variant="h6">{t('common.status')}</Typography>
             <Divider sx={{ mb: 2 }} />
-            {/* Status selector */}
-            {!isCompanyManager && (
+            {/* Status selector - only for HR and MANAGER (not COMPANY_MANAGER or EMPLOYEE) */}
+            {canPerformAdvancedActions && (
               <>
                 <FormControl fullWidth size="small">
                   <InputLabel>{t('common.status')}</InputLabel>
@@ -576,6 +621,8 @@ const ApplicationDetail: React.FC = () => {
                     [ApplicationStatus.NEW]: t('application.new'),
                     [ApplicationStatus.IN_REVIEW]: t('application.inReview'),
                     [ApplicationStatus.FORWARDED]: t('application.forwarded'),
+                    [ApplicationStatus.PARTIALLY_EVALUATED]: t('application.partiallyevaluated'),
+                    [ApplicationStatus.FULLY_EVALUATED]: t('application.fullyevaluated'),
                     [ApplicationStatus.MEETING_SCHEDULED]: t('application.meetingScheduled'),
                     [ApplicationStatus.ACCEPTED]: t('application.accepted'),
                     [ApplicationStatus.REJECTED]: t('application.rejected'),
@@ -591,6 +638,8 @@ const ApplicationDetail: React.FC = () => {
                     [ApplicationStatus.NEW]: t('application.new'),
                     [ApplicationStatus.IN_REVIEW]: t('application.inReview'),
                     [ApplicationStatus.FORWARDED]: t('application.forwarded'),
+                    [ApplicationStatus.PARTIALLY_EVALUATED]: t('application.partiallyevaluated'),
+                    [ApplicationStatus.FULLY_EVALUATED]: t('application.fullyevaluated'),
                     [ApplicationStatus.MEETING_SCHEDULED]: t('application.meetingScheduled'),
                     [ApplicationStatus.ACCEPTED]: t('application.accepted'),
                     [ApplicationStatus.REJECTED]: t('application.rejected'),
@@ -609,7 +658,8 @@ const ApplicationDetail: React.FC = () => {
                 </Button>
               </>
             )}
-            {isCompanyManager && (
+            {/* Status display only for COMPANY_MANAGER and EMPLOYEE */}
+            {(isCompanyManager || isEmployee) && (
               <Typography variant="body2" color="text.secondary">
                 {t(`application.${detail.status?.toLowerCase().replace(/_/g, '') || ''}`) || detail.status.replace('_', ' ')}
               </Typography>
@@ -633,7 +683,7 @@ const ApplicationDetail: React.FC = () => {
               >
                 {t('application.viewPositionDetails')}
               </Button>
-              <Button size="small" startIcon={<ForwardIcon />} onClick={() => navigate(`/cv-sharing/applications/${detail.id}/forward`)} disabled={isCompanyManager}>{t('application.forwardToReviewer')}</Button>
+              <Button size="small" startIcon={<ForwardIcon />} onClick={() => navigate(`/cv-sharing/applications/${detail.id}/forward`)} disabled={!canPerformAdvancedActions}>{t('application.forwardToReviewer')}</Button>
             </Box>
 
             <Typography variant="h6" sx={{ mt: 3 }}>{t('application.ratings')}</Typography>
