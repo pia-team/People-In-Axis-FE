@@ -165,6 +165,11 @@ api.interceptors.response.use(
       } else if (status === 403) {
         toast.error(msg || 'Access forbidden');
       } else if (status === 404) {
+        // Skip error toast for my-evaluation endpoint (404 is expected when no evaluation exists)
+        const url = error.config?.url || '';
+        if (url.includes('/evaluations/my-evaluation')) {
+          return Promise.reject(error);
+        }
         toast.error(msg || 'Resource not found');
       } else if (status >= 500) {
         toast.error(msg || 'Server error');

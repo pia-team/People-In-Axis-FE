@@ -48,6 +48,7 @@ export interface EvaluationResponse {
   totalScore: number;
   answers: EvaluationAnswer[];
   evaluatedAt: string;
+  updatedAt?: string;
 }
 
 export interface EvaluatorSummary {

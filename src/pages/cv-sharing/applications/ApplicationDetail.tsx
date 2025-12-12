@@ -24,6 +24,7 @@ import {
   Select,
   MenuItem,
   LinearProgress,
+  CircularProgress,
   useMediaQuery,
   useTheme
 } from '@mui/material';
@@ -43,7 +44,8 @@ import {
   Edit as EditIcon,
   Undo as UndoIcon,
   Work as WorkIcon,
-  Person as PersonIcon
+  Person as PersonIcon,
+  Assignment as AssignmentIcon
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
@@ -53,7 +55,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useKeycloak } from '@/hooks/useKeycloak';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useTranslation } from 'react-i18next';
-import { EvaluationButton } from '@/components/cv-sharing/evaluation';
+import { EvaluationButton, EvaluationDetailModal } from '@/components/cv-sharing/evaluation';
+import { evaluationService } from '@/services/cv-sharing/evaluationService';
+import { EvaluationSummary } from '@/types/cv-sharing/evaluation';
 
 const statusOptions: ApplicationStatus[] = [
   ApplicationStatus.NEW,
@@ -120,6 +124,16 @@ const ApplicationDetail: React.FC = () => {
     queryFn: () => applicationService.getApplicationById(id!),
     enabled: !!id
   });
+
+  // Load evaluation summary for HR and MANAGER roles
+  const { data: evaluationSummary, isLoading: evaluationSummaryLoading, error: evaluationSummaryError } = useQuery<EvaluationSummary>({
+    queryKey: ['evaluation-summary', id],
+    queryFn: () => evaluationService.getEvaluationSummary(id!),
+    enabled: !!id && (isHR || hasRole('MANAGER')),
+    refetchOnMount: true,
+    refetchOnWindowFocus: false
+  });
+
   const [newStatus, setNewStatus] = useState<ApplicationStatus | ''>('');
   const [commentText, setCommentText] = useState('');
   const [ratingScore, setRatingScore] = useState<number | null>(null);
@@ -148,6 +162,7 @@ const ApplicationDetail: React.FC = () => {
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
+  const [selectedEvaluationId, setSelectedEvaluationId] = useState<string | null>(null);
 
   useEffect(() => {
     if (detail) setNewStatus(detail.status);
@@ -159,6 +174,20 @@ const ApplicationDetail: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isError]);
+
+  // Refetch evaluation summary when page becomes visible (e.g., after evaluation is updated)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && id && (isHR || hasRole('MANAGER'))) {
+        queryClient.invalidateQueries({ queryKey: ['evaluation-summary', id] });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [id, isHR, hasRole, queryClient]);
 
   const handleStatusChange = async () => {
     if (!detail || !newStatus) return;
@@ -393,6 +422,7 @@ const ApplicationDetail: React.FC = () => {
                   applicationId={id}
                   onEvaluationComplete={() => {
                     queryClient.invalidateQueries({ queryKey: ['application', id] });
+                    queryClient.invalidateQueries({ queryKey: ['evaluation-summary', id] });
                   }}
                 />
               )}
@@ -498,6 +528,118 @@ const ApplicationDetail: React.FC = () => {
                     </ListItem>
                   ))}
                 </List>
+              </>
+            )}
+
+            {/* Evaluation Summary Section - For HR and MANAGER */}
+            {(isHR || hasRole('MANAGER')) && (
+              <>
+                <Typography variant="h6" sx={{ mt: 3, color: 'primary.main' }}>
+                  <StarIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                  {t('application.evaluationSummary') || 'Değerlendirme Özeti'}
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
+                {evaluationSummaryLoading ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                    <CircularProgress />
+                  </Box>
+                ) : evaluationSummaryError ? (
+                  <Typography variant="body2" color="error" sx={{ py: 2 }}>
+                    {t('error.loadFailed', { item: t('application.evaluationSummary') || 'Değerlendirme özeti' })}
+                  </Typography>
+                ) : evaluationSummary && evaluationSummary.completedEvaluations > 0 ? (
+                  <Paper sx={{ p: 2, mb: 3, bgcolor: 'action.hover' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                      <Box sx={{ flex: 1 }}>
+                        <Grid container spacing={2}>
+                          <Grid item xs={12} sm={6}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <StarIcon color="warning" />
+                              <Box>
+                                <Typography variant="body2" color="text.secondary">
+                                  {t('application.averageScore') || 'Ortalama Puan'}
+                                </Typography>
+                                <Typography variant="h5" fontWeight="bold" color="primary">
+                                  {evaluationSummary.averageScore.toFixed(2)}/10
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </Grid>
+                          <Grid item xs={12} sm={6}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <PersonIcon color="primary" />
+                              <Box>
+                                <Typography variant="body2" color="text.secondary">
+                                  {t('application.completedEvaluations') || 'Tamamlanan Değerlendirme'}
+                                </Typography>
+                                <Typography variant="h5" fontWeight="bold" color="primary">
+                                  {evaluationSummary.completedEvaluations}/{evaluationSummary.totalForwardings}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </Grid>
+                        </Grid>
+                      </Box>
+                    </Box>
+                    {evaluationSummary.evaluators.length > 0 && (
+                      <Box sx={{ mt: 2 }}>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                          {t('application.evaluators') || 'Değerlendirenler'}
+                        </Typography>
+                        <List dense>
+                          {evaluationSummary.evaluators.slice(0, 3).map((evaluator) => (
+                            <ListItem 
+                              key={evaluator.evaluationId} 
+                              sx={{ 
+                                py: 0.5,
+                                cursor: 'pointer',
+                                '&:hover': { bgcolor: 'action.hover' }
+                              }}
+                              onClick={() => setSelectedEvaluationId(evaluator.evaluationId)}
+                            >
+                              <ListItemIcon>
+                                <Avatar sx={{ width: 24, height: 24, fontSize: '0.75rem' }}>
+                                  {evaluator.evaluatorName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                </Avatar>
+                              </ListItemIcon>
+                              <ListItemText
+                                primary={evaluator.evaluatorName}
+                                secondary={
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                                    <Chip
+                                      label={`${evaluator.score.toFixed(1)}/10`}
+                                      size="small"
+                                      color={evaluator.score >= 8 ? 'success' : evaluator.score >= 6 ? 'warning' : 'error'}
+                                    />
+                                    <Typography variant="caption" color="text.secondary">
+                                      {new Date(evaluator.evaluatedAt).toLocaleDateString()}
+                                    </Typography>
+                                  </Box>
+                                }
+                              />
+                            </ListItem>
+                          ))}
+                          {evaluationSummary.evaluators.length > 3 && (
+                            <ListItem>
+                              <ListItemText
+                                primary={
+                                  <Typography variant="caption" color="text.secondary">
+                                    {t('application.andMore', { count: evaluationSummary.evaluators.length - 3 }) || 
+                                      `ve ${evaluationSummary.evaluators.length - 3} kişi daha...`}
+                                  </Typography>
+                                }
+                              />
+                            </ListItem>
+                          )}
+                        </List>
+                      </Box>
+                    )}
+                  </Paper>
+                ) : (
+                  <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+                    {t('application.noEvaluations') || 'Henüz değerlendirme yapılmamış'}
+                  </Typography>
+                )}
               </>
             )}
 
@@ -936,6 +1078,16 @@ const ApplicationDetail: React.FC = () => {
         onClose={() => setRejectDialogOpen(false)}
         onConfirm={handleRejectApplication}
       />
+
+      {/* Evaluation Detail Modal - For HR and MANAGER to view employee evaluations */}
+      {id && selectedEvaluationId && (isHR || hasRole('MANAGER')) && (
+        <EvaluationDetailModal
+          isOpen={!!selectedEvaluationId}
+          onClose={() => setSelectedEvaluationId(null)}
+          applicationId={id}
+          evaluationId={selectedEvaluationId}
+        />
+      )}
     </Box>
   );
 };

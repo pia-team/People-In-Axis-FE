@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@mui/material';
-import { Star as StarIcon } from '@mui/icons-material';
+import { Star as StarIcon, Edit as EditIcon } from '@mui/icons-material';
 import { evaluationService } from '@/services/cv-sharing/evaluationService';
 import EvaluationFormModal from './EvaluationFormModal';
 
@@ -10,12 +10,13 @@ interface Props {
 }
 
 /**
- * Button component for EMPLOYEE users to evaluate applications
- * Only shows if user can evaluate (forwarded to them and not yet evaluated)
+ * Button component for EMPLOYEE users to evaluate/edit applications
+ * Shows if user can evaluate (forwarded to them) - allows both new evaluation and editing existing one
  */
 const EvaluationButton: React.FC<Props> = ({ applicationId, onEvaluationComplete }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [canEvaluate, setCanEvaluate] = useState(false);
+  const [hasExistingEvaluation, setHasExistingEvaluation] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,11 +26,16 @@ const EvaluationButton: React.FC<Props> = ({ applicationId, onEvaluationComplete
   const checkEvaluationPermission = async () => {
     try {
       setLoading(true);
-      const result = await evaluationService.canEvaluate(applicationId);
-      setCanEvaluate(result);
+      const canEval = await evaluationService.canEvaluate(applicationId);
+      setCanEvaluate(canEval);
+      
+      // Check if there's an existing evaluation
+      const existingEval = await evaluationService.getMyEvaluation(applicationId);
+      setHasExistingEvaluation(!!existingEval);
     } catch (error) {
       console.error('Error checking evaluation permission:', error);
       setCanEvaluate(false);
+      setHasExistingEvaluation(false);
     } finally {
       setLoading(false);
     }
@@ -37,7 +43,8 @@ const EvaluationButton: React.FC<Props> = ({ applicationId, onEvaluationComplete
 
   const handleSuccess = () => {
     setIsOpen(false);
-    setCanEvaluate(false); // Hide button after successful evaluation
+    // Refresh evaluation status
+    checkEvaluationPermission();
     if (onEvaluationComplete) {
       onEvaluationComplete();
     }
@@ -51,11 +58,11 @@ const EvaluationButton: React.FC<Props> = ({ applicationId, onEvaluationComplete
     <>
       <Button
         variant="contained"
-        color="primary"
+        color={hasExistingEvaluation ? "secondary" : "primary"}
         onClick={() => setIsOpen(true)}
-        startIcon={<StarIcon />}
+        startIcon={hasExistingEvaluation ? <EditIcon /> : <StarIcon />}
       >
-        Aday Değerlendirme
+        {hasExistingEvaluation ? 'Değerlendirmeyi Düzenle' : 'Aday Değerlendirme'}
       </Button>
 
       <EvaluationFormModal

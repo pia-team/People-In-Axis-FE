@@ -557,7 +557,15 @@
     "forwardedBy": "Forwarded By",
     "forwardingInfo": "Forwarding Information",
     "forwardedByLabel": "Forwarded By",
-    "noForwardMessage": "No message"
+    "noForwardMessage": "No message",
+    "evaluationSummary": "Evaluation Summary",
+    "averageScore": "Average Score",
+    "completedEvaluations": "Completed Evaluations",
+    "evaluators": "Evaluators",
+    "noEvaluations": "No evaluations yet",
+    "andMore": "and {{count}} more...",
+    "evaluate": "Evaluate",
+    "cannotEvaluate": "You cannot evaluate this application"
   },
   "poolCV": {
     "title": "Pool CV",
