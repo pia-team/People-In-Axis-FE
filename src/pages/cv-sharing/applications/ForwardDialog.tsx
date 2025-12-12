@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Paper, Typography, TextField, Button, Stack, Autocomplete, CircularProgress, Chip, Alert, Tooltip } from '@mui/material';
+import { Box, Paper, Typography, TextField, Button, Stack, Autocomplete, CircularProgress, Chip, Tooltip } from '@mui/material';
 import { Warning as WarningIcon } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
@@ -22,20 +22,16 @@ const ForwardDialog: React.FC = () => {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [inviting, setInviting] = useState(false);
   const [existingForwardings, setExistingForwardings] = useState<Forwarding[]>([]);
-  const [loadingForwardings, setLoadingForwardings] = useState(true);
 
   // Load existing forwardings for this application
   useEffect(() => {
     const loadExistingForwardings = async () => {
       if (!id) return;
       try {
-        setLoadingForwardings(true);
         const detail = await applicationService.getApplicationById(id);
         setExistingForwardings(detail.forwardings || []);
       } catch (e) {
         console.error('Failed to load existing forwardings', e);
-      } finally {
-        setLoadingForwardings(false);
       }
     };
     loadExistingForwardings();
