@@ -528,6 +528,27 @@ export interface PoolCVStatistics {
 }
 
 // Position Match
+export interface MatchBreakdown {
+  skillsScore?: number;
+  experienceScore?: number;
+  languageScore?: number;
+  educationScore?: number;
+  locationScore?: number;
+  salaryScore?: number;
+  semanticScore?: number;
+  details?: Record<string, string>;
+}
+
+export interface MatchedCVResponse {
+  poolCV: PoolCV;
+  matchScore?: number; // 0-100
+  breakdown?: MatchBreakdown;
+  missingRequiredSkills?: string[];
+  matchedSkills?: string[];
+  matchLevel?: string; // EXCELLENT, GOOD, FAIR, POOR
+  recommendation?: string;
+}
+
 export interface PositionMatch {
   id: string;
   poolCvId: string;

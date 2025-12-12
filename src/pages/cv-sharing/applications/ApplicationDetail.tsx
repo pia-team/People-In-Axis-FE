@@ -44,8 +44,7 @@ import {
   Edit as EditIcon,
   Undo as UndoIcon,
   Work as WorkIcon,
-  Person as PersonIcon,
-  Assignment as AssignmentIcon
+  Person as PersonIcon
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
