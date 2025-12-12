@@ -1,23 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
-  DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Typography,
+  Box,
+  Slider,
+  Chip,
+  CircularProgress,
+  FormLabel,
+  Stack,
+} from '@mui/material';
 import { evaluationService } from '@/services/cv-sharing/evaluationService';
 import {
   EvaluationQuestion,
   CreateEvaluationRequest,
-  CATEGORY_COLORS,
 } from '@/types/cv-sharing/evaluation';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { useSnackbar } from 'notistack';
 
 interface Props {
   isOpen: boolean;
@@ -41,7 +43,7 @@ const EvaluationFormModal: React.FC<Props> = ({
   const [generalComment, setGeneralComment] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
-  const { toast } = useToast();
+  const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
     if (isOpen) {
@@ -63,11 +65,10 @@ const EvaluationFormModal: React.FC<Props> = ({
       setAnswers(initialAnswers);
     } catch (error: any) {
       console.error('Error loading questions:', error);
-      toast({
-        title: 'Hata',
-        description: error.response?.data?.message || 'Sorular yüklenirken hata oluştu',
-        variant: 'destructive',
-      });
+      enqueueSnackbar(
+        error.response?.data?.message || 'Sorular yüklenirken hata oluştu',
+        { variant: 'error' }
+      );
     } finally {
       setLoadingQuestions(false);
     }
@@ -93,11 +94,7 @@ const EvaluationFormModal: React.FC<Props> = ({
 
       // Validate all questions are answered
       if (Object.keys(answers).length !== questions.length) {
-        toast({
-          title: 'Eksik Bilgi',
-          description: 'Lütfen tüm soruları cevaplayın',
-          variant: 'destructive',
-        });
+        enqueueSnackbar('Lütfen tüm soruları cevaplayın', { variant: 'warning' });
         return;
       }
 
@@ -112,134 +109,137 @@ const EvaluationFormModal: React.FC<Props> = ({
 
       await evaluationService.createEvaluation(applicationId, request);
 
-      toast({
-        title: 'Başarılı',
-        description: 'Değerlendirme başarıyla kaydedildi',
-      });
+      enqueueSnackbar('Değerlendirme başarıyla kaydedildi', { variant: 'success' });
 
       onSuccess();
     } catch (error: any) {
       console.error('Error submitting evaluation:', error);
-      toast({
-        title: 'Hata',
-        description: error.response?.data?.message || 'Değerlendirme kaydedilirken hata oluştu',
-        variant: 'destructive',
-      });
+      enqueueSnackbar(
+        error.response?.data?.message || 'Değerlendirme kaydedilirken hata oluştu',
+        { variant: 'error' }
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  const getCategoryColor = (category: string): 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' => {
+    if (category.includes('Teknik')) return 'primary';
+    if (category.includes('İletişim')) return 'success';
+    if (category.includes('Ekip')) return 'secondary';
+    if (category.includes('Analitik')) return 'warning';
+    if (category.includes('Motivasyon')) return 'error';
+    return 'info';
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Aday Değerlendirme Formu</DialogTitle>
-          <DialogDescription>
-            Lütfen aşağıdaki 10 soruyu 0-10 arası puanlayarak cevaplayınız. Her soru için
-            opsiyonel olarak yorum ekleyebilirsiniz.
-          </DialogDescription>
-        </DialogHeader>
+    <Dialog open={isOpen} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle>Aday Değerlendirme Formu</DialogTitle>
+      <DialogContent dividers>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          Lütfen aşağıdaki 10 soruyu 0-10 arası puanlayarak cevaplayınız. Her soru için
+          opsiyonel olarak yorum ekleyebilirsiniz.
+        </Typography>
 
         {loadingQuestions ? (
-          <div className="flex justify-center items-center py-8">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-          </div>
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8 }}>
+            <CircularProgress />
+          </Box>
         ) : (
-          <div className="space-y-6 py-4">
+          <Stack spacing={4} sx={{ py: 2 }}>
             {questions.map((question, index) => (
-              <div key={question.id} className="border-b pb-6 last:border-0">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-sm font-medium text-gray-500">
+              <Box key={question.id} sx={{ borderBottom: index < questions.length - 1 ? 1 : 0, borderColor: 'divider', pb: 3 }}>
+                <Stack spacing={2}>
+                  <Box>
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                      <Typography variant="caption" color="text.secondary">
                         Soru {index + 1}
-                      </span>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          CATEGORY_COLORS[question.questionCategory] ||
-                          'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {question.questionCategory}
-                      </span>
-                    </div>
-                    <Label className="text-base font-medium">{question.questionText}</Label>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1">
-                      <Slider
-                        value={[answers[question.id]?.score || 5]}
-                        onValueChange={([value]) => handleScoreChange(question.id, value)}
-                        min={0}
-                        max={10}
-                        step={1}
-                        className="w-full"
+                      </Typography>
+                      <Chip
+                        label={question.questionCategory}
+                        size="small"
+                        color={getCategoryColor(question.questionCategory)}
                       />
-                      <div className="flex justify-between mt-1 text-xs text-gray-500">
-                        <span>0</span>
-                        <span>5</span>
-                        <span>10</span>
-                      </div>
-                    </div>
-                    <div className="text-2xl font-bold text-blue-600 min-w-[60px] text-center">
-                      {answers[question.id]?.score || 5}/10
-                    </div>
-                  </div>
+                    </Stack>
+                    <FormLabel>
+                      <Typography variant="body1" fontWeight="medium">
+                        {question.questionText}
+                      </Typography>
+                    </FormLabel>
+                  </Box>
 
-                  <Textarea
-                    placeholder="İsteğe bağlı yorum ekleyin..."
-                    value={answers[question.id]?.comment || ''}
-                    onChange={e => handleCommentChange(question.id, e.target.value)}
-                    rows={2}
-                    className="resize-none"
-                  />
-                </div>
-              </div>
+                  <Stack spacing={2}>
+                    <Box>
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <Box sx={{ flex: 1 }}>
+                          <Slider
+                            value={answers[question.id]?.score || 5}
+                            onChange={(_, value) => handleScoreChange(question.id, value as number)}
+                            min={0}
+                            max={10}
+                            step={1}
+                            marks
+                            valueLabelDisplay="auto"
+                          />
+                          <Stack direction="row" justifyContent="space-between" sx={{ mt: 0.5 }}>
+                            <Typography variant="caption" color="text.secondary">0</Typography>
+                            <Typography variant="caption" color="text.secondary">5</Typography>
+                            <Typography variant="caption" color="text.secondary">10</Typography>
+                          </Stack>
+                        </Box>
+                        <Typography variant="h5" fontWeight="bold" color="primary" sx={{ minWidth: 60, textAlign: 'center' }}>
+                          {answers[question.id]?.score || 5}/10
+                        </Typography>
+                      </Stack>
+                    </Box>
+
+                    <TextField
+                      placeholder="İsteğe bağlı yorum ekleyin..."
+                      value={answers[question.id]?.comment || ''}
+                      onChange={(e) => handleCommentChange(question.id, e.target.value)}
+                      multiline
+                      rows={2}
+                      fullWidth
+                      size="small"
+                    />
+                  </Stack>
+                </Stack>
+              </Box>
             ))}
 
-            <div className="space-y-2 pt-4">
-              <Label htmlFor="generalComment" className="text-base font-medium">
-                Genel Değerlendirme Yorumu
-              </Label>
-              <Textarea
-                id="generalComment"
+            <Box sx={{ pt: 2 }}>
+              <FormLabel>
+                <Typography variant="body1" fontWeight="medium" sx={{ mb: 1 }}>
+                  Genel Değerlendirme Yorumu
+                </Typography>
+              </FormLabel>
+              <TextField
                 placeholder="Aday hakkında genel görüşlerinizi yazın..."
                 value={generalComment}
-                onChange={e => setGeneralComment(e.target.value)}
+                onChange={(e) => setGeneralComment(e.target.value)}
+                multiline
                 rows={4}
-                className="resize-none"
+                fullWidth
               />
-            </div>
-          </div>
+            </Box>
+          </Stack>
         )}
-
-        <div className="flex justify-end gap-2 pt-4 border-t">
-          <Button variant="outline" onClick={onClose} disabled={loading}>
-            İptal
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={loading || loadingQuestions}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Kaydediliyor...
-              </>
-            ) : (
-              'Değerlendirmeyi Kaydet'
-            )}
-          </Button>
-        </div>
       </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} disabled={loading}>
+          İptal
+        </Button>
+        <Button
+          onClick={handleSubmit}
+          disabled={loading || loadingQuestions}
+          variant="contained"
+          startIcon={loading ? <CircularProgress size={16} /> : null}
+        >
+          {loading ? 'Kaydediliyor...' : 'Değerlendirmeyi Kaydet'}
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 };
 
 export default EvaluationFormModal;
-

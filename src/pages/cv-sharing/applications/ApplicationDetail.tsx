@@ -53,11 +53,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useKeycloak } from '@/hooks/useKeycloak';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useTranslation } from 'react-i18next';
+import { EvaluationButton } from '@/components/cv-sharing/evaluation';
 
 const statusOptions: ApplicationStatus[] = [
   ApplicationStatus.NEW,
   ApplicationStatus.IN_REVIEW,
   ApplicationStatus.FORWARDED,
+  ApplicationStatus.PARTIALLY_EVALUATED,
+  ApplicationStatus.FULLY_EVALUATED,
   ApplicationStatus.MEETING_SCHEDULED,
   ApplicationStatus.ACCEPTED,
   ApplicationStatus.REJECTED,
@@ -73,6 +76,10 @@ const statusColor = (status: ApplicationStatus): 'default' | 'primary' | 'second
       return 'primary';
     case ApplicationStatus.FORWARDED:
       return 'secondary';
+    case ApplicationStatus.PARTIALLY_EVALUATED:
+      return 'warning';
+    case ApplicationStatus.FULLY_EVALUATED:
+      return 'success';
     case ApplicationStatus.MEETING_SCHEDULED:
       return 'warning';
     case ApplicationStatus.ACCEPTED:
@@ -380,6 +387,16 @@ const ApplicationDetail: React.FC = () => {
           <Grid item xs={12}>
             {/* Top action buttons */}
             <Box sx={{ mb: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              {/* Evaluation Button for EMPLOYEE role */}
+              {isEmployee && id && (
+                <EvaluationButton
+                  applicationId={id}
+                  onEvaluationComplete={() => {
+                    queryClient.invalidateQueries({ queryKey: ['application', id] });
+                  }}
+                />
+              )}
+
               {/* HR Reject Button - Only for HR and not already REJECTED/WITHDRAWN/ACCEPTED */}
               {isHR &&
                detail.status !== ApplicationStatus.REJECTED &&
@@ -604,6 +621,8 @@ const ApplicationDetail: React.FC = () => {
                     [ApplicationStatus.NEW]: t('application.new'),
                     [ApplicationStatus.IN_REVIEW]: t('application.inReview'),
                     [ApplicationStatus.FORWARDED]: t('application.forwarded'),
+                    [ApplicationStatus.PARTIALLY_EVALUATED]: t('application.partiallyevaluated'),
+                    [ApplicationStatus.FULLY_EVALUATED]: t('application.fullyevaluated'),
                     [ApplicationStatus.MEETING_SCHEDULED]: t('application.meetingScheduled'),
                     [ApplicationStatus.ACCEPTED]: t('application.accepted'),
                     [ApplicationStatus.REJECTED]: t('application.rejected'),
@@ -619,6 +638,8 @@ const ApplicationDetail: React.FC = () => {
                     [ApplicationStatus.NEW]: t('application.new'),
                     [ApplicationStatus.IN_REVIEW]: t('application.inReview'),
                     [ApplicationStatus.FORWARDED]: t('application.forwarded'),
+                    [ApplicationStatus.PARTIALLY_EVALUATED]: t('application.partiallyevaluated'),
+                    [ApplicationStatus.FULLY_EVALUATED]: t('application.fullyevaluated'),
                     [ApplicationStatus.MEETING_SCHEDULED]: t('application.meetingScheduled'),
                     [ApplicationStatus.ACCEPTED]: t('application.accepted'),
                     [ApplicationStatus.REJECTED]: t('application.rejected'),

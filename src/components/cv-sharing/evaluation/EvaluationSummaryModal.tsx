@@ -1,13 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
-  DialogContent,
-  DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+  DialogContent,
+  Typography,
+  Box,
+  CircularProgress,
+  List,
+  ListItem,
+  ListItemText,
+  Stack,
+  Paper,
+  Chip,
+} from '@mui/material';
+import { Star, TrendingUp } from '@mui/icons-material';
 import { evaluationService } from '@/services/cv-sharing/evaluationService';
-import { EvaluationSummary, getScoreColor, getScoreBgColor } from '@/types/cv-sharing/evaluation';
-import { Star, TrendingUp, Loader2 } from 'lucide-react';
+import { EvaluationSummary } from '@/types/cv-sharing/evaluation';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import EvaluationDetailModal from './EvaluationDetailModal';
@@ -45,95 +53,121 @@ const EvaluationSummaryModal: React.FC<Props> = ({ isOpen, onClose, applicationI
     }
   };
 
+  const getScoreColor = (score: number): 'success' | 'warning' | 'error' => {
+    if (score >= 8) return 'success';
+    if (score >= 6) return 'warning';
+    return 'error';
+  };
+
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Aday Değerlendirme Özeti</DialogTitle>
-          </DialogHeader>
-
+      <Dialog open={isOpen} onClose={onClose} maxWidth="md" fullWidth>
+        <DialogTitle>Aday Değerlendirme Özeti</DialogTitle>
+        <DialogContent dividers>
           {loading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-            </div>
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+              <CircularProgress />
+            </Box>
           ) : summary ? (
-            <div className="space-y-6">
+            <Stack spacing={3}>
               {/* Average Score Card */}
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 rounded-lg p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+              <Paper
+                sx={{
+                  p: 3,
+                  background: 'linear-gradient(to right, #e3f2fd, #e8eaf6)',
+                }}
+              >
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                       Ortalama Değerlendirme Puanı
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <Star className="w-6 h-6 text-yellow-500 fill-yellow-500" />
-                      <span className={`text-4xl font-bold ${getScoreColor(summary.averageScore)}`}>
+                    </Typography>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Star sx={{ color: '#ffc107' }} />
+                      <Typography
+                        variant="h3"
+                        fontWeight="bold"
+                        color={getScoreColor(summary.averageScore) + '.main'}
+                      >
                         {summary.averageScore.toFixed(2)}
-                      </span>
-                      <span className="text-2xl text-gray-400">/10</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                      </Typography>
+                      <Typography variant="h5" color="text.secondary">
+                        /10
+                      </Typography>
+                    </Stack>
+                  </Box>
+                  <Box sx={{ textAlign: 'right' }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                       Toplam Değerlendirme
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="w-5 h-5 text-blue-600" />
-                      <span className="text-3xl font-bold text-blue-600">
+                    </Typography>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <TrendingUp color="primary" />
+                      <Typography variant="h4" fontWeight="bold" color="primary">
                         {summary.completedEvaluations}
-                      </span>
-                      <span className="text-gray-400">/ {summary.totalForwardings}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                      </Typography>
+                      <Typography variant="body1" color="text.secondary">
+                        / {summary.totalForwardings}
+                      </Typography>
+                    </Stack>
+                  </Box>
+                </Stack>
+              </Paper>
 
               {/* Evaluators List */}
-              <div className="space-y-3">
-                <h3 className="text-lg font-semibold">Değerlendirmeler</h3>
+              <Box>
+                <Typography variant="h6" sx={{ mb: 2 }}>
+                  Değerlendirmeler
+                </Typography>
                 {summary.evaluators.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
+                  <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ py: 4 }}>
                     Henüz değerlendirme yapılmamış
-                  </div>
+                  </Typography>
                 ) : (
-                  summary.evaluators.map(evaluator => (
-                    <div
-                      key={evaluator.evaluationId}
-                      className="border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer transition-colors"
-                      onClick={() => setSelectedEvaluationId(evaluator.evaluationId)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <p className="font-medium text-gray-900 dark:text-gray-100">
-                            {evaluator.evaluatorName}
-                          </p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {evaluator.evaluatorEmail}
-                          </p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                            {format(new Date(evaluator.evaluatedAt), 'dd MMMM yyyy, HH:mm', {
-                              locale: tr,
-                            })}
-                          </p>
-                        </div>
-                        <div
-                          className={`px-4 py-2 rounded-full ${getScoreBgColor(
-                            evaluator.score
-                          )}`}
-                        >
-                          <span className={`text-xl font-bold ${getScoreColor(evaluator.score)}`}>
-                            {evaluator.score.toFixed(1)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))
+                  <List>
+                    {summary.evaluators.map(evaluator => (
+                      <ListItem
+                        key={evaluator.evaluationId}
+                        sx={{
+                          border: 1,
+                          borderColor: 'divider',
+                          borderRadius: 1,
+                          mb: 1,
+                          cursor: 'pointer',
+                          '&:hover': { bgcolor: 'action.hover' },
+                        }}
+                        onClick={() => setSelectedEvaluationId(evaluator.evaluationId)}
+                      >
+                        <ListItemText
+                          primary={evaluator.evaluatorName}
+                          secondary={
+                            <Box>
+                              <Typography variant="caption" display="block">
+                                {evaluator.evaluatorEmail}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {format(new Date(evaluator.evaluatedAt), 'dd MMMM yyyy, HH:mm', {
+                                  locale: tr,
+                                })}
+                              </Typography>
+                            </Box>
+                          }
+                        />
+                        <Chip
+                          label={`${evaluator.score.toFixed(1)}/10`}
+                          color={getScoreColor(evaluator.score)}
+                          size="medium"
+                          sx={{ fontWeight: 'bold', fontSize: '1rem', minWidth: 80 }}
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
                 )}
-              </div>
-            </div>
+              </Box>
+            </Stack>
           ) : (
-            <div className="text-center py-8 text-gray-500">Değerlendirme bulunamadı</div>
+            <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ py: 4 }}>
+              Değerlendirme bulunamadı
+            </Typography>
           )}
         </DialogContent>
       </Dialog>
@@ -151,4 +185,3 @@ const EvaluationSummaryModal: React.FC<Props> = ({ isOpen, onClose, applicationI
 };
 
 export default EvaluationSummaryModal;
-

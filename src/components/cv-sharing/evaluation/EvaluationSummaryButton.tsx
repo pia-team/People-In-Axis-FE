@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { FileText } from 'lucide-react';
+import { Button } from '@mui/material';
+import { Description as FileTextIcon } from '@mui/icons-material';
 import EvaluationSummaryModal from './EvaluationSummaryModal';
 
 interface Props {
@@ -24,11 +24,10 @@ const EvaluationSummaryButton: React.FC<Props> = ({ applicationId, evaluationCou
     <>
       <Button
         onClick={() => setIsOpen(true)}
-        variant="outline"
-        className="border-green-600 text-green-600 hover:bg-green-50 dark:hover:bg-green-950"
-        size="default"
+        variant="outlined"
+        color="success"
+        startIcon={<FileTextIcon />}
       >
-        <FileText className="w-4 h-4 mr-2" />
         Değerlendirmeleri Gör ({evaluationCount})
       </Button>
 
@@ -42,4 +41,3 @@ const EvaluationSummaryButton: React.FC<Props> = ({ applicationId, evaluationCou
 };
 
 export default EvaluationSummaryButton;
-

@@ -1,9 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { evaluationService } from '@/services/cv-sharing/evaluationService';
 import { EvaluationProgress as EvaluationProgressType } from '@/types/cv-sharing/evaluation';
-import { CheckCircle, Clock, Loader2, TrendingUp } from 'lucide-react';
+import { CheckCircle, Schedule, TrendingUp } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
+import {
+  Box,
+  Paper,
+  Typography,
+  LinearProgress,
+  List,
+  ListItem,
+  ListItemText,
+  CircularProgress,
+  Stack,
+} from '@mui/material';
 
 interface Props {
   applicationId: string;
@@ -35,11 +46,11 @@ const EvaluationProgress: React.FC<Props> = ({ applicationId }) => {
 
   if (loading) {
     return (
-      <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-900">
-        <div className="flex justify-center items-center py-4">
-          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-        </div>
-      </div>
+      <Paper sx={{ p: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
+          <CircularProgress />
+        </Box>
+      </Paper>
     );
   }
 
@@ -48,74 +59,72 @@ const EvaluationProgress: React.FC<Props> = ({ applicationId }) => {
   }
 
   return (
-    <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-900">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-lg flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-blue-600" />
-          Değerlendirme Durumu
-        </h3>
-        <span className="text-2xl font-bold text-blue-600">
+    <Paper sx={{ p: 3 }}>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <TrendingUp color="primary" />
+          <Typography variant="h6">Değerlendirme Durumu</Typography>
+        </Stack>
+        <Typography variant="h4" fontWeight="bold" color="primary">
           {progress.completedEvaluations}/{progress.totalForwardings}
-        </span>
-      </div>
+        </Typography>
+      </Stack>
 
       {/* Progress Bar */}
-      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 mb-4">
-        <div
-          className="bg-blue-600 h-4 rounded-full transition-all duration-500 flex items-center justify-center"
-          style={{ width: `${progress.completionPercentage}%` }}
-        >
-          {progress.completionPercentage > 10 && (
-            <span className="text-xs font-medium text-white">
-              %{progress.completionPercentage.toFixed(0)}
-            </span>
-          )}
-        </div>
-      </div>
-
-      <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-        %{progress.completionPercentage.toFixed(0)} tamamlandı
-      </div>
+      <Box sx={{ mb: 2 }}>
+        <LinearProgress
+          variant="determinate"
+          value={progress.completionPercentage}
+          sx={{ height: 8, borderRadius: 4 }}
+        />
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          %{progress.completionPercentage.toFixed(0)} tamamlandı
+        </Typography>
+      </Box>
 
       {/* Forwarding List */}
-      <div className="space-y-2">
-        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+      <Box>
+        <Typography variant="subtitle2" fontWeight="medium" sx={{ mb: 1 }}>
           İletilen Kullanıcılar
-        </h4>
-        {progress.forwardings.map(f => (
-          <div
-            key={f.forwardingId}
-            className={`flex items-center justify-between p-3 rounded border transition-colors ${
-              f.isCompleted
-                ? 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800'
-                : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
-            }`}
-          >
-            <div className="flex-1">
-              <div className="font-medium">{f.forwardedToName}</div>
-              <div className="text-sm text-gray-500 dark:text-gray-400">{f.forwardedToEmail}</div>
-            </div>
-
-            {f.isCompleted ? (
-              <div className="text-green-600 dark:text-green-400 flex items-center gap-2">
-                <CheckCircle className="w-5 h-5" />
-                <span className="text-sm">
-                  {f.evaluatedAt &&
-                    format(new Date(f.evaluatedAt), 'dd MMM yyyy', { locale: tr })}
-                </span>
-              </div>
-            ) : (
-              <div className="text-gray-400 dark:text-gray-500 flex items-center gap-2">
-                <Clock className="w-5 h-5" />
-                <span className="text-sm">Beklemede</span>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
+        </Typography>
+        <List>
+          {progress.forwardings.map(f => (
+            <ListItem
+              key={f.forwardingId}
+              sx={{
+                bgcolor: f.isCompleted ? 'success.light' : 'background.paper',
+                border: 1,
+                borderColor: f.isCompleted ? 'success.main' : 'divider',
+                borderRadius: 1,
+                mb: 1,
+              }}
+            >
+              <ListItemText
+                primary={f.forwardedToName}
+                secondary={f.forwardedToEmail}
+              />
+              <Box>
+                {f.isCompleted ? (
+                  <Stack direction="row" spacing={1} alignItems="center" color="success.main">
+                    <CheckCircle />
+                    <Typography variant="caption">
+                      {f.evaluatedAt &&
+                        format(new Date(f.evaluatedAt), 'dd MMM yyyy', { locale: tr })}
+                    </Typography>
+                  </Stack>
+                ) : (
+                  <Stack direction="row" spacing={1} alignItems="center" color="text.disabled">
+                    <Schedule />
+                    <Typography variant="caption">Beklemede</Typography>
+                  </Stack>
+                )}
+              </Box>
+            </ListItem>
+          ))}
+        </List>
+      </Box>
+    </Paper>
   );
 };
 
 export default EvaluationProgress;
-

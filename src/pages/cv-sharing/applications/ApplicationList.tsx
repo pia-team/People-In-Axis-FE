@@ -238,6 +238,8 @@ const ApplicationList: React.FC = () => {
       [ApplicationStatus.NEW]: 'info',
       [ApplicationStatus.IN_REVIEW]: 'primary',
       [ApplicationStatus.FORWARDED]: 'secondary',
+      [ApplicationStatus.PARTIALLY_EVALUATED]: 'warning',
+      [ApplicationStatus.FULLY_EVALUATED]: 'success',
       [ApplicationStatus.MEETING_SCHEDULED]: 'warning',
       [ApplicationStatus.ACCEPTED]: 'success',
       [ApplicationStatus.REJECTED]: 'error',
@@ -305,6 +307,8 @@ const ApplicationList: React.FC = () => {
             [ApplicationStatus.NEW]: t('application.new'),
             [ApplicationStatus.IN_REVIEW]: t('application.inReview'),
             [ApplicationStatus.FORWARDED]: t('application.forwarded'),
+            [ApplicationStatus.PARTIALLY_EVALUATED]: t('application.partiallyevaluated'),
+            [ApplicationStatus.FULLY_EVALUATED]: t('application.fullyevaluated'),
             [ApplicationStatus.MEETING_SCHEDULED]: t('application.meetingScheduled'),
             [ApplicationStatus.ACCEPTED]: t('application.accepted'),
             [ApplicationStatus.REJECTED]: t('application.rejected'),
@@ -547,6 +551,8 @@ const ApplicationList: React.FC = () => {
                 <MenuItem value={ApplicationStatus.NEW}>{t('application.new')}</MenuItem>
                 <MenuItem value={ApplicationStatus.IN_REVIEW}>{t('application.inReview')}</MenuItem>
                 <MenuItem value={ApplicationStatus.FORWARDED}>{t('application.forwarded')}</MenuItem>
+                <MenuItem value={ApplicationStatus.PARTIALLY_EVALUATED}>{t('application.partiallyevaluated')}</MenuItem>
+                <MenuItem value={ApplicationStatus.FULLY_EVALUATED}>{t('application.fullyevaluated')}</MenuItem>
                 <MenuItem value={ApplicationStatus.MEETING_SCHEDULED}>{t('application.meetingScheduled')}</MenuItem>
                 <MenuItem value={ApplicationStatus.ACCEPTED}>{t('application.accepted')}</MenuItem>
                 <MenuItem value={ApplicationStatus.REJECTED}>{t('application.rejected')}</MenuItem>

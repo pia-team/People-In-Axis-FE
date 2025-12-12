@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
-  DialogContent,
-  DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+  DialogContent,
+  Typography,
+  Box,
+  CircularProgress,
+  Stack,
+  Paper,
+  Chip,
+  Grid,
+} from '@mui/material';
+import { Star, Person as UserIcon, Mail, CalendarToday } from '@mui/icons-material';
 import { evaluationService } from '@/services/cv-sharing/evaluationService';
 import {
   EvaluationResponse,
-  getScoreColor,
-  getScoreBgColor,
-  CATEGORY_COLORS,
 } from '@/types/cv-sharing/evaluation';
-import { Loader2, Star, User, Mail, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 
@@ -54,112 +57,146 @@ const EvaluationDetailModal: React.FC<Props> = ({
     }
   };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Değerlendirme Detayı</DialogTitle>
-        </DialogHeader>
+  const getScoreColor = (score: number): 'success' | 'warning' | 'error' => {
+    if (score >= 8) return 'success';
+    if (score >= 6) return 'warning';
+    return 'error';
+  };
 
+  const getCategoryColor = (category: string): 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' => {
+    if (category.includes('Teknik')) return 'primary';
+    if (category.includes('İletişim')) return 'success';
+    if (category.includes('Ekip')) return 'secondary';
+    if (category.includes('Analitik')) return 'warning';
+    if (category.includes('Motivasyon')) return 'error';
+    return 'info';
+  };
+
+  return (
+    <Dialog open={isOpen} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle>Değerlendirme Detayı</DialogTitle>
+      <DialogContent dividers>
         {loading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-          </div>
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <CircularProgress />
+          </Box>
         ) : evaluation ? (
-          <div className="space-y-6">
+          <Stack spacing={3}>
             {/* Evaluator Info Card */}
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
+            <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
                     Değerlendiren
-                  </h3>
-                  <div className="flex items-center gap-2 mb-1">
-                    <User className="w-4 h-4 text-gray-500" />
-                    <span className="font-medium">{evaluation.evaluatedBy.fullName}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                  </Typography>
+                  <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                    <UserIcon fontSize="small" color="action" />
+                    <Typography variant="body1" fontWeight="medium">
+                      {evaluation.evaluatedBy.fullName}
+                    </Typography>
+                  </Stack>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Mail fontSize="small" color="action" />
+                    <Typography variant="body2" color="text.secondary">
                       {evaluation.evaluatedBy.email}
-                    </span>
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
+                    </Typography>
+                  </Stack>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
                     Değerlendirme Bilgileri
-                  </h3>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Calendar className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm">
+                  </Typography>
+                  <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                    <CalendarToday fontSize="small" color="action" />
+                    <Typography variant="body2">
                       {format(new Date(evaluation.evaluatedAt), 'dd MMMM yyyy, HH:mm', {
                         locale: tr,
                       })}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                    <span className={`text-lg font-bold ${getScoreColor(evaluation.totalScore)}`}>
+                    </Typography>
+                  </Stack>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Star sx={{ color: '#ffc107' }} />
+                    <Typography
+                      variant="h6"
+                      fontWeight="bold"
+                      color={getScoreColor(evaluation.totalScore) + '.main'}
+                    >
                       {evaluation.totalScore.toFixed(2)} / 10
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+                    </Typography>
+                  </Stack>
+                </Grid>
+              </Grid>
+            </Paper>
 
             {/* Questions and Answers */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Sorular ve Cevaplar</h3>
-              {evaluation.answers.map((answer, index) => (
-                <div key={answer.questionId} className="border rounded-lg p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-sm font-medium text-gray-500">
-                          Soru {answer.questionOrder}
-                        </span>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            CATEGORY_COLORS[answer.questionCategory] ||
-                            'bg-gray-100 text-gray-800'
-                          }`}
-                        >
-                          {answer.questionCategory}
-                        </span>
-                      </div>
-                      <p className="font-medium">{answer.questionText}</p>
-                    </div>
-                    <div
-                      className={`ml-4 px-3 py-1 rounded-full ${getScoreBgColor(answer.score)}`}
-                    >
-                      <span className={`text-lg font-bold ${getScoreColor(answer.score)}`}>
-                        {answer.score}/10
-                      </span>
-                    </div>
-                  </div>
-                  {answer.comment && (
-                    <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-900 rounded">
-                      <p className="text-sm text-gray-700 dark:text-gray-300">{answer.comment}</p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+            <Box>
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                Sorular ve Cevaplar
+              </Typography>
+              <Stack spacing={2}>
+                {evaluation.answers.map((answer) => (
+                  <Paper key={answer.questionId} sx={{ p: 2, border: 1, borderColor: 'divider' }}>
+                    <Stack spacing={2}>
+                      <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+                        <Box sx={{ flex: 1 }}>
+                          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                            <Typography variant="caption" color="text.secondary">
+                              Soru {answer.questionOrder}
+                            </Typography>
+                            <Chip
+                              label={answer.questionCategory}
+                              size="small"
+                              color={getCategoryColor(answer.questionCategory)}
+                            />
+                          </Stack>
+                          <Typography variant="body1" fontWeight="medium">
+                            {answer.questionText}
+                          </Typography>
+                        </Box>
+                        <Chip
+                          label={`${answer.score}/10`}
+                          color={getScoreColor(answer.score)}
+                          sx={{ fontWeight: 'bold', minWidth: 70 }}
+                        />
+                      </Stack>
+                      {answer.comment && (
+                        <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            {answer.comment}
+                          </Typography>
+                        </Box>
+                      )}
+                    </Stack>
+                  </Paper>
+                ))}
+              </Stack>
+            </Box>
 
             {/* General Comment */}
             {evaluation.generalComment && (
-              <div className="space-y-2">
-                <h3 className="text-lg font-semibold">Genel Değerlendirme</h3>
-                <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+              <Box>
+                <Typography variant="h6" sx={{ mb: 1 }}>
+                  Genel Değerlendirme
+                </Typography>
+                <Paper
+                  sx={{
+                    p: 2,
+                    bgcolor: 'primary.light',
+                    border: 1,
+                    borderColor: 'primary.main',
+                  }}
+                >
+                  <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
                     {evaluation.generalComment}
-                  </p>
-                </div>
-              </div>
+                  </Typography>
+                </Paper>
+              </Box>
             )}
-          </div>
+          </Stack>
         ) : (
-          <div className="text-center py-8 text-gray-500">Değerlendirme bulunamadı</div>
+          <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ py: 4 }}>
+            Değerlendirme bulunamadı
+          </Typography>
         )}
       </DialogContent>
     </Dialog>
@@ -167,4 +204,3 @@ const EvaluationDetailModal: React.FC<Props> = ({
 };
 
 export default EvaluationDetailModal;
-

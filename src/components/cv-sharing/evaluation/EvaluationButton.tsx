@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Star } from 'lucide-react';
+import { Button } from '@mui/material';
+import { Star as StarIcon } from '@mui/icons-material';
 import { evaluationService } from '@/services/cv-sharing/evaluationService';
 import EvaluationFormModal from './EvaluationFormModal';
 
@@ -50,11 +50,11 @@ const EvaluationButton: React.FC<Props> = ({ applicationId, onEvaluationComplete
   return (
     <>
       <Button
+        variant="contained"
+        color="primary"
         onClick={() => setIsOpen(true)}
-        className="bg-blue-600 hover:bg-blue-700 text-white"
-        size="default"
+        startIcon={<StarIcon />}
       >
-        <Star className="w-4 h-4 mr-2" />
         Aday Değerlendirme
       </Button>
 
