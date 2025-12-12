@@ -11,6 +11,7 @@ import {
   PositionStatus,
   PositionStatistics,
   PositionMatch,
+  MatchedCVResponse,
   Skill,
   Language
 } from '@/types/cv-sharing';
@@ -220,6 +221,51 @@ class PositionService {
    */
   async removeMatch(positionId: string, poolCvId: string): Promise<void> {
     await axios.delete(`${this.baseUrl}/${positionId}/matches/${poolCvId}`);
+  }
+
+  /**
+   * Match all Pool CVs with a position and return detailed matching results
+   * Only accessible by HR and MANAGER roles
+   */
+  async matchAllCVsForPosition(positionId: string, page = 0, size = 20): Promise<PagedResponse<MatchedCVResponse>> {
+    const response = await axios.get<SpringPageResponse<MatchedCVResponse> | MatchedCVResponse[]>(
+      `${this.baseUrl}/${positionId}/match-all-cvs`,
+      {
+        params: { page, size }
+      }
+    );
+    const data = response.data;
+    
+    let content: MatchedCVResponse[];
+    let pageInfo: PagedResponse<MatchedCVResponse>["pageInfo"];
+    
+    if (isSpringPageResponse<MatchedCVResponse>(data)) {
+      content = data.content;
+      pageInfo = {
+        page: data.number ?? page,
+        size: data.size ?? size,
+        totalElements: data.totalElements ?? content.length,
+        totalPages: data.totalPages ?? 1,
+      };
+    } else if (Array.isArray(data)) {
+      content = data;
+      pageInfo = {
+        page,
+        size,
+        totalElements: content.length,
+        totalPages: 1,
+      };
+    } else {
+      content = [];
+      pageInfo = {
+        page,
+        size,
+        totalElements: 0,
+        totalPages: 1,
+      };
+    }
+    
+    return { content, pageInfo };
   }
 
   /**

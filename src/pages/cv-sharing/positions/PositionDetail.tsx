@@ -40,7 +40,8 @@ import {
   People as ApplicantsIcon,
   Visibility as ViewIcon,
   Share as ShareIcon,
-  MoreVert as MoreVertIcon
+  MoreVert as MoreVertIcon,
+  Search as SearchIcon
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -53,6 +54,7 @@ import SectionCard from '@/components/ui/SectionCard';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useKeycloak } from '@/providers/KeycloakProvider';
 import { useTranslation } from 'react-i18next';
+import BestCandidatesDialog from './BestCandidatesDialog';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -85,6 +87,7 @@ const PositionDetail: React.FC = () => {
   const queryClient = useQueryClient();
   const { hasRole } = useKeycloak();
   const isHR = hasRole('HUMAN_RESOURCES');
+  const isManager = hasRole('MANAGER');
   const isCompanyManager = hasRole('COMPANY_MANAGER');
   const [isArchiving, setIsArchiving] = useState(false);
   const [isActivating, setIsActivating] = useState(false);
@@ -93,6 +96,7 @@ const PositionDetail: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [removeDialog, setRemoveDialog] = useState<{ open: boolean; poolCvId?: string; name?: string }>({ open: false });
   const [isRemovingApplicant, setIsRemovingApplicant] = useState(false);
+  const [bestCandidatesDialogOpen, setBestCandidatesDialogOpen] = useState(false);
 
   const { data: position, isPending } = useQuery({
     queryKey: ['position', id],
@@ -299,6 +303,17 @@ const PositionDetail: React.FC = () => {
           >
             {t('common.share')}
           </Button>
+          {(isHR || isManager) && (
+            <Button
+              variant="contained"
+              startIcon={<SearchIcon />}
+              onClick={() => setBestCandidatesDialogOpen(true)}
+              fullWidth={false}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
+            >
+              {t('position.findBestCandidates')}
+            </Button>
+          )}
           <Tooltip title={isCompanyManager ? t('common.viewOnly') : (isHR ? t('position.duplicatePosition') : t('common.onlyHR'))}>
             <span>
               <Button
@@ -763,6 +778,13 @@ const PositionDetail: React.FC = () => {
         onClose={() => setDeleteDialogOpen(false)}
         onConfirm={handleDelete}
       />
+      {id && (
+        <BestCandidatesDialog
+          open={bestCandidatesDialogOpen}
+          onClose={() => setBestCandidatesDialogOpen(false)}
+          positionId={id}
+        />
+      )}
     </PageContainer>
   );
 };
