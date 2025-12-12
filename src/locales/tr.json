@@ -113,7 +113,8 @@
     "sortByAsc": "Artan Sırala",
     "sortByDesc": "Azalan Sırala",
     "hideColumn": "Sütunu Gizle",
-    "manageColumns": "Sütunları Yönet"
+    "manageColumns": "Sütunları Yönet",
+    "company": "Şirket"
   },
   "navigation": {
     "dashboard": "Pano",
